@@ -162,6 +162,69 @@ def abs_path_values_sum(s, b1, b2, t1, t2, num):
     return l, a
 
 
+
+
+
+
+#######################################################
+
+def dir_deriv(f, b1, b2):
+    """ dir_deriv(f, b1, b2) returns the directional derivative of the function |f(x)|_p at the point b1 in the direction b2.
+
+    Parameters
+    ----------
+    b1, b2 : Berkovich_Cp_Affine(p)
+        Points of type I, II or III.
+    f : PolynomialPolynomialRing(Qp(p,10), 't')
+        A polynomial in one variable over the p-adics, Q_p
+    """
+    p = b1.prime()
+    if b1.gt(b2) == False and b1.lt(b2) == False:
+        # b1 and b2 are not ordered so replace b2 by the join
+        b2 = b2.join(b1)
+    if b1 == b2:
+        return False
+        ############# maybe raise an error?
+    a1 = b1.center()
+    a2 = b2.center()
+    r1 = b1.radius()
+    r2 = b2.radius()
+    if r1 < r2:
+        # take a1 to be the common centre
+        h = f(t = t + a1)
+        m = float('inf')
+        e = log(r1, 1/p)
+        for i in range(0, f.degree(t) + 1):
+            m = min(m, h.valuation_of_coefficient(i) + i*e)
+        # this computes minimum of valuations, we also need to store when this minimum is obtained
+        l = []
+        for i in range(0, f.degree(t) + 1):
+            if h.valuation_of_coefficient(i) + i*e == m:
+                l.append(i)
+        # the directional derivative is in direction of increasing radius, so |f| = |c_n|*r^n locally above b1 for n the largest element of the list l
+        n = l[-1]
+        # derivative is then n*|c_n|*r^n = n*p**(-m)
+        # if we want the derivative with respect to the radius metric then this is n*|c_n|*r^{n-1}
+        return n*(p**(-m))
+    if r1 > r2:
+        # take a2 to be the common centre
+        h = f(t = t + a2)
+        m = float('inf')
+        e = log(r1, 1/p)
+        for i in range(0, f.degree(t) + 1):
+            m = min(m, h.valuation_of_coefficient(i) + i*e)
+        # this computes minimum of valuations, we also need to store when this minimum is obtained
+        l = []
+        for i in range(0, f.degree(t) + 1):
+            if h.valuation_of_coefficient(i) + i*e == m:
+                l.append(i)
+        # the directional derivative is in direction of decreasing radius, so |f| = |c_n|*r^n locally above b1 for n the smallest element of the list l
+        n = l[0]
+        # derivative is then -n*|c_n|*r^n = -n*p**(-m)
+        # if we want the derivative with respect to the radius metric then this is n*|c_n|*r^{n-1}
+        return -n*(p**(-m))   
+
+
 ###########################################################
 ################ Some tests ###############################
 
