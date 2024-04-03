@@ -10,6 +10,44 @@ struct BerkovichPoint
     # n should correspond to radius p^-n. We work with integers to avoid rounding issues.
 end
 
+struct BerkovichPolyDisk
+    disks::Vector{BerkovichPoint}
+end
+
+function BerkovichPolyDisk(disks::Vector{BerkovichPoint})
+    return BerkovichPolyDisk(disks)
+end
+
+function BerkovichPolyDisk(center::Vector{padic}, radius::Vector{Int64})
+    if length(center) != length(radius)
+        error("Center and radius vectors should have the same length")
+    end
+    disks = []
+    for i in 1:length(center)
+        push!(disks, BerkovichPoint(center[i], radius[i]))
+    end
+    return BerkovichPolyDisk(disks)
+end
+
+function radius(b::BerkovichPoint)
+    return b.radius
+end
+
+function radius(d::BerkovichPolyDisk)
+    return [radius(b) for b in d.disks]
+end
+
+# BerkovichTagent represents an element of the tangent space at a Berkovich point. Here we allow the tangent to have a magnitude instead of normalising it to 1.
+struct BerkovichTangent
+    point::BerkovichPoint
+    direction::padic
+    magnitude::Float64
+end
+
+struct BerkovichPolyTangent 
+    tangents::Vector{BerkovichTangent}
+end
+
 function prime(b::BerkovichPoint)
     center = b.center
     return convert(Int64, Nemo.prime(center.parent))
@@ -161,9 +199,6 @@ function update_param(t,i)
     error("i is out of range")
 end
 
-
-
-
 function simul_descent_step(t0,t1,t2,s0,s1,s2,X,Y)
     """ simul_descent_step(t0,t1,t2,s0,s1,s2,X,Y) changes all parameters by one step
         in such a way to minimse the loss function along X and Y. 
@@ -231,7 +266,40 @@ function simul_descent(X, Y, N)
 end
 
 
+# IMPLEMENT ME!
+function abs_sum_grad(F, v)
+    """ abs_sum_grad(F, v) returns the gradient of the sum of absolute values of rational functions in vector F in the direction of tangent vector v.
 
+    Parameters
+    ----------
+    F : Vector of rational functions
+    a : Tangent vector 
+    """
+    return "Implement me"
+end
+
+#  Implement me! Gradient descent step but allows one to control which directions are used for computing the gradient.
+function gradient_step(F, V, alpha)
+    """ gradient_step(F, V, alpha) returns a Berkovich point corresponding to taking a step in the direction of the smallest gradient of the sum of absolute values of rational functions in F in the direction of tangent vectors in V. Alpha represents a learning rate which can be modified to control the size of the step.
+
+    Parameters
+    ----------
+    F : Vector of rational functions
+    V : Vector of tangent vector
+    alpha : Float64
+    """
+    return "Implement me"
+end
+
+# Implement me! Gradient descent algorithm that uses a subset of all (normalized) tangent vectors: those that correspond to shrinking only one radius at a time. 
+function restrained_gradient_descent(F, N, P)
+    return "implement me"
+end
+
+# Implement me! Gradient descent algorithm that all descending tangent vectors at any given step.  
+function greedy_gradient_descent(F, N, P)
+    return "implement me"
+end 
 
 # ########## TEST ############
 
@@ -273,7 +341,6 @@ function test_function(t0,t1,t2,s0,s1,s2,x)
     p = prime(t0)
     return exp(rat * log(p))
 end
-
 
 # write a similar algorithm for greedy descent
 
