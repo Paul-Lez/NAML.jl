@@ -267,7 +267,7 @@ end
 
 
 
-function dir_deriv(f::PolyRingElem{T}, b1::BerkovichPoint, b2::BerkovichPoint) where T <: RingElement
+function dir_deriv(f, b1::BerkovichPoint, b2::BerkovichPoint)
     """ dir_deriv(f, b1, b2) returns the directional derivative of the function |f(x)|_p at the point b1 in the direction b2.
 
     Parameters
@@ -278,6 +278,7 @@ function dir_deriv(f::PolyRingElem{T}, b1::BerkovichPoint, b2::BerkovichPoint) w
         A polynomial in one variable over the p-adics, Q_p
     """
     p = prime(b1)
+    T = gen(f.parent)
     if !gt(b1, b2)  && !lt(b1, b2) 
         # b1 and b2 are not ordered so replace b2 by the join
         b2 = join(b1, b2)
@@ -293,16 +294,16 @@ function dir_deriv(f::PolyRingElem{T}, b1::BerkovichPoint, b2::BerkovichPoint) w
     if r1 < r2
         # take a1 to be the common centre
         h = compose(f, T + a1)
-        m = typemax(Float)
-        e = log(1/p, r1)
+        m = typemax(Float64)
+        e = log(1/(Float64(p)), r1)
 
-        for i in 0:f.degree(t)
-            m = min(m, valuation(h.coefficient(i), p) + i*e)
+        for i in 0:degree(f)
+            m = min(m, valuation_coeff(h, i) + i*e)
         end
         # this computes the minimum of valuations, we also need to store when this minimum is obtained
         l = Int[]
-        for i in 0:f.degree(t)
-            if valuation(h.coefficient(i), p) + i*e == m
+        for i in 0:degree(f)
+            if valuation_coeff(h, i) + i*e == m
                 push!(l, i)
             end
         end
@@ -310,20 +311,20 @@ function dir_deriv(f::PolyRingElem{T}, b1::BerkovichPoint, b2::BerkovichPoint) w
         n = last(l)
         # derivative is then n*|c_n|*r^n = n*p**(-m)
         # if we want the derivative with respect to the radius metric then this is n*|c_n|*r^{n-1}
-        return n * (p^(-m))
+        return n * (Float64(p)^(-m))
     end
     if r1 > r2
         # take a2 to be the common centre
         h = compose(f, T + a2)
-        m = typemax(Float)
-        e = log(1/p, r1)
-        for i in 0:f.degree(t)
-            m = min(m, valuation(h.coefficient(i), p) + i*e)
+        m = typemax(Float64)
+        e = log(1/(Float64(p)), r1)
+        for i in 0:degree(f)
+            m = min(m, valuation_coeff(h, i) + i*e)
         end
         # this computes minimum of valuations, we also need to store when this minimum is obtained
         l = Int[]
-        for i in 0:f.degree(t)
-            if valuation(h.coefficient(i), p) + i*e == m
+        for i in 0:degree(f)
+            if valuation_coeff(h, i) + i*e == m
                 push!(l, i)
             end
         end
@@ -331,7 +332,7 @@ function dir_deriv(f::PolyRingElem{T}, b1::BerkovichPoint, b2::BerkovichPoint) w
         n = first(l)
         # derivative is then -n*|c_n|*r^n = -n*p**(-m)
         # if we want the derivative with respect to the radius metric then this is n*|c_n|*r^{n-1}
-        return -n * (p^(-m))   
+        return -n * (Float64(p)^(-m))   
     end
 end 
 
@@ -480,6 +481,7 @@ s2 = BerkovichPoint(Q(2), 0.5)
 R, x = polynomial_ring(Q, "x")
 f = (x-3)*(x-12)*(x-30)*(x-84)
 g = (x-1)
+println(dir_deriv(f, s2, s1))
 #println(compose(f, f))
 
 #######################################################

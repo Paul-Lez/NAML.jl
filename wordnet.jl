@@ -322,12 +322,18 @@ function simul_descent(X, Y, N)
     return [t0, t1, t2, s0, s1, s2]
 end
 
+function abs_directional_derivative(f::MPolyRingElem, v, i) 
+    T = base_ring(f.parent)
+    _, x = polynomial_ring(T, "x")
+    p = [j != i ? point(v)[j] : x for j in eachindex(v.tangents)]
+    g = AbstractAlgebra.evaluate(f, p)
+    return dir_deriv(g, point(v).disks[i], BerkovichPoint(direction(v)[i], 0))
+end 
+
+
 # Compute symbolical gradient of rational function f at evaluated at the base point of v, in the direction of v
 function abs_grad_sym(f, v) 
-    #t = gen(f.parent)
-    #h = compose(f, )
-    """ IMPLEMENT ME !!!!!! """
-    return BerkovichPolyTangent_zero(v)
+    return BerkovichPolyTangent(point(v), direction(v), [abs_directional_derivative(f, v, i) for i in eachindex(v.tangents)])
 end 
 
 # IMPLEMENT ME!
