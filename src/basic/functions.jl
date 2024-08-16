@@ -1,6 +1,6 @@
 include("tangent_vector.jl")
 
-## This file will contain the basic of functions on the polydisc space and their calculus
+## This file contains the basic of functions on the polydisc space and their calculus
 
 # Evaluate the valuation of a polynomial at a point p
 function evaluate_abs(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{S, T}) where S where T
@@ -8,7 +8,7 @@ function evaluate_abs(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{
     # Is this the right thing to compute?
     vec = [t[i] - p.center[i] for i in eachindex(p.center)]
     g = AbstractAlgebra.evaluate(f, vec) 
-    # TODO Paul: This seems wrong... 
+    # TODO Paul: check this
     max, _ = findmax([padic_abs(Nemo.coeff(g, v)) * (Float64(prime(p))^(-sum(p.radius .* v))) for v in Nemo.exponent_vectors(g)])
     return max
 end

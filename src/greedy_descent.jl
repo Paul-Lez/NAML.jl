@@ -1,1 +1,0 @@
-## This file will contain an implementation of the 1D tree descent algorithm ##
