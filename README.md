@@ -15,4 +15,5 @@ polydisc space over a non-Archimedean field).
 
 ## See how this works
 
-To see this in practice, run the demo in `test/cubic_learning_experiment.ipynb`. 
+To see this in practice, run the demo in `test/cubic_learning_experiment.ipynb`. This notebook contains code for learning the roots (which depend on some parameter `a`) of a cubic.
+Another demo experiment can be found in the file `test/polynomial_learning.ipynb`. This second experiment contains code for learning the roots of "random" polynomials of arbitrary degree.
