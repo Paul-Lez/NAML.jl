@@ -37,7 +37,6 @@ function gradient_descent(data::Vector{Tuple{ValuationPolydisc{S, T}, U}}, model
 end
 
 # Helper function to initialise the "Gradient Descent" OptimSetup structure.
-function gradient_descent_init(data::Vector{Tuple{ValuationPolydisc{S, T}, U}}, 
-    model::Model{S, T}, loss, degree=1) where S where T where U
+function gradient_descent_init(data::Vector{Tuple{ValuationPolydisc{S, T}, U}}, model::Model{S, T}, loss, degree=1) where S where T where U
     return OptimSetup(data, model, loss, (dat, mod) -> gradient_descent(dat, mod, loss, degree))
 end 
