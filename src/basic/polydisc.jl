@@ -30,8 +30,7 @@ end
 # Some of the code (e.g the function below) might be nicer if we can use some unifying type
 # E.g. Polydisk
 
-function prime(p::ValuationPolydisc)
-    """prime(p) returns the prime number of the padic field of p as an integer
+@doc raw"""prime(p) returns the prime number of the padic field of p as an integer
 
     Parameters
     ----------
@@ -42,7 +41,8 @@ function prime(p::ValuationPolydisc)
     ----------
     p: ZZRing
         The prime number of the padic field of p
-    """
+"""
+function prime(p::ValuationPolydisc)
     return Nemo.prime(p.center[1].parent)
 end
 
@@ -60,13 +60,13 @@ function padic_abs(a::padic)
     return Float64(Nemo.prime(a.parent))^(-v)
 end
 
-function join(b1::ValuationPolydisc{S, T}, b2::ValuationPolydisc{S, T}) where S where T
-    """join(b1, b2) returns the join of b1 and b2
+@doc raw"""join(b1, b2) returns the join of b1 and b2
 
     Parameters
     ----------
     b1, b2 : ValuationPolydisk{S, T}
-    """
+"""
+function join(b1::ValuationPolydisc{S, T}, b2::ValuationPolydisc{S, T}) where S where T
     r = [min(b1.radius[i], valuation(b1.center[i] - b2.center[i]), b2.radius[i]) for i in Base.eachindex(b1)]
     # check correctness (max vs min)
     return ValuationPolydisc(b1.center, r)
