@@ -1,5 +1,4 @@
 using Oscar
-using Combinatorics
 
 ################### POLYDISCS ###################
 
@@ -86,19 +85,18 @@ function children(p::ValuationPolydisc{S, T}, degree=1) where S where T
     # The point p has prime(p)^degree children.
     sizehint!(output, Int(prime(p))^degree)
     # iterate over all possible lists that have precisely degree times the value 1 and 0 everywhere else
-    for shrink in Combinatorics.permutations([ones(T, degree) ; zeros(T, dim(p) - degree)])
-        # a "unit shrink" along a radius is the same as increasing the valuation 
-        # measure of the radius by 1 
-        new_radius = p.radius + shrink
+    for coordinatesToShrink in AbstractAlgebra.combinations(dim(p),degree)
+        # a "unit shrink" along a radius is the same as increasing the valuation
+        # measure of the radius by 1
+        new_radius = copy(p.radius)
+        new_radius[coordinatesToShrink] .+= 1
         # We can shrink along various centers so we need to be sure to include them all
-        # TODO Paul: explain the line below!
-        for radius_changes in Iterators.product([shrink[i] == 1 ? (0:Int(prime(p))-1) : (0:0) for i in Base.eachindex(p)]...)
-            # TODO Paul: figure out what's happening with S
-            R = p.center[1].parent
-            new_center = p.center + R.([Int(radius_changes[i]) * prime(p)^(p.radius[i]) for i in Base.eachindex(radius_changes)]) 
+        for radius_changes in Iterators.product([0:Int(prime(p))-1 for i in coordinatesToShrink]...)
+            new_center = copy(p.center)
+            new_center[coordinatesToShrink] .+= radius_changes .* (prime(p) .^ p.radius[coordinatesToShrink])
             push!(output, ValuationPolydisc(new_center, new_radius))
-        end 
-    end 
+        end
+    end
     return output
 end 
 
