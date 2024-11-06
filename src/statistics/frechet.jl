@@ -1,7 +1,3 @@
-#include("../basic/functions.jl")
-include("../optim/greedy_descent.jl")
-include("../optim/loss.jl")
-
 # This file provides tools for computing the Frechet mean 
 # of a set X = {p1, ..., pm} of n-polydiscs. 
 

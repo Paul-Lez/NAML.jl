@@ -1,5 +1,3 @@
-include("basic.jl")
-
 ########### Greedy descent algorithm ###########
 
 # In this section we implement greedy descent algorithms

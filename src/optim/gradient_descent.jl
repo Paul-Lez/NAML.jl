@@ -1,6 +1,3 @@
-using LinearAlgebra
-include("basic.jl")
-
 ########### Gradient descent optimiser #########
 
 # In this section we implement the tools necessary for gradient descent, and the gradient descent algorithm

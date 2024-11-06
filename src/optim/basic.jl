@@ -1,5 +1,3 @@
-include("../basic/functions.jl")
-
 ###### THIS SECTIONS DEFINES THE DATA TYPES NEEDED FOR DOING OPTIMISATION AND PROVIDES SOME BASIC API #####
 
 # This struct captures the underlying function of a model, plus which variables 

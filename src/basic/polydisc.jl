@@ -1,5 +1,3 @@
-using Oscar
-
 ################### POLYDISCS ###################
 
 # This file sets up the basic structures and
