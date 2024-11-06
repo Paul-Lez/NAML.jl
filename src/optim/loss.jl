@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 ## This file contains various "standard" loss functions for non-Archimedean 
 ## optimisation
 

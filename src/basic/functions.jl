@@ -1,5 +1,3 @@
-include("tangent_vector.jl")
-
 ## This file contains the basic of functions on the polydisc space and their calculus
 
 # Evaluate the valuation of a polynomial at a point p
