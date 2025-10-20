@@ -13,6 +13,21 @@
 
 # Helper functions to construct standard loss functions
 
+@doc raw"""
+    MSE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPolydisc{S,T},U}}) where {S,T,U}
+
+Initialize a Mean Squared Error (MSE) loss function.
+
+Creates a `Loss` structure with evaluation and gradient functions for MSE loss:
+``\mathcal{L}(\theta) = \frac{1}{n} \sum_{i=1}^n (f(x_i; \theta) - y_i)^2``
+
+# Arguments
+- `model::AbstractModel{S}`: The model to optimize
+- `data::Vector{Tuple{ValuationPolydisc{S,T},U}}`: Training data as `(input, output)` pairs
+
+# Returns
+`Loss`: Loss structure with MSE evaluation and gradient functions
+"""
 function MSE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPolydisc{S,T},U}}) where S where T where U
     # Create a closure that computes the MSE for a given parameter value
     function MSE_compute(param::ValuationPolydisc{S,T}) where S where T
@@ -27,6 +42,22 @@ function MSE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPoly
     return Loss(MSE_compute, MSE_grad)
 end
 
+@doc raw"""
+    MPE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPolydisc{S,T},U}}, p::Int) where {S,T,U}
+
+Initialize a Mean p-Power Error (MPE) loss function.
+
+Creates a `Loss` structure using the ``\ell^p`` norm instead of ``\ell^2``:
+``\mathcal{L}(\theta) = \frac{1}{n} \sum_{i=1}^n |f(x_i; \theta) - y_i|^p``
+
+# Arguments
+- `model::AbstractModel{S}`: The model to optimize
+- `data::Vector{Tuple{ValuationPolydisc{S,T},U}}`: Training data as `(input, output)` pairs
+- `p::Int`: The power for the loss (must be finite; for ``p = \infty`` use sup loss - TODO)
+
+# Returns
+`Loss`: Loss structure with MPE evaluation and gradient functions
+"""
 function MPE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPolydisc{S,T},U}}, p::Int) where S where T where U
     # MPE is the "Mean p-power error", i.e. same as the MSE but now we use the ℓᵖ norm instead of the ℓ² one.
     # Here we need finite p. For p = ∞, see the sup loss (TODO Paul: implement the sup loss)

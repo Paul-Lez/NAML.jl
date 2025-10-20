@@ -2,7 +2,23 @@
 
 # In this section we implement greedy descent algorithms
 
-# The optimiser function for greedy descent
+@doc raw"""
+    greedy_descent(loss::Loss, param::ValuationPolydisc{S,T}, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T}
+
+Perform one step of greedy descent optimization.
+
+Computes children of the current parameter and selects the child that minimizes the loss.
+Can operate in strict mode (one coordinate at a time) or full mode (all coordinates).
+
+# Arguments
+- `loss::Loss`: The loss function structure
+- `param::ValuationPolydisc{S,T}`: Current parameter values
+- `next_branch::Int`: Index of next branch to descend (in strict mode)
+- `settings::Tuple{Bool,Int}`: `(strict, degree)` where `strict` enables single-coordinate descent
+
+# Returns
+`Tuple{ValuationPolydisc{S,T}, Int}`: New parameters and next branch index
+"""
 function greedy_descent(
     loss::Loss,
     param::ValuationPolydisc{S,T},
@@ -28,7 +44,20 @@ end
 
 # end
 
-# This function outputs the OptimSetup object for greedy descent
+@doc raw"""
+    greedy_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T}
+
+Initialize an optimization setup for greedy descent.
+
+# Arguments
+- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `loss::Loss`: The loss function structure
+- `next_branch::Int`: Starting branch index for strict mode (typically 1)
+- `settings::Tuple{Bool,Int}`: `(strict, degree)` controlling descent behavior
+
+# Returns
+`OptimSetup`: Configured optimization setup for greedy descent
+"""
 function greedy_descent_init(
     param::ValuationPolydisc{S,T},
     loss::Loss,
