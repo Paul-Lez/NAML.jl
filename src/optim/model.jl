@@ -9,10 +9,10 @@ end
 
 # This structure captures a model, i.e. the underlying function, the
 # data of which variables are parameters, and values for each parameter
-mutable struct Model{S, T}
+mutable struct Model{S,T}
     fun::AbstractModel{S}
     # the values of the parameters
-    param::ValuationPolydisc{S, T}
+    param::ValuationPolydisc{S,T}
 end
 
 # Updates the weights of a model. Notice that this changes
@@ -48,19 +48,19 @@ end
 # using the evaluation mechanisms for absolute polynomials.
 # E.g. if the model is f(x, θ, y, ϕ) where the parameters is (θ, ϕ) are we are given (x, y) = (1, 2), (θ, ϕ) = (3, 4)
 # then the function will output (1, 3, 2, 4).
-function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S, T}, param::ValuationPolydisc{S, T}) where S where T
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T}, param::ValuationPolydisc{S,T}) where S where T
     keys = getkeys(m)
     abstract_model_variable_radius = Vector{T}([m.param_info[i] ? val.radius[keys[i]] : param.radius[keys[i]] for i in Base.eachindex(m.param_info)])
     abstract_model_variable_center = Vector{S}([m.param_info[i] ? val.center[keys[i]] : param.center[keys[i]] for i in Base.eachindex(m.param_info)])
     #println(length(abstract_model_variable_center))
-    return ValuationPolydisc{S, T}(abstract_model_variable_center, abstract_model_variable_radius)
-end 
+    return ValuationPolydisc{S,T}(abstract_model_variable_center, abstract_model_variable_radius)
+end
 
 # given a value for the parameters and for the data, this function outputs a point x that can be evaluated
 # using the evaluation mechanisms for absolute polynomials.
 # E.g. if the model is f(x, θ, y, ϕ) where the parameters is (θ, ϕ) are we are given (x, y) = (1, 2), (θ, ϕ) = (3, 4)
 # then the function will output (1, 3, 2, 4).
-function set_model_variable(m::Model{S, T}, val::ValuationPolydisc{S, T}) where S where T
+function set_model_variable(m::Model{S,T}, val::ValuationPolydisc{S,T}) where S where T
     return set_abstract_model_variable(m.fun, val, m.param)
 end
 
@@ -78,12 +78,12 @@ end
 # Evaluate the abstract model (this is currently an implentation that is specific to
 # absolute polynomial sums and will need to be updated when we move to more general
 # functions for our models)
-function eval_abs(m::AbstractModel, val, param)
+function evaluate(m::AbstractModel, val, param)
     var = set_abstract_model_variable(m, val, param)
-    return eval_abs(m.fun, var)
+    return evaluate(m.fun, var)
 end
 
 # Evaluate model `m` at a choice of input `val`
-function eval_abs(m::Model, val)
-    return eval_abs(m.fun, val, m.param)
+function evaluate(m::Model, val)
+    return evaluate(m.fun, val, m.param)
 end
