@@ -17,6 +17,15 @@ struct AbsolutePolynomialSum{S} <: PolydiscFunction{S}
     polys::Vector{AbstractAlgebra.Generic.MPoly{S}}
 end
 
+struct LinearPolymomial{S}
+    coefficients::Vector{S}
+    constant::S
+end
+
+struct LinearAbsolutePolynomialSum{S} <: PolydiscFunction{S}
+    polys::Vector{LinearPolymomial{S}}
+end
+
 function parent(F::PolydiscFunction{S}) where S
     return parent(F[1])
 end
@@ -53,6 +62,11 @@ end
 
 function directional_derivative(fun::AbsolutePolynomialSum{S}, v::ValuationTangent{S,T}) where S where T
     return sum([directional_derivative(f, v) for f in fun.polys])
+end
+
+## TODO Claude
+function evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T}) where S where T
+
 end
 
 # At the moment we work with multiple differential operators: the directional derivative along a tangent vector, and the gradient at a point.
