@@ -6,15 +6,8 @@
 # A radius of r means v(x - c) >= r (where v is the p-adic valuation).
 # This means |x - c|_p <= p^(-r)
 #
-# Key facts about valuation-based radii:
-#   - radius = 0 means v(x - c) >= 0 (always true, entire field)
-#   - radius = 1 means v(x - c) >= 1 (strict inclusion, smaller ball, size ~= p)
-#   - radius = 2 means v(x - c) >= 2 (even smaller ball, size ~= p^2)
-#   - radius = -1 means v(x - c) >= -1 (much larger ball, size ~= p^1 = p)
-#   - Negative radius => LARGER ball! e.g., radius -1 gives actual size p
 #
 # Formula: |x - c|_p <= p^(-r), so negative r expands the radius
-# Note: A radius of 0 does NOT mean point evaluation! It means the entire field.
 #
 # This test suite verifies:
 # 1. Consistency between different evaluation methods (evaluate_abs, evaluate for AbsolutePolynomialSum)
@@ -121,7 +114,7 @@ include("../src/naml.jl")
         R, (x, y) = polynomial_ring(K, ["x", "y"])
 
         # Define simple linear polynomials
-        f1 = 2*x + y + 1
+        f1 = 2 * x + y + 1
         f2 = x + 3
 
         # Create AbsolutePolynomialSum
@@ -144,7 +137,7 @@ include("../src/naml.jl")
             val_lin = evaluate(lin_poly_sum, p)
 
             # These should be approximately equal
-            @test val_abs ≈ val_lin atol=1e-10
+            @test val_abs ≈ val_lin atol = 1e-10
         end
     end
 
@@ -157,9 +150,9 @@ include("../src/naml.jl")
         # Using multivariate polynomials
         polynomials = [
             x,           # Monomial
-            2*x,         # Coefficient * monomial
+            2 * x,         # Coefficient * monomial
             x + 1,       # Polynomial with constant
-            x*y + 1,     # Multivariate
+            x * y + 1,     # Multivariate
         ]
 
         test_points = [
@@ -196,7 +189,7 @@ include("../src/naml.jl")
         @test val ≈ 1.0
 
         # Test: (x+1)*(y+1) = xy + x + y + 1, evaluated at (0,0)
-        f2 = (x+1)*(y+1)
+        f2 = (x + 1) * (y + 1)
         abs_sum2 = AbsolutePolynomialSum([f2])
         p2 = ValuationPolydisc([K(0), K(0)], [0, 0])
 
@@ -280,13 +273,13 @@ include("../src/naml.jl")
 
         val_batch = batch_eval(p)
         val_regular = evaluate(poly, p)
-        @test val_batch ≈ val_regular atol=1e-10
+        @test val_batch ≈ val_regular atol = 1e-10
 
         # Test at another point
         p2 = ValuationPolydisc([K(1), K(1)], [0, 0])
         val_batch2 = batch_eval(p2)
         val_regular2 = evaluate(poly, p2)
-        @test val_batch2 ≈ val_regular2 atol=1e-10
+        @test val_batch2 ≈ val_regular2 atol = 1e-10
     end
 
     @testset "Polynomial sum evaluation" begin
@@ -408,7 +401,7 @@ include("../src/naml.jl")
         # f(x,y) = 3x + 2y + 5
 
         # As MultiVariate polynomial
-        f_mv = 3*x + 2*y + 5
+        f_mv = 3 * x + 2 * y + 5
 
         # As LinearPolynomial
         f_lin = LinearPolynomial([K(3), K(2)], K(5))
@@ -427,7 +420,7 @@ include("../src/naml.jl")
             val_mv = evaluate_abs(f_mv, p)
             val_lin = evaluate(f_lin, p)
 
-            @test val_mv ≈ val_lin atol=1e-10
+            @test val_mv ≈ val_lin atol = 1e-10
         end
     end
 
@@ -459,7 +452,7 @@ include("../src/naml.jl")
                 val_regular = evaluate(poly, p)
 
                 # They should be equal (or very close due to floating point)
-                @test val_batch ≈ val_regular atol=1e-10
+                @test val_batch ≈ val_regular atol = 1e-10
             end
         end
     end
@@ -559,7 +552,7 @@ include("../src/naml.jl")
         val_batch_sum = batch_eval1(p) + batch_eval2(p)
         val_regular_sum = evaluate(poly_sum, p)
 
-        @test val_batch_sum ≈ val_regular_sum atol=1e-10
+        @test val_batch_sum ≈ val_regular_sum atol = 1e-10
     end
 
     @testset "Batch evaluation numerical stability" begin
@@ -578,7 +571,7 @@ include("../src/naml.jl")
             val_regular = evaluate(poly, p)
 
             # Should be exactly equal or within floating point tolerance
-            @test val_batch ≈ val_regular atol=1e-12
+            @test val_batch ≈ val_regular atol = 1e-12
         end
     end
 
