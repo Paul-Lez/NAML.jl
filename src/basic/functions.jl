@@ -58,6 +58,11 @@ struct LinearPolynomial{S}
     constant::S
 end
 
+struct LinearRationalFunction{S}
+    num::LinearPolynomial{S}
+    den::LinearPolynomial{S}
+end
+
 @doc raw"""
     LinearAbsolutePolynomialSum{S}
 
@@ -74,6 +79,10 @@ gradient computation over polydisc spaces.
 """
 struct LinearAbsolutePolynomialSum{S} <: PolydiscFunction{S}
     polys::Vector{LinearPolynomial{S}}
+end
+
+struct LinearRationalFunctionSum{S} <: PolydiscFunction{S}
+    rats::Vector{LinearRationalFunction{S}}
 end
 
 @doc raw"""
@@ -184,6 +193,14 @@ Computes the sum of absolute values of each polynomial in the sum evaluated at t
 """
 function evaluate(fun::AbsolutePolynomialSum{S}, var::ValuationPolydisc{S,T}) where S where T
     return sum([evaluate_abs(f, var) for f in fun.polys])
+end
+
+function evaluate(f::LinearRationalFunction{S}, var::ValuationPolydisc{S,T}) where S where T
+    return evaluate(f.num, var) / evaluate(f.den, var)
+end
+
+function evaluate(f::LinearRationalFunctionSum{S}, var::ValuationPolydisc{S,T}) where S where T
+    return sum([evaluate(fun, var) for fun in f.rats])
 end
 
 @doc raw"""

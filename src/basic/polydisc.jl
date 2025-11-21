@@ -391,3 +391,14 @@ end
 # function aggregate(p::ValuationPolydisc{S, T}, q::ValuationPolydisc{S, T}, p_coords::Vector{Bool}) where S where T
 #     new_center = Vector{T}
 # end
+
+function subdisc(p::ValuationPolydisc{S,T}, idx::Array{Int})::ValuationPolydisc{S,T} where S where T
+    new_center = p.center[idx]
+    new_radius = p.radius[idx]
+    return ValuationPolydisc(new_center, new_radius)
+end
+
+function components(p::ValuationPolydisc{S,T})::Array{ValuationPolydisc{S,T}} where S where T
+    # There will be a less cursed implementation for this:)
+    return map(i -> subdisc(p, [i]), 1:length(p.center))
+end
