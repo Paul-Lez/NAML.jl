@@ -330,7 +330,7 @@ function evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T}) where S 
 end
 
 function batch_evaluate_init(f::PolydiscFunction{S})::Function where S
-    batch_evaluate_init(f)
+    return batch_evaluate_init(f)
 end
 
 function batch_evaluate_init(poly::LinearPolynomial{S})::Function where S
@@ -345,8 +345,6 @@ function batch_evaluate_init(poly::LinearPolynomial{S})::Function where S
     end
     return eval
 end
-
-# Let's also do the batch_evaluate_init for Add, Mul and so on 
 
 function batch_evaluate_init(f::Add{S})::Function where S
     left_eval = batch_evaluate_init(f.left)
