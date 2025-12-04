@@ -154,6 +154,13 @@ function Base.:(==)(p::ValuationPolydisc, q::ValuationPolydisc)
     return radius(p) == radius(q) && all(valuation.(center(p) .- center(q)) .> radius(p))
 end
 
+function Base.isequal(p::ValuationPolydisc, q::ValuationPolydisc)
+    # check whether the radii coincide
+    # and if yes, check whether coordinate-wise difference of centers
+    # has lower valuation than radii
+    return radius(p) == radius(q) && all(valuation.(center(p) .- center(q)) .> radius(p))
+end
+
 @doc raw"""
     Base.hash(m::ValuationPolydisc, h::UInt)
 
@@ -166,8 +173,10 @@ Compute a hash value for a polydisc for use in hash-based collections.
 # Returns
 `UInt`: The hash value
 """
-function Base.hash(m::ValuationPolydisc, h::UInt)
-    return hash(h)
+function Base.hash(m::ValuationPolydisc{S,T}, h::UInt) where S where T
+    h = hash(m.center, h)
+    h = hash(m.radius, h)
+    return h
 end
 
 
@@ -284,7 +293,11 @@ function dist(b1::ValuationPolydisc{S,T}, b2::ValuationPolydisc{S,T}) where S wh
     b = Float64(p)
     j = join(b1, b2)
     return sum([b^(-j.radius[i]) - b^(-b1.radius[i]) + b^(-j.radius[i]) - b^(-b2.radius[i]) for i in Base.eachindex(b1)])
+end
 
+function hyp_dist(b1::ValuationPolydisc{S,T}, b2::ValuationPolydisc{S,T}) where S where T
+    j = join(b1, b2)
+    return sum([2 * j.radius[i] - b1.radius[i] - b2.radius[i] for i in Base.eachindex(b1)])
 end
 
 @doc raw"""
