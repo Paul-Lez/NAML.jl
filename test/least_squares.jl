@@ -4,7 +4,10 @@
 # 1. make_ordinary_least_squares_loss: Learn matrix A and bias b for linear regression
 # 2. solve_linear_system: Solve Ax + b = y for x
 
-include("../src/naml.jl")
+using Oscar
+include("../src/NAML.jl")
+using .NAML
+
 
 println("=" ^ 80)
 println("Test 1: Linear Regression (Learning A and b)")
@@ -40,7 +43,7 @@ loss_regression = make_ordinary_least_squares_loss(data_points)
 initial_param = ValuationPolydisc([K(0), K(0)], [0, 0])
 
 # Set up greedy descent optimizer
-optim_regression = greedy_descent_init(initial_param, loss_regression, 1, (false, 1))
+optim_regression = greedy_descent_init(initial_param, loss_regression, 1, (true, 1))
 
 println("\nRunning greedy descent for linear regression...")
 println("Initial loss: ", eval_loss(optim_regression))
@@ -96,7 +99,7 @@ loss_system = solve_linear_system(A, b, y)
 initial_x = ValuationPolydisc([K(0), K(0)], [0, 0])
 
 # Set up greedy descent optimizer
-optim_system = greedy_descent_init(initial_x, loss_system, 1, (false, 1))
+optim_system = greedy_descent_init(initial_x, loss_system, 1, (true, 1))
 
 println("\nRunning greedy descent for system solving...")
 println("Initial loss: ", eval_loss(optim_system))

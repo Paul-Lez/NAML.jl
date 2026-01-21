@@ -420,7 +420,7 @@ function batch_evaluate_init(poly::LinearPolynomial{S})::Function where S
         abs_values = [abs_poly_coeffs[i] + p.radius[i] for i in 1:num_coeffs]
         push!(abs_values, valuation(constant_term))
         # Compute the absolute value
-        return Float64(prime(p))^minimum(abs_values)
+        return Float64(prime(p))^(-minimum(abs_values))
     end
     return eval
 end
