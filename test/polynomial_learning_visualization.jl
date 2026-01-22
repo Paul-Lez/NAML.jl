@@ -1,4 +1,5 @@
-include("../src/naml.jl")
+using Oscar
+using NAML
 
 p, prec = 2, 20
 K = padic_field(p, precision=prec)

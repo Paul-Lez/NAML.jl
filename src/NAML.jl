@@ -2,6 +2,7 @@ module NAML
 
 using Oscar
 using LinearAlgebra
+using Printf
 
 # Include all source files
 include("basic/valuation.jl")
@@ -13,6 +14,11 @@ include("optim/basic.jl")
 include("optim/gradient_descent.jl")
 include("optim/greedy_descent.jl")
 include("optim/loss.jl")
+include("optim/mcts/hoo.jl")
+include("optim/mcts/mcts.jl")
+include("optim/mcts/uct.jl")
+include("optim/mcts/modified_uct.jl")
+include("optim/mcts/flat_ucb.jl")
 include("statistics/frechet.jl")
 
 # Export types and functions
@@ -51,6 +57,28 @@ export greedy_descent, greedy_descent_init
 
 # From optim/gradient_descent.jl
 export gradient_param, gradient_descent, gradient_descent_init
+
+# From optim/mcts/hoo.jl
+export HOONode, HOOConfig, HOOState
+export hoo_descent, hoo_descent_init
+export get_tree_size, get_visited_nodes, get_leaf_nodes
+
+# From optim/mcts/mcts.jl
+export MCTSNode, MCTSConfig, MCTSState
+export SelectionMode, VisitCount, BestValue
+export mcts_descent, mcts_descent_init
+
+# From optim/mcts/uct.jl
+export UCTNode, UCTConfig, UCTState
+export uct_descent, uct_descent_init
+
+# From optim/mcts/modified_uct.jl
+export ModifiedUCTNode, ModifiedUCTConfig, ModifiedUCTState
+export modified_uct_descent, modified_uct_descent_init
+
+# From optim/mcts/flat_ucb.jl
+export FlatUCBNode, FlatUCBConfig, FlatUCBState
+export flat_ucb_descent, flat_ucb_descent_init
 
 # From statistics/frechet.jl
 export frechet_mean
