@@ -1,5 +1,7 @@
 *.sage.py
 *.json
+*.claude
+logs_local
 
 # Docker outputs
 outputs/*

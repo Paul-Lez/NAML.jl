@@ -154,10 +154,6 @@ function Base.:(==)(p::ValuationPolydisc, q::ValuationPolydisc)
     return radius(p) == radius(q) && all(valuation.(center(p) .- center(q)) .> radius(p))
 end
 
-function Base.eachindex(p::ValuationPolydisc)
-    return Base.eachindex(p.center)
-end
-
 @doc raw"""
     Base.hash(m::ValuationPolydisc, h::UInt)
 
