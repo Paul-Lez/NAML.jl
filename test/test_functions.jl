@@ -18,8 +18,7 @@
 using Oscar
 using LinearAlgebra
 using Test
-
-include("../src/naml.jl")
+using NAML
 
 @testset "functions.jl tests" begin
 

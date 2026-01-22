@@ -187,7 +187,7 @@ end
 ##################################################
 
 @doc raw"""
-    compute_beta_n(n_i::Int, beta::Float64, N::Int)
+    compute_modified_uct_beta_n(n_i::Int, beta::Float64, N::Int)
 
 Compute the confidence parameter β_n for visit count n_i.
 
@@ -198,7 +198,7 @@ where:
 - N is the total number of nodes in the tree
 - n_i is the current visit count
 """
-function compute_beta_n(n_i::Int, beta::Float64, N::Int)
+function compute_modified_uct_beta_n(n_i::Int, beta::Float64, N::Int)
     return beta / (2.0 * N * n_i * (n_i + 1))
 end
 
@@ -236,7 +236,7 @@ function modified_ucb_score(node::ModifiedUCTNode, config::ModifiedUCTConfig)
     k_prime_d = config.k_prime_coeffs[d + 1]
 
     # Compute β_n
-    beta_n = compute_beta_n(n_i, config.beta, config.total_nodes)
+    beta_n = compute_modified_uct_beta_n(n_i, config.beta, config.total_nodes)
 
     # Compute the three components of the bound
     exploitation = average_value(node)

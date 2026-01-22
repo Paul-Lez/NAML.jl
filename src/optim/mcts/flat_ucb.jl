@@ -109,7 +109,7 @@ struct FlatUCBConfig
 end
 
 @doc raw"""
-    compute_beta_n(n_i::Int, beta::Float64, total_nodes::Int)
+    compute_flat_ucb_beta_n(n_i::Int, beta::Float64, total_nodes::Int)
 
 Compute the confidence parameter β_n for a node with n_i visits.
 
@@ -117,7 +117,7 @@ Formula: $\beta_{n_i} = \frac{\beta}{2^{D+1} n_i (n_i + 1)} = \frac{\beta}{N n_i
 
 where N = total_nodes ≈ 2^{D+1} - 1 (we use 2^{D+1} as approximation for simplicity).
 """
-function compute_beta_n(n_i::Int, beta::Float64, total_nodes::Int)
+function compute_flat_ucb_beta_n(n_i::Int, beta::Float64, total_nodes::Int)
     if n_i == 0
         return 1.0  # Avoid division by zero
     end
@@ -201,7 +201,7 @@ function compute_leaf_b_value(node::FlatUCBNode, config::FlatUCBConfig)
     n_i = node.visits
 
     # Compute β_n
-    beta_n = compute_beta_n(n_i, config.beta, config.total_nodes)
+    beta_n = compute_flat_ucb_beta_n(n_i, config.beta, config.total_nodes)
 
     # Compute confidence term
     confidence = sqrt(log(1.0 / beta_n) / (2.0 * n_i))

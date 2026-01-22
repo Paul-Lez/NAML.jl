@@ -8,9 +8,7 @@
 # This is a comparison test to polynomial_learning.jl which uses greedy descent.
 
 using Printf
-
-include("../src/naml.jl")
-include("../src/optim/mcts/hoo.jl")
+using NAML
 
 println("="^70)
 println("Polynomial Learning with HOO Algorithm")
