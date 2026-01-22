@@ -1,2 +1,4 @@
 *.sage.py
 *.json
+*.claude
+logs_local
