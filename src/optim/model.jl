@@ -170,7 +170,7 @@ For model ``f(x, \theta, y, \phi)`` with `param_info = [true, false, true, false
 The returned polydisc has the same dimension as the original polynomial ring and can be
 directly passed to polynomial evaluation functions.
 """
-function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T}, param::ValuationPolydisc{S,T}) where S where T
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T}, param::ValuationPolydisc{S,T}) where {S, T}
     keys = getkeys(m)
     abstract_model_variable_radius = Vector{T}([m.param_info[i] ? val.radius[keys[i]] : param.radius[keys[i]] for i in Base.eachindex(m.param_info)])
     abstract_model_variable_center = Vector{S}([m.param_info[i] ? val.center[keys[i]] : param.center[keys[i]] for i in Base.eachindex(m.param_info)])
@@ -195,7 +195,7 @@ parameter values rather than requiring them as an argument.
 # See Also
 - `set_abstract_model_variable`: The underlying function with explicit parameters
 """
-function set_model_variable(m::Model{S,T}, val::ValuationPolydisc{S,T}) where S where T
+function set_model_variable(m::Model{S,T}, val::ValuationPolydisc{S,T}) where {S, T}
     return set_abstract_model_variable(m.fun, val, m.param)
 end
 
@@ -555,36 +555,36 @@ function batch_evaluate_init(m::AbstractModel{S}) where S
     return model_eval
 end
 
-# @doc raw"""
-#     batch_evaluate_init(m::Model{S,T})
+@doc raw"""
+    batch_evaluate_init(m::Model{S,T})
 
-# Initialize a batch evaluation function for a model with stored parameters.
+Initialize a batch evaluation function for a model with stored parameters.
 
-# Returns a closure that evaluates the model at given data values using the model's
-# stored parameter values. The returned function accepts a single argument: data (polydisc).
+Returns a closure that evaluates the model at given data values using the model's
+stored parameter values. The returned function accepts a single argument: data (polydisc).
 
-# # Arguments
-# - `m::Model{S,T}`: The model (containing stored parameters)
+# Arguments
+- `m::Model{S,T}`: The model (containing stored parameters)
 
-# # Returns
-# `Function`: A closure `(data::ValuationPolydisc) -> Float64` that evaluates the model
-# at the given data using the stored parameters
+# Returns
+`Function`: A closure `(data::ValuationPolydisc) -> Float64` that evaluates the model
+at the given data using the stored parameters
 
-# # Notes
-# This is a convenience wrapper around `batch_evaluate_init(::AbstractModel)` that captures
-# the model's current parameters in the closure.
-# """
-# function batch_evaluate_init(m::Model{S,T}) where S where T
-#     # Get the batch evaluation function for the abstract model
-#     abstract_batch_eval = batch_evaluate_init(m.fun)
+# Notes
+This is a convenience wrapper around `batch_evaluate_init(::AbstractModel)` that captures
+the model's current parameters in the closure.
+"""
+function batch_evaluate_init(m::Model{S,T}) where {S, T}
+    # Get the batch evaluation function for the abstract model
+    abstract_batch_eval = batch_evaluate_init(m.fun)
 
-#     # Capture the parameters in a closure
-#     param = m.param
+    # Capture the parameters in a closure
+    param = m.param
 
-#     # Return a closure that takes only data values
-#     function model_eval_with_params(val::ValuationPolydisc{S,T}) where T
-#         return abstract_batch_eval(val, param)
-#     end
+    # Return a closure that takes only data values
+    function model_eval_with_params(val::ValuationPolydisc{S,T}) where T
+        return abstract_batch_eval(val, param)
+    end
 
-#     return model_eval_with_params
-# end
+    return model_eval_with_params
+end

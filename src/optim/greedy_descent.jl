@@ -24,7 +24,7 @@ function greedy_descent(
     param::ValuationPolydisc{S,T},
     next_branch::Int,
     settings::Tuple{Bool,Int}
-) where S where T
+) where {S, T}
     (strict, degree) = settings
     if strict
         below_nodes = children_along_branch(param, next_branch)
@@ -36,7 +36,9 @@ function greedy_descent(
     # current parameter point and take the child
     # that minimises the loss
     loss_values = loss.eval(below_nodes)
-    return (below_nodes[argmin(loss_values)], next_branch)
+    # Pick a *random* minimum amond the possible ones
+    min = rand(findall(u -> u == minimum(loss_values), loss_values))
+    return (below_nodes[min], next_branch)
 end
 
 @doc raw"""
@@ -58,7 +60,7 @@ function greedy_descent_init(
     loss::Loss,
     next_branch::Int,
     settings::Tuple{Bool,Int}
-) where S where T
+) where {S, T}
     return OptimSetup(
         loss,
         param,
