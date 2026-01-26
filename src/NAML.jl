@@ -20,6 +20,7 @@ include("optimization/optimizers/tree_search/uct.jl")
 include("optimization/optimizers/tree_search/modified_uct.jl")
 include("optimization/optimizers/tree_search/flat_ucb.jl")
 include("statistics/frechet.jl")
+include("statistics/least_squares.jl")
 
 # Export types and functions
 
@@ -82,5 +83,8 @@ export flat_ucb_descent, flat_ucb_descent_init
 
 # From statistics/frechet.jl
 export frechet_mean
+
+# From statistics/least_squares.jl
+export make_ordinary_least_squares_loss, solve_linear_system
 
 end # module NAML
