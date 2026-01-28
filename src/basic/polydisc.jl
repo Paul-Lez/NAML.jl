@@ -312,13 +312,25 @@ function children(p::ValuationPolydisc{S,T,N}, degree=1) where {S, T, N}
     for coordinatesToShrink in AbstractAlgebra.combinations(dim(p), degree)
         # a "unit shrink" along a radius is the same as increasing the valuation
         # measure of the radius by 1
-        new_radius = collect(p.radius)
-        new_radius[coordinatesToShrink] .+= 1
+        new_radius = ntuple(N) do i
+            if i in coordinatesToShrink
+                p.radius[i] + 1
+            else
+                p.radius[i]
+            end
+        end
+
         # We can shrink along various centers so we need to be sure to include them all
         for radius_changes in Iterators.product([0:Int(prime(p))-1 for i in coordinatesToShrink]...)
-            new_center = collect(p.center)
-            new_center[coordinatesToShrink] .+= radius_changes .* (prime(p) .^ p.radius[coordinatesToShrink])
-            push!(output, ValuationPolydisc(new_center, new_radius))
+            new_center = ntuple(N) do i
+                idx_in_shrink = findfirst(==(i), coordinatesToShrink)
+                if idx_in_shrink !== nothing
+                    p.center[i] + radius_changes[idx_in_shrink] * (prime(p) ^ p.radius[i])
+                else
+                    p.center[i]
+                end
+            end
+            push!(output, ValuationPolydisc{S,T,N}(new_center, new_radius))
         end
     end
     return output
