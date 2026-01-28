@@ -365,16 +365,20 @@ function children_along_branch(
     # for coordinatesToShrink in 0::(Int(prime(p))-1)
     # a "unit shrink" along a radius is the same as increasing the valuation
     # measure of the radius by 1
-    new_radius = collect(p.radius)
-    new_radius[branch_index] += 1
+    new_radius = ntuple(i -> i == branch_index ? p.radius[i] + 1 : p.radius[i], N)
     K = base_field(p)
     # We can shrink along various centers so we need to be sure to include them all
     for residue_class in 0:Int(prime(p))-1
-        new_center = collect(p.center)
         # TODO: make less hacky
         prime_as_padic = O(K, prime(p))
-        new_center[branch_index] += residue_class * (prime_as_padic ^ p.radius[branch_index])
-        push!(output, ValuationPolydisc(new_center, new_radius))
+        new_center = ntuple(N) do i
+            if i == branch_index
+                p.center[i] + residue_class * (prime_as_padic ^ p.radius[branch_index])
+            else
+                p.center[i]
+            end
+        end
+        push!(output, ValuationPolydisc{S,T,N}(new_center, new_radius))
     end
     return output
 end
