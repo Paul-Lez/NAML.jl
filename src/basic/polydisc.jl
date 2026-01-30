@@ -142,24 +142,34 @@ import Base.==
 @doc raw"""
     Base.:(==)(p::ValuationPolydisc, q::ValuationPolydisc)
 
-Check equality of two polydiscs.
+Check equality of two polydiscs in Berkovich space.
 
-Two polydiscs are equal if they have the same radii and their centers differ by elements
-with valuation strictly greater than the corresponding radii (i.e., the centers represent
-the same point in the polydisc space).
+Two polydiscs D(a, r) and D(b, s) represent the same Berkovich point if and only if:
+1. They have the same radius: r = s
+2. Their centers are "close enough": v(a - b) >= r
+
+This is the correct condition for Berkovich equality in non-Archimedean geometry.
 
 # Arguments
 - `p::ValuationPolydisc`: First polydisc
 - `q::ValuationPolydisc`: Second polydisc
 
 # Returns
-`Bool`: `true` if the polydiscs are equal, `false` otherwise
+`Bool`: `true` if the polydiscs represent the same Berkovich point, `false` otherwise
+
+# Mathematical Note
+The condition v(a-b) >= r (not > r) is crucial: if v(a-b) = r exactly, then
+D(a, r) and D(b, r) are the same disc by the ultrametric property.
 """
 function Base.:(==)(p::ValuationPolydisc{S,T,N}, q::ValuationPolydisc{S,T,N}) where {S,T,N}
-    # check whether the radii coincide
-    # and if yes, check whether coordinate-wise difference of centers
-    # has lower valuation than radii
-    return radius(p) == radius(q) && all(valuation.(center(p) .- center(q)) .> radius(p))
+    # Check if radii are equal
+    if radius(p) != radius(q)
+        return false
+    end
+
+    # Check if centers represent the same Berkovich point
+    # Two centers with the same radius r are equal if v(a-b) >= r
+    return all(valuation.(center(p) .- center(q)) .>= radius(p))
 end
 
 @doc raw"""

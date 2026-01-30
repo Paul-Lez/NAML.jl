@@ -21,6 +21,7 @@ include("optimization/optimizers/tree_search/modified_uct.jl")
 include("optimization/optimizers/tree_search/flat_ucb.jl")
 include("statistics/frechet.jl")
 include("statistics/least_squares.jl")
+include("visualization/loss_landscape.jl")
 
 # Export types and functions
 
@@ -86,5 +87,12 @@ export frechet_mean
 
 # From statistics/least_squares.jl
 export make_ordinary_least_squares_loss, solve_linear_system
+
+# From visualization/loss_landscape.jl
+export ConvexHullTree, convex_hull
+export sample_loss_landscape
+export print_landscape_summary, plot_loss_landscape, export_landscape_csv
+# Tree visualization
+export plot_tree_with_loss, plot_tree_simple
 
 end # module NAML
