@@ -106,7 +106,7 @@ function make_cutoff_loss(f::NAML.PolydiscFunction{S},
 
     # Create batch evaluator
     batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = (params::Vector{NAML.ValuationPolydisc{S, Int64}}) -> map(batch_eval, params)
+    batch_fn = (params) -> map(batch_eval, params)
 
     return NAML.Loss(batch_fn, x -> 0)
 end
@@ -188,7 +188,7 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
 
         total_loss = sum(loss_terms)
         batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = (params::Vector{NAML.ValuationPolydisc{S, Int64}}) -> map(batch_eval, params)
+        batch_fn = (params) -> map(batch_eval, params)
 
         return NAML.Loss(batch_fn, x -> 0)
     else
@@ -209,7 +209,7 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
 
         total_loss = sum(loss_terms)
         batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = (params::Vector{NAML.ValuationPolydisc{S, Int64}}) -> map(batch_eval, params)
+        batch_fn = (params) -> map(batch_eval, params)
 
         return NAML.Loss(batch_fn, x -> 0)
     end
@@ -239,8 +239,8 @@ gauss = generate_gauss_point(5, K)
 ```
 """
 function generate_gauss_point(n::Int, K::PadicField)
-    center = [K(1) for _ in 1:n]
-    radius = zeros(Int64, n)
+    center = ntuple(i -> K(1), n)
+    radius = ntuple(i -> 0, n)
     return NAML.ValuationPolydisc(center, radius)
 end
 
@@ -265,8 +265,8 @@ gauss = generate_gauss_point(5, K, Float64)
 ```
 """
 function generate_gauss_point(n::Int, K::PadicField, T::Type)
-    center = [K(1) for _ in 1:n]
-    radius = zeros(T, n)
+    center = ntuple(i -> K(1), n)
+    radius = ntuple(i -> zero(T), n)
     return NAML.ValuationPolydisc(center, radius)
 end
 

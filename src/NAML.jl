@@ -13,6 +13,7 @@ include("optimization/model.jl")
 include("optimization/optim_setup.jl")
 include("optimization/optimizers/gradient_descent.jl")
 include("optimization/optimizers/greedy_descent.jl")
+include("optimization/optimizers/random_descent.jl")
 include("optimization/loss.jl")
 include("optimization/optimizers/tree_search/hoo.jl")
 include("optimization/optimizers/tree_search/mcts.jl")
@@ -58,6 +59,9 @@ export MSE_loss_init, MPE_loss_init
 
 # From optimization/optimizers/greedy_descent.jl
 export greedy_descent, greedy_descent_init
+
+# From optimization/optimizers/random_descent.jl (BASELINE ONLY - for experimental comparison)
+export random_descent, random_descent_init
 
 # From optimization/optimizers/gradient_descent.jl
 export gradient_param, gradient_descent, gradient_descent_init
