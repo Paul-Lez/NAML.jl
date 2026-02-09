@@ -5,7 +5,7 @@
 ## - Loss function = sum of 3 terms, each composing exp or log with a polynomial
 
 using Plots
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 using Oscar
 

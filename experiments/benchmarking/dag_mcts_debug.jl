@@ -1,6 +1,6 @@
 # Quick debug script to understand why MCTS isn't improving
 using Oscar
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 
 # Setup same problem

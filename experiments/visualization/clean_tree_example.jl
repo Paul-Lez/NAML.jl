@@ -4,7 +4,7 @@
 ## to demonstrate how the loss landscape visualization works.
 
 using Plots
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 using Oscar
 
