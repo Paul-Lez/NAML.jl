@@ -1,6 +1,8 @@
 using Oscar
 using NAML
 
+# TODO(Paul-Lez): get this to work again
+
 p, prec = 2, 20
 K = padic_field(p, precision=prec)
 
