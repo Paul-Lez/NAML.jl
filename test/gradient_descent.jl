@@ -14,7 +14,7 @@ using NAML
     a1 = [K(0)]
     r1 = Vector{Int}([0])
     p1 = ValuationPolydisc(a1, r1)
-    p2 = ValuationPolydisc(Vector{PadicFieldElem}(), Vector{Int}())
+    p2 = ValuationPolydisc(K, Vector{PadicFieldElem}(), Vector{Int}())
     data = [(p2, 1)]
 
     # Create polynomial ring

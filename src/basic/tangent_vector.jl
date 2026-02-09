@@ -28,6 +28,23 @@ struct ValuationTangent{S, T, N} #where T<:Oscar.scalar_types
 end
 
 @doc raw"""
+    ValuationTangent(point::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, direction::Vector{PadicFieldElem}, magnitude::Vector{T}) where {P,Prec,PFE,T,N}
+
+Convenience constructor that automatically wraps `PadicFieldElem` direction into `ValuedFieldPoint`.
+
+This constructor enables compatibility with existing code that uses unwrapped `PadicFieldElem`
+while the polydisc uses wrapped `ValuedFieldPoint`.
+"""
+function ValuationTangent(
+    point::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N},
+    direction::Vector{PadicFieldElem},
+    magnitude::Vector{T}
+) where {P,Prec,PFE,T,N}
+    wrapped_direction = [ValuedFieldPoint{P,Prec,PFE}(d) for d in direction]
+    return ValuationTangent{ValuedFieldPoint{P,Prec,PFE},T,N}(point, wrapped_direction, magnitude)
+end
+
+@doc raw"""
     dim(v::ValuationTangent)
 
 Return the dimension of the tangent space.

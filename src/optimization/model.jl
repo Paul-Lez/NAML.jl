@@ -61,10 +61,15 @@ model = Model(f, params)
 Models are mutable so that optimization algorithms can update `param` in place.
 Use `update_weights!` to modify parameter values.
 """
-mutable struct Model{S,T,N}
-    fun::AbstractModel{S}
+mutable struct Model{FS,PS,T,N}
+    fun::AbstractModel{FS}
     # Current parameter values
-    param::ValuationPolydisc{S,T,N}
+    param::ValuationPolydisc{PS,T,N}
+end
+
+# Convenience constructor for when types match
+function Model(fun::AbstractModel{S}, param::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return Model{S,S,T,N}(fun, param)
 end
 
 @doc raw"""
@@ -176,6 +181,20 @@ function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc
     abstract_model_variable_radius = Vector{T}([m.param_info[i] ? val.radius[keys[i]] : param.radius[keys[i]] for i in Base.eachindex(m.param_info)])
     abstract_model_variable_center = Vector{S}([m.param_info[i] ? val.center[keys[i]] : param.center[keys[i]] for i in Base.eachindex(m.param_info)])
     return ValuationPolydisc(abstract_model_variable_center, abstract_model_variable_radius)
+end
+
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T,N1}, param::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N2}) where {S,P,Prec,T,N1,N2}
+    unwrapped_param_center = tuple([vp.elem for vp in param.center]...)
+    unwrapped_param = ValuationPolydisc{S,T,N2}(unwrapped_param_center, param.radius)
+    return set_abstract_model_variable(m, val, unwrapped_param)
+end
+
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N1}, param::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N2}) where {S,P,Prec,T,N1,N2}
+    unwrapped_val_center = tuple([vp.elem for vp in val.center]...)
+    unwrapped_val = ValuationPolydisc{S,T,N1}(unwrapped_val_center, val.radius)
+    unwrapped_param_center = tuple([vp.elem for vp in param.center]...)
+    unwrapped_param = ValuationPolydisc{S,T,N2}(unwrapped_param_center, param.radius)
+    return set_abstract_model_variable(m, unwrapped_val, unwrapped_param)
 end
 
 @doc raw"""
@@ -588,4 +607,82 @@ function batch_evaluate_init(m::Model{S,T}) where {S, T}
     end
 
     return model_eval_with_params
+end
+
+#=============================================================================
+ Typed Model Evaluator - Refactor 2
+=============================================================================#
+
+@doc raw"""
+    ModelEvaluator{FS,PS,T,N1,N2,E}
+
+Typed evaluator for AbstractModel.
+
+Combines the model structure with a typed function evaluator for efficient
+computation with full compile-time type information.
+
+# Type Parameters
+- `FS`: Function coefficient type
+- `PS`: Parameter coefficient type (may differ from FS due to ValuedFieldPoint wrapping)
+- `T`: Radius type
+- `N1`: Dimension of data polydisc
+- `N2`: Dimension of parameter polydisc
+- `E`: Type of the underlying function evaluator
+
+# Fields
+- `model::AbstractModel{FS}`: The abstract model
+- `fun_eval::E`: Typed evaluator for the underlying function
+"""
+struct ModelEvaluator{FS,PS,T,N1,N2,E<:PolydiscFunctionEvaluator}
+    model::AbstractModel{FS}
+    fun_eval::E
+end
+
+@doc raw"""
+    batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+
+Create a typed evaluator for an AbstractModel.
+
+**NEW TYPED INTERFACE**: Returns a ModelEvaluator struct instead of a closure.
+
+# Arguments
+- `m::AbstractModel{S}`: The abstract model
+- `::Type{ValuationPolydisc{S,T,N}}`: The full variable polydisc type (data + parameters combined)
+
+# Returns
+`ModelEvaluator`: A typed evaluator callable as `eval(data_polydisc, param_polydisc)`
+
+# Example
+```julia
+model = AbstractModel(fun, param_info)
+# Determine full dimension (data_dim + param_dim)
+eval = batch_evaluate_init(model, ValuationPolydisc{S,T,FullDim})
+result = eval(data_polydisc, param_polydisc)
+```
+"""
+function batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    fun_eval = batch_evaluate_init(m.fun, ValuationPolydisc{S,T,N})
+    return ModelEvaluator{S,S,T,0,0,typeof(fun_eval)}(m, fun_eval)
+end
+
+@doc raw"""
+    batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+
+Lifting evaluator: when the model uses type `S` but data uses `ValuedFieldPoint{P,Prec,S}`,
+eagerly lift the function to ValuedFieldPoint at evaluator creation time.
+
+This avoids runtime type conversion on every evaluation call. The function-level
+`batch_evaluate_init` methods handle the coefficient lifting (e.g. converting
+`LinearPolynomial{S}` coefficients to `ValuedFieldPoint{P,Prec,S}`).
+"""
+function batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    fun_eval = batch_evaluate_init(m.fun, ValuationPolydisc{VFP,T,N})
+    return ModelEvaluator{S,VFP,T,0,0,typeof(fun_eval)}(m, fun_eval)
+end
+
+# Callable for (data, param) -> Float64
+function (eval::ModelEvaluator)(val::ValuationPolydisc{S1,T,N1}, param::ValuationPolydisc{S2,T,N2}) where {S1,S2,T,N1,N2}
+    full_var = set_abstract_model_variable(eval.model, val, param)
+    return eval.fun_eval(full_var)
 end

@@ -6,6 +6,7 @@ using Printf
 
 # Include all source files
 include("basic/valuation.jl")
+include("basic/valued_point.jl")
 include("basic/polydisc.jl")
 include("basic/tangent_vector.jl")
 include("basic/functions.jl")
@@ -30,6 +31,11 @@ include("visualization/loss_landscape.jl")
 # From basic/valuation.jl
 export valuation
 
+# From basic/valued_point.jl
+export ValuedFieldPoint
+export unwrap, lift
+# Note: prime and precision are exported via polydisc.jl (prime) and Base (precision)
+
 # From basic/polydisc.jl
 export ValuationPolydisc, AbsPolydisc
 export center, radius, dim, prime
@@ -43,11 +49,16 @@ export ValuationTangent
 
 # From basic/functions.jl
 export PolydiscFunction, AbsolutePolynomialSum, LinearAbsolutePolynomialSum, LinearPolynomial
+export PolydiscFunctionEvaluator  # Abstract evaluator type
+export LinearPolynomialEvaluator, ConstantEvaluator
+export AddEvaluator, SubEvaluator, MulEvaluator, DivEvaluator
+export SMulEvaluator, CompEvaluator, SumEvaluator
+export LambdaEvaluator, MPolyEvaluator
 export directional_exponent, directional_derivative, grad, eval_abs
 # Note: evaluate not exported to avoid conflicts with Oscar/AbstractAlgebra - use NAML.evaluate
 
 # From optimization/model.jl
-export AbstractModel, Model
+export AbstractModel, Model, ModelEvaluator
 export var_indices, param_indices, set_abstract_model_variable, batch_evaluate_init
 
 # From optimization/optim_setup.jl

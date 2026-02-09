@@ -39,6 +39,73 @@ function ValuationPolydisc(center::Vector{S}, radius::Vector{T}) where {S,T}
 end
 
 @doc raw"""
+    ValuationPolydisc(center::Vector{PadicFieldElem}, radius::Vector{T}) where T
+
+Convenience constructor that automatically wraps `PadicFieldElem` into `ValuedFieldPoint`
+for compile-time optimization.
+
+This constructor extracts the prime and precision from the field and creates a
+`ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},T,N}` where `P` and `Prec`
+are type parameters available at compile time.
+
+# Example
+```julia
+K = PadicField(2, 20)
+p = ValuationPolydisc([K(1), K(2)], [0, 0])
+# Creates ValuationPolydisc{ValuedFieldPoint{2,20,PadicFieldElem}, Int, 2}
+```
+"""
+function ValuationPolydisc(center::Vector{PadicFieldElem}, radius::Vector{T}) where T
+    N = length(center)
+    @assert length(radius) == N "center and radius must have the same length"
+    @assert 0 < N "The polydisc can't have dimension 0"
+
+    # Extract prime and precision from the field
+    K = Base.parent(first(center))
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    # Wrap elements in ValuedFieldPoint
+    wrapped_center = tuple([ValuedFieldPoint{P,Prec,PadicFieldElem}(c) for c in center]...)
+    wrapped_radius = tuple(radius...)
+
+    return ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},T,N}(wrapped_center, wrapped_radius)
+end
+
+@doc raw"""
+    ValuationPolydisc(K::PadicField, center::Vector{PadicFieldElem}, radius::Vector{T}) where T
+
+Constructor for ValuationPolydisc that accepts an explicit field parameter.
+This is useful for creating 0-dimensional polydiscs with ValuedFieldPoint wrapping.
+
+# Example
+```julia
+K = PadicField(2, 20)
+p = ValuationPolydisc(K, Vector{PadicFieldElem}(), Vector{Int}())
+# Creates ValuationPolydisc{ValuedFieldPoint{2,20,PadicFieldElem}, Int, 0}
+```
+"""
+function ValuationPolydisc(K::PadicField, center::Vector{PadicFieldElem}, radius::Vector{T}) where T
+    N = length(center)
+    @assert length(radius) == N "center and radius must have the same length"
+
+    # Extract prime and precision from the field
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    if N == 0
+        # Return empty polydisc with ValuedFieldPoint type
+        return ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},T,0}(tuple(), tuple())
+    end
+
+    # Wrap elements in ValuedFieldPoint
+    wrapped_center = tuple([ValuedFieldPoint{P,Prec,PadicFieldElem}(c) for c in center]...)
+    wrapped_radius = tuple(radius...)
+
+    return ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},T,N}(wrapped_center, wrapped_radius)
+end
+
+@doc raw"""
     AbsPolydisc{S,T}
 
 A polydisc over a p-adic field, where the radius is measured with respect to the norm.
@@ -262,6 +329,19 @@ function prime(p::ValuationPolydisc)
     return Nemo.prime(p.center[1].parent)
 end
 
+@doc raw"""
+    prime(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}) where {P,Prec,S,T,N}
+
+Return the prime of a polydisc with ValuedFieldPoint elements.
+
+This is a compile-time constant when using ValuedFieldPoint, enabling
+optimizations in hot-path functions like `children()`.
+
+# Returns
+`Int`: The prime `P` (compile-time constant)
+"""
+@inline prime(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}) where {P,Prec,S,T,N} = P
+
 function base_field(p::ValuationPolydisc)
     return p.center[1].parent
 end
@@ -403,6 +483,51 @@ function children(p::ValuationPolydisc{S,T,N}, degree=1) where {S, T, N}
     return output
 end
 
+@doc raw"""
+    children(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, degree=1) where {P,Prec,PFE,T,N}
+
+Specialized version of `children()` for `ValuedFieldPoint` that leverages compile-time prime.
+
+This version benefits from having `P` available at compile time, allowing the compiler to
+optimize loops and potentially unroll iterations for small primes.
+"""
+function children(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, degree=1) where {P,Prec,PFE,T,N}
+    @req dim(p) >= degree "degree exceeding dimension of polydisc"
+    output = Vector{ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}}()
+    # The point p has P^degree children (P is compile-time constant)
+    sizehint!(output, P^degree)
+    K = Base.parent(p.center[1].elem)
+    # Create prime as ValuedFieldPoint
+    prime_as_valued = ValuedFieldPoint{P,Prec,PFE}(K(P))
+    # iterate over all possible lists that have precisely degree times the value 1 and 0 everywhere else
+    for coordinatesToShrink in AbstractAlgebra.combinations(dim(p), degree)
+        # a "unit shrink" along a radius is the same as increasing the valuation
+        # measure of the radius by 1
+        new_radius = ntuple(N) do i
+            if i in coordinatesToShrink
+                p.radius[i] + 1
+            else
+                p.radius[i]
+            end
+        end
+
+        # We can shrink along various centers so we need to be sure to include them all
+        # P is compile-time constant, so this loop bound is known at compile time
+        for radius_changes in Iterators.product([0:P-1 for i in coordinatesToShrink]...)
+            new_center = ntuple(N) do i
+                idx_in_shrink = findfirst(==(i), coordinatesToShrink)
+                if idx_in_shrink !== nothing
+                    p.center[i] + radius_changes[idx_in_shrink] * (prime_as_valued ^ p.radius[i])
+                else
+                    p.center[i]
+                end
+            end
+            push!(output, ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}(new_center, new_radius))
+        end
+    end
+    return output
+end
+
 # TODO: this should also work when the valuation is negative...
 
 @doc raw"""
@@ -446,6 +571,42 @@ function children_along_branch(
             end
         end
         push!(output, ValuationPolydisc{S,T,N}(new_center, new_radius))
+    end
+    return output
+end
+
+@doc raw"""
+    children_along_branch(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, branch_index::Int) where {P,Prec,PFE,T,N}
+
+Specialized version of `children_along_branch()` for `ValuedFieldPoint` that leverages compile-time prime.
+
+This version benefits from having `P` available at compile time, allowing the compiler to
+optimize loops and potentially unroll iterations for small primes.
+"""
+function children_along_branch(
+    p::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N},
+    branch_index::Int
+) where {P,Prec,PFE,T,N}
+    output = Vector{ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}}()
+    # The point p has P children below branch i (P is compile-time constant)
+    sizehint!(output, P)
+    # a "unit shrink" along a radius is the same as increasing the valuation
+    # measure of the radius by 1
+    new_radius = ntuple(i -> i == branch_index ? p.radius[i] + 1 : p.radius[i], N)
+    K = Base.parent(p.center[1].elem)
+    # Create prime as ValuedFieldPoint
+    prime_as_valued = ValuedFieldPoint{P,Prec,PFE}(K(P))
+    # We can shrink along various centers so we need to be sure to include them all
+    # P is compile-time constant, so this loop bound is known at compile time
+    for residue_class in 0:P-1
+        new_center = ntuple(N) do i
+            if i == branch_index
+                p.center[i] + residue_class * (prime_as_valued ^ p.radius[branch_index])
+            else
+                p.center[i]
+            end
+        end
+        push!(output, ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}(new_center, new_radius))
     end
     return output
 end

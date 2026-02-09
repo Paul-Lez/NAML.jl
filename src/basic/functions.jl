@@ -406,6 +406,288 @@ function evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T}) where {S
     return maximum(abs_values)
 end
 
+#=============================================================================
+ Typed Evaluators - Refactor 2: Replace closures with callable structs
+=============================================================================#
+
+@doc raw"""
+    PolydiscFunctionEvaluator{S,T,N}
+
+Abstract base type for typed function evaluators.
+
+Separates mathematical function definition (PolydiscFunction) from efficient
+computation (PolydiscFunctionEvaluator). Encodes full type information S, T, N
+at compile time for optimization.
+
+# Type Parameters
+- `S`: Coefficient type (e.g., ValuedFieldPoint{P,Prec,PadicFieldElem})
+- `T`: Radius type (typically Int)
+- `N`: Dimension of polydisc space
+
+# Design Philosophy
+- **PolydiscFunction{S}**: "What is the function?" (mathematical definition)
+- **PolydiscFunctionEvaluator{S,T,N}**: "How do we efficiently evaluate it?" (computation)
+
+# Usage
+Evaluators are callable structs created via `batch_evaluate_init`:
+```julia
+f = LinearPolynomial([K(1), K(2)], K(0))
+eval = batch_evaluate_init(f, ValuationPolydisc{S,T,N})
+result = eval(polydisc)  # Fully typed, no closures
+```
+"""
+abstract type PolydiscFunctionEvaluator{S,T,N} end
+
+# --- LinearPolynomial Evaluator ---
+@doc raw"""
+    LinearPolynomialEvaluator{S,T,N}
+
+Typed evaluator for LinearPolynomial functions.
+
+Precomputes coefficient valuations for efficient evaluation.
+"""
+struct LinearPolynomialEvaluator{S,T,N} <: PolydiscFunctionEvaluator{S,T,N}
+    coefficients::NTuple{N,S}
+    coeff_valuations::NTuple{N,Int}  # Precomputed valuations
+    constant::S
+end
+
+function (eval::LinearPolynomialEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    # Compute constant term
+    constant_term = eval.constant
+    # TODO: vectorize this (again ...)
+    for i in 1:N
+        constant_term += eval.coefficients[i] * p.center[i]
+    end
+
+    # Find minimum valuation
+    abs_values = [eval.coeff_valuations[i] + p.radius[i] for i in 1:N]
+    push!(abs_values, valuation(constant_term))
+    min_val = minimum(abs_values)
+
+    # Compute absolute value
+    return Float64(prime(p))^(-min_val)
+end
+
+# --- Constant Evaluator ---
+@doc raw"""
+    ConstantEvaluator{S,T,N}
+
+Typed evaluator for Constant functions.
+"""
+struct ConstantEvaluator{S,T,N} <: PolydiscFunctionEvaluator{S,T,N}
+    value::Float64
+end
+
+function (eval::ConstantEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.value
+end
+
+# --- Binary Operation Evaluators ---
+struct AddEvaluator{S,T,N,L<:PolydiscFunctionEvaluator{S,T,N},R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    left::L
+    right::R
+end
+
+function (eval::AddEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.left(p) + eval.right(p)
+end
+
+struct SubEvaluator{S,T,N,L<:PolydiscFunctionEvaluator{S,T,N},R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    left::L
+    right::R
+end
+
+function (eval::SubEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.left(p) - eval.right(p)
+end
+
+struct MulEvaluator{S,T,N,L<:PolydiscFunctionEvaluator{S,T,N},R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    left::L
+    right::R
+end
+
+function (eval::MulEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.left(p) * eval.right(p)
+end
+
+struct DivEvaluator{S,T,N,L<:PolydiscFunctionEvaluator{S,T,N},R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    top::L
+    bottom::R
+end
+
+function (eval::DivEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.top(p) / eval.bottom(p)
+end
+
+# --- Scalar Multiplication Evaluator ---
+struct SMulEvaluator{S,T,N,R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    scalar::Float64
+    right::R
+end
+
+function (eval::SMulEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.scalar * eval.right(p)
+end
+
+# --- Composition with Real Function Evaluator ---
+struct CompEvaluator{S,T,N,F<:Function,R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    outer::F
+    inner::R
+end
+
+function (eval::CompEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.outer(eval.inner(p))
+end
+
+# --- Sum of Homogeneous Evaluators ---
+struct SumEvaluator{S,T,N,E<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+    evaluators::Vector{E}
+end
+
+function (eval::SumEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return sum(e(p) for e in eval.evaluators)
+end
+
+# --- Lambda Evaluator (wraps arbitrary functions) ---
+struct LambdaEvaluator{S,T,N} <: PolydiscFunctionEvaluator{S,T,N}
+    func::Function
+end
+
+function (eval::LambdaEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return eval.func(p)
+end
+
+# --- MPoly Evaluator (wraps raw polynomial evaluation) ---
+struct MPolyEvaluator{S,T,N,P<:AbstractAlgebra.Generic.MPoly} <: PolydiscFunctionEvaluator{S,T,N}
+    poly::P
+end
+
+function (eval::MPolyEvaluator{S,T,N,P})(p::ValuationPolydisc{S,T,N}) where {S,T,N,P}
+    return evaluate(eval.poly, p)
+end
+
+#=============================================================================
+ New batch_evaluate_init Interface - Takes Type, Returns Typed Evaluator
+=============================================================================#
+
+@doc raw"""
+    batch_evaluate_init(f::PolydiscFunction{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+
+Create a typed evaluator for efficient batch evaluation.
+
+**NEW INTERFACE**: Takes a polydisc type parameter and returns a fully-typed callable struct
+instead of an untyped closure. This enables compile-time specialization.
+
+# Arguments
+- `f::PolydiscFunction{S}`: The function to evaluate
+- `::Type{ValuationPolydisc{S,T,N}}`: The polydisc type (determines T and N at compile time)
+
+# Returns
+`PolydiscFunctionEvaluator{S,T,N}`: A typed, callable evaluator struct
+
+# Example
+```julia
+f = LinearPolynomial([K(1), K(2)], K(0))
+eval = batch_evaluate_init(f, ValuationPolydisc{ValuedFieldPoint{2,20,PadicFieldElem},Int,2})
+result = eval(some_polydisc)  # Fully specialized
+```
+
+# Design Benefits
+- **Type stability**: S, T, N known at compile time
+- **No closures**: Evaluators are concrete structs, not function objects
+- **Inlining**: Julia can inline evaluator calls
+- **Specialization**: Full method specialization on all type parameters
+"""
+function batch_evaluate_init(f::PolydiscFunction{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    error("batch_evaluate_init not implemented for $(typeof(f)) with type ValuationPolydisc{$S,$T,$N}")
+end
+
+# Convenience: infer type from example polydisc
+function batch_evaluate_init(f::PolydiscFunction{S}, p::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return batch_evaluate_init(f, ValuationPolydisc{S,T,N})
+end
+
+# --- Typed evaluator implementations for each function type ---
+
+function batch_evaluate_init(poly::LinearPolynomial{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    @assert length(poly.coefficients) == N "LinearPolynomial has $(length(poly.coefficients)) coefficients but polydisc has dimension $N"
+    coefficients = ntuple(i -> poly.coefficients[i], N)
+    coeff_valuations = ntuple(i -> Int(valuation(poly.coefficients[i])), N)
+    return LinearPolynomialEvaluator{S,T,N}(coefficients, coeff_valuations, poly.constant)
+end
+
+function batch_evaluate_init(c::Constant{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    return ConstantEvaluator{S,T,N}(Float64(c.value))
+end
+
+function batch_evaluate_init(f::Add{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    left = batch_evaluate_init(f.left, P)
+    right = batch_evaluate_init(f.right, P)
+    return AddEvaluator{S,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Sub{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    left = batch_evaluate_init(f.left, P)
+    right = batch_evaluate_init(f.right, P)
+    return SubEvaluator{S,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Mul{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    left = batch_evaluate_init(f.left, P)
+    right = batch_evaluate_init(f.right, P)
+    return MulEvaluator{S,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Div{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    top = batch_evaluate_init(f.top, P)
+    bottom = batch_evaluate_init(f.bottom, P)
+    return DivEvaluator{S,T,N,typeof(top),typeof(bottom)}(top, bottom)
+end
+
+function batch_evaluate_init(f::SMul{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    right = batch_evaluate_init(f.right, P)
+    return SMulEvaluator{S,T,N,typeof(right)}(Float64(f.left), right)
+end
+
+function batch_evaluate_init(f::Comp{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    inner = batch_evaluate_init(f.right, P)
+    return CompEvaluator{S,T,N,typeof(f.left),typeof(inner)}(f.left, inner)
+end
+
+function batch_evaluate_init(l::Lambda{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    return LambdaEvaluator{S,T,N}(l.func)
+end
+
+function batch_evaluate_init(f::LinearAbsolutePolynomialSum{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    evaluators = [batch_evaluate_init(poly, P) for poly in f.polys]
+    E = eltype(evaluators)
+    return SumEvaluator{S,T,N,E}(evaluators)
+end
+
+function batch_evaluate_init(poly::AbstractAlgebra.Generic.MPoly{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    return MPolyEvaluator{S,T,N,typeof(poly)}(poly)
+end
+
+function batch_evaluate_init(f::AbsolutePolynomialSum{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    evaluators = [batch_evaluate_init(poly, P) for poly in f.polys]
+    E = eltype(evaluators)
+    return SumEvaluator{S,T,N,E}(evaluators)
+end
+
+#=============================================================================
+ Legacy batch_evaluate_init Interface - Backwards Compatibility
+=============================================================================#
+
+@doc raw"""
+    batch_evaluate_init(f::PolydiscFunction{S})::Function where S
+
+Legacy interface returning untyped closures. Retained for backwards compatibility.
+
+**DEPRECATED**: Use the typed interface `batch_evaluate_init(f, ::Type{ValuationPolydisc{S,T,N}})` instead.
+
+This interface returns untyped closures which prevent compile-time specialization on T and N.
+"""
 function batch_evaluate_init(f::PolydiscFunction{S})::Function where S
     return batch_evaluate_init(f)
 end
@@ -612,4 +894,123 @@ Compute partial derivatives along specified coordinate directions.
 """
 function partial_gradient(f, v::ValuationTangent{S,T}, gradient_indices) where {S, T}
     return [directional_derivative(f, basis_vector(v, i)) for i in gradient_indices]
+end
+
+#=============================================================================
+ Lifting Adapters for ValuedFieldPoint Integration
+
+ When a PolydiscFunction{S} is used with a ValuationPolydisc{ValuedFieldPoint{P,Prec,S}},
+ these adapters bridge the type gap. They work for any coefficient type S, not just
+ PadicFieldElem, provided that S has the right methods (valuation, abs, etc).
+=============================================================================#
+
+@doc raw"""
+    evaluate(fun::PolydiscFunction{S}, var::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
+
+Lifting adapter: evaluate a function with coefficients of type `S` on a polydisc with `ValuedFieldPoint{P,Prec,S}` coordinates.
+Unwraps the polydisc and delegates to the standard evaluate method.
+"""
+function evaluate(fun::PolydiscFunction{S}, var::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
+    unwrapped_polydisc = ValuationPolydisc{S,T,N}(var.center |> unwrap, var.radius)
+    return evaluate(fun, unwrapped_polydisc)
+end
+
+function batch_evaluate_init(poly::LinearPolynomial{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    new_coeffs = [VFP(c) for c in poly.coefficients]
+    new_const = VFP(poly.constant)
+    new_poly = LinearPolynomial(new_coeffs, new_const)
+    return batch_evaluate_init(new_poly, ValuationPolydisc{VFP,T,N})
+end
+
+function batch_evaluate_init(f::LinearAbsolutePolynomialSum{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    new_polys = Vector{LinearPolynomial{VFP}}()
+    for poly in f.polys
+        new_coeffs = [VFP(c) for c in poly.coefficients]
+        new_const = VFP(poly.constant)
+        push!(new_polys, LinearPolynomial(new_coeffs, new_const))
+    end
+    new_f = LinearAbsolutePolynomialSum(new_polys)
+    return batch_evaluate_init(new_f, ValuationPolydisc{VFP,T,N})
+end
+
+function batch_evaluate_init(f::Constant{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    return ConstantEvaluator{ValuedFieldPoint{P,Prec,S},T,N}(Float64(f.value))
+end
+
+function batch_evaluate_init(poly::AbstractAlgebra.Generic.MPoly{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    function wrapped_eval(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N})
+        unwrapped_polydisc = ValuationPolydisc{S,T,N}(p.center |> unwrap, p.radius)
+        return evaluate(poly, unwrapped_polydisc)
+    end
+    return LambdaEvaluator{VFP,T,N}(wrapped_eval)
+end
+
+function batch_evaluate_init(f::AbsolutePolynomialSum{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    evaluators = [batch_evaluate_init(poly, ValuationPolydisc{VFP,T,N}) for poly in f.polys]
+    E = eltype(evaluators)
+    return SumEvaluator{VFP,T,N,E}(evaluators)
+end
+
+function batch_evaluate_init(f::Add{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    left = batch_evaluate_init(f.left, PT)
+    right = batch_evaluate_init(f.right, PT)
+    return AddEvaluator{VFP,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Sub{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    left = batch_evaluate_init(f.left, PT)
+    right = batch_evaluate_init(f.right, PT)
+    return SubEvaluator{VFP,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Mul{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    left = batch_evaluate_init(f.left, PT)
+    right = batch_evaluate_init(f.right, PT)
+    return MulEvaluator{VFP,T,N,typeof(left),typeof(right)}(left, right)
+end
+
+function batch_evaluate_init(f::Div{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    top = batch_evaluate_init(f.top, PT)
+    bottom = batch_evaluate_init(f.bottom, PT)
+    return DivEvaluator{VFP,T,N,typeof(top),typeof(bottom)}(top, bottom)
+end
+
+function batch_evaluate_init(f::SMul{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    right = batch_evaluate_init(f.right, PT)
+    return SMulEvaluator{VFP,T,N,typeof(right)}(Float64(f.left), right)
+end
+
+function batch_evaluate_init(f::Comp{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    PT = ValuationPolydisc{VFP,T,N}
+    inner = batch_evaluate_init(f.right, PT)
+    return CompEvaluator{VFP,T,N,typeof(f.left),typeof(inner)}(f.left, inner)
+end
+
+function directional_derivative(fun::PolydiscFunction{S}, v::ValuationTangent{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
+    unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
+    unwrapped_direction = collect(unwrap(v.direction))
+    unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
+    return directional_derivative(fun, unwrapped_tangent)
+end
+
+function directional_derivative(poly::AbstractAlgebra.Generic.MPoly{S}, v::ValuationTangent{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
+    unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
+    unwrapped_direction = collect(unwrap(v.direction))
+    unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
+    return directional_derivative(poly, unwrapped_tangent)
 end
