@@ -13,7 +13,7 @@ using Random
 using Oscar
 
 # Load NAML module
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 
 ##################################################

@@ -9,7 +9,7 @@
 
 # Load required packages
 using Plots
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 using Oscar
 
