@@ -9,7 +9,7 @@ using Printf
 using Random
 using Oscar
 
-include("../src/NAML.jl")
+include("../../src/NAML.jl")
 using .NAML
 
 function main()
