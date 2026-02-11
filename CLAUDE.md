@@ -56,13 +56,14 @@ naml-experiments/
 │   ├── NAML.jl                    # Main module with exports
 │   ├── basic/                     # Core mathematical structures
 │   │   ├── valuation.jl           # Valuation and absolute value
+│   │   ├── valued_point.jl        # ValuedFieldPoint wrapper
 │   │   ├── polydisc.jl            # Polydisc definitions
 │   │   ├── tangent_vector.jl      # Tangent vectors
-│   │   └── functions.jl           # Function algebra
+│   │   └── functions.jl           # Function algebra & typed evaluators
 │   ├── optimization/
 │   │   ├── optim_setup.jl         # Core optimization API
 │   │   ├── loss.jl                # Loss functions
-│   │   ├── model.jl               # Model structures
+│   │   ├── model.jl               # Model structures & ModelEvaluator
 │   │   └── optimizers/            # Optimization algorithms
 │   │       ├── greedy_descent.jl
 │   │       ├── gradient_descent.jl
@@ -93,12 +94,16 @@ naml-experiments/
 2. **Valuation vs Absolute Value**: Radius measured via valuation, not norm
 3. **Compositional Functions**: Build complex functions from simple pieces (lazy evaluation)
 4. **Mutable OptimSetup**: Allows in-place parameter updates
-5. **Closure-based Loss**: Data captured in closures, not stored in structs
-6. **DAG Structure**: Polydisc space forms a DAG; multiple paths to same state (addressed by DAG-MCTS)
+5. **Typed Evaluators**: Compile-time type specialization via callable structs (see [EVALUATORS.md](EVALUATORS.md))
+6. **Auto-Wrapping**: `PadicFieldElem` centers automatically wrapped in `ValuedFieldPoint` for optimization
+7. **Generic Lifting**: Automatic type conversion adapters work for any valued field type
+8. **DAG Structure**: Polydisc space forms a DAG; multiple paths to same state (addressed by DAG-MCTS)
 
 ---
 
 ## Part 1: Basic Structures (`src/basic/`)
+
+**Note**: This library uses **typed evaluators** for efficient function evaluation. See [EVALUATORS.md](EVALUATORS.md) for details on the evaluator architecture, `ValuedFieldPoint` wrapper, and lifting adapters.
 
 ### 1.1 Valuation (`valuation.jl`)
 
@@ -137,6 +142,11 @@ p = ValuationPolydisc{padic,Int,2}((K(1), K(2)), (0, 0))
 
 # Using vectors (convenience constructor converts to tuples)
 p = ValuationPolydisc([K(1), K(2)], [0, 0])
+
+# Auto-wrapping: PadicFieldElem centers wrapped in ValuedFieldPoint
+K = PadicField(2, 20)
+p = ValuationPolydisc([K(1), K(2)], [0, 0])
+# Type: ValuationPolydisc{ValuedFieldPoint{2,20,PadicFieldElem},Int,2}
 ```
 
 **Key Functions:**
@@ -188,16 +198,19 @@ Base.:+(v1, v2)                                         # Vector addition
 
 ### 1.4 Functions (`functions.jl`)
 
-Rich compositional algebra for building functions on polydisc spaces.
+Rich compositional algebra for building functions on polydisc spaces. Includes **typed evaluator infrastructure** for efficient batch evaluation (see [EVALUATORS.md](EVALUATORS.md)).
 
 **Abstract Base:**
 ```julia
-PolydiscFunction{S}
+PolydiscFunction{S}          # Mathematical function definition
+PolydiscFunctionEvaluator{S,T,N}  # Typed evaluator for computation
 ```
-All functions inherit from this. Supports:
+
+All functions inherit from `PolydiscFunction`. Supports:
 - Evaluation on polydiscs
 - Directional derivatives
 - Automatic differentiation
+- Typed evaluator generation
 
 **Concrete Types:**
 
@@ -267,9 +280,10 @@ eval_abs(f, val::Vector)
 Evaluate at a point (returns scalar).
 
 ```julia
-batch_evaluate_init(f, data)
+batch_evaluate_init(f, ::Type{ValuationPolydisc{S,T,N}})  # Typed interface (preferred)
+batch_evaluate_init(f)                                      # Legacy closure interface
 ```
-Create efficient batch evaluator. Returns closure for repeated evaluation on same dataset.
+Create efficient evaluator. Typed interface returns `PolydiscFunctionEvaluator{S,T,N}`. See [EVALUATORS.md](EVALUATORS.md).
 
 **Calculus:**
 
@@ -345,19 +359,23 @@ update_state!(optim, state)    # Update optimizer state
 
 ### 2.2 Loss Functions (`loss.jl`)
 
+**Uses Typed Evaluators**: All loss functions use `ModelEvaluator` for efficient batch computation. Automatic lifting handles type mismatches (see [EVALUATORS.md](EVALUATORS.md)).
+
 ```julia
-MSE_loss_init(model::Model, data) -> Loss
+MSE_loss_init(model::AbstractModel, data) -> Loss
 ```
 Mean Squared Error: `(1/n) Σ (ŷᵢ - yᵢ)²`
 
 ```julia
-MPE_loss_init(model::Model, data, p::Int) -> Loss
+MPE_loss_init(model::AbstractModel, data, p::Int) -> Loss
 ```
 Mean p-Power Error: `(1/n) Σ |ŷᵢ - yᵢ|^p`
 
-**Data Format:**
+**Data Formats:**
 ```julia
-data::Vector{Tuple{Vector{S}, S}}  # [(x₁, y₁), ..., (xₙ, yₙ)]
+data::Vector{Tuple{ValuationPolydisc{S,T,N}, U}}  # Polydisc data (most common)
+data::Vector{Tuple{Vector{S}, U}}                 # Vector-valued data
+data::Vector{Tuple{S, U}}                         # Field-valued data
 ```
 
 ### 2.3 Models (`model.jl`)
@@ -373,12 +391,18 @@ Separates function structure from parameter values.
 
 **Model (mutable):**
 ```julia
-Model{S,T}
-    fun::AbstractModel{S}
-    param::ValuationPolydisc{S,T}
+Model{FS,PS,T,N}
+    fun::AbstractModel{FS}              # Function coefficient type
+    param::ValuationPolydisc{PS,T,N}    # Parameter type (may differ via ValuedFieldPoint)
 ```
 
-Concrete model with parameter values.
+Concrete model with parameter values. `FS` and `PS` can differ (e.g., `FS=PadicFieldElem`, `PS=ValuedFieldPoint{...}`).
+
+**ModelEvaluator (NEW):**
+```julia
+ModelEvaluator{FS,PS,T,N1,N2,E}  # Typed evaluator for models
+```
+Callable as `eval(data::ValuationPolydisc, param::ValuationPolydisc) -> Float64`.
 
 **Functions:**
 ```julia
@@ -386,7 +410,7 @@ var_indices(m)                           # Indices of data variables
 param_indices(m)                         # Indices of parameters
 set_abstract_model_variable(m, x, θ)    # Interleave data x and parameters θ
 eval_abs(m, x)                          # Evaluate at input x
-batch_evaluate_init(m, data)            # Batch evaluator
+batch_evaluate_init(m, Type)            # Create typed ModelEvaluator
 ```
 
 **Example:**
@@ -517,19 +541,25 @@ julia --project=. test/runtests.jl
 ```
 
 **Test Files:**
+
+**Basic Structures:**
+- `valued_point.jl` - ValuedFieldPoint wrapper tests
 - `polydisc.jl` - Basic polydisc operations, equality, hashing
 - `tangent_vector.jl` - Tangent vector operations
 - `functions.jl` - Basic polynomial evaluation
-- `test_functions.jl` - Expanded function algebra tests
+- `test_typed_evaluators.jl` - Typed evaluator infrastructure
+
+**Optimization:**
 - `polynomial_learning.jl` - Full optimization pipeline
 - `gradient_descent.jl` - Gradient descent tests
-- `test_all_optimizers.jl` - Comprehensive optimizer tests
+- `bivariate_optimization.jl` - Bivariate cubic polynomial tests
+- `linear_optimization.jl` - Linear polynomial with multiple optimizers
+
+**Other:**
 - `frechet.jl` - Frechet mean tests
 - `least_squares.jl` - Linear regression tests
 - `dag_mcts.jl` - DAG-MCTS tests
-- `loss_landscape.jl` - Visualization tests
-- `geodesic.jl` - Geodesic computation tests
-- `convex_hull.jl` - Convex hull tests
+- `loss_landscape.jl`, `geodesic.jl`, `convex_hull.jl` - Visualization tests
 
 ### 5.2 Experiments
 
@@ -590,12 +620,20 @@ Not a registered package - use `include("src/NAML.jl"); using .NAML`.
 # Basic
 ValuationPolydisc, AbsPolydisc
 ValuationTangent
+ValuedFieldPoint
 PolydiscFunction, AbsolutePolynomialSum, LinearPolynomial
 LinearAbsolutePolynomialSum, LinearRationalFunction, LinearRationalFunctionSum
+
+# Typed Evaluators
+PolydiscFunctionEvaluator
+LinearPolynomialEvaluator, ConstantEvaluator, MPolyEvaluator, SumEvaluator
+AddEvaluator, SubEvaluator, MulEvaluator, DivEvaluator, SMulEvaluator
+CompEvaluator, LambdaEvaluator
 
 # Optimization
 Loss, OptimSetup
 AbstractModel, Model
+ModelEvaluator
 
 # Tree Search
 MCTSNode, MCTSConfig, MCTSState, SelectionMode, VisitCount, BestValue
@@ -612,7 +650,8 @@ ConvexHullTree
 **Functions:**
 ```julia
 # Basic operations
-valuation, center, radius, dim, prime
+valuation, center, radius, dim, prime, precision
+unwrap                                    # Extract element from ValuedFieldPoint
 dist, children, children_along_branch, concatenate, canonical_center
 directional_derivative, directional_exponent, grad, eval_abs
 
@@ -762,5 +801,6 @@ K = PadicField(2, 20)  # 20 digits of 2-adic precision
 
 ## Additional Documentation
 
+- **[EVALUATORS.md](EVALUATORS.md)** - Typed evaluator architecture, ValuedFieldPoint wrapper, lifting adapters
 - **[OPTIMIZERS.md](OPTIMIZERS.md)** - Detailed optimizer documentation, algorithm descriptions, hyperparameter tuning
 - **[PAPER_EXPERIMENTS.md](PAPER_EXPERIMENTS.md)** - Paper experiment infrastructure and benchmarking utilities

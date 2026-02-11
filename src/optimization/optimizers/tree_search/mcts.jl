@@ -14,32 +14,32 @@
 A node in the MCTS search tree.
 
 # Fields
-- `polydisc::ValuationPolydisc{S,T}`: The polydisc at this node
-- `parent::Union{MCTSNode{S,T}, Nothing}`: Parent node (nothing for root)
-- `children::Vector{MCTSNode{S,T}}`: Child nodes that have been expanded
+- `polydisc::ValuationPolydisc{S,T,N}`: The polydisc at this node
+- `parent::Union{MCTSNode{S,T,N}, Nothing}`: Parent node (nothing for root)
+- `children::Vector{MCTSNode{S,T,N}}`: Child nodes that have been expanded
 - `visits::Int`: Number of times this node has been visited
 - `total_value::Float64`: Sum of all values backpropagated through this node
 - `is_expanded::Bool`: Whether this node's children have been generated
 """
-mutable struct MCTSNode{S,T}
-    polydisc::ValuationPolydisc{S,T}
-    parent::Union{MCTSNode{S,T}, Nothing}
-    children::Vector{MCTSNode{S,T}}
+mutable struct MCTSNode{S,T,N}
+    polydisc::ValuationPolydisc{S,T,N}
+    parent::Union{MCTSNode{S,T,N}, Nothing}
+    children::Vector{MCTSNode{S,T,N}}
     visits::Int
     total_value::Float64
     is_expanded::Bool
 end
 
 @doc raw"""
-    MCTSNode(polydisc::ValuationPolydisc{S,T}, parent=nothing) where {S,T}
+    MCTSNode(polydisc::ValuationPolydisc{S,T,N}, parent=nothing) where {S,T,N}
 
 Create a new MCTS node with the given polydisc and optional parent.
 """
-function MCTSNode(polydisc::ValuationPolydisc{S,T}, parent=nothing) where {S,T}
-    return MCTSNode{S,T}(
+function MCTSNode(polydisc::ValuationPolydisc{S,T,N}, parent=nothing) where {S,T,N}
+    return MCTSNode{S,T,N}(
         polydisc,
         parent,
-        MCTSNode{S,T}[],
+        MCTSNode{S,T,N}[],
         0,
         0.0,
         false
@@ -134,17 +134,17 @@ end
 ##################################################
 
 @doc raw"""
-    MCTSState{S,T}
+    MCTSState{S,T,N}
 
 State maintained across MCTS optimization steps.
 
 # Fields
-- `root::MCTSNode{S,T}`: The current root node of the search tree
+- `root::MCTSNode{S,T,N}`: The current root node of the search tree
 - `next_branch::Int`: Next branch index for strict mode
 - `step_count::Int`: Number of optimization steps taken
 """
-mutable struct MCTSState{S,T}
-    root::MCTSNode{S,T}
+mutable struct MCTSState{S,T,N}
+    root::MCTSNode{S,T,N}
     next_branch::Int
     step_count::Int
 end
@@ -477,7 +477,7 @@ end
 ##################################################
 
 @doc raw"""
-    mcts_descent(loss::Loss, param::ValuationPolydisc{S,T}, state::MCTSState{S,T}, config::MCTSConfig) where {S,T}
+    mcts_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, state::MCTSState{S,T,N}, config::MCTSConfig) where {S,T,N}
 
 Perform one step of MCTS optimization.
 
@@ -486,19 +486,19 @@ making it compatible with `OptimSetup`.
 
 # Arguments
 - `loss::Loss`: The loss function structure
-- `param::ValuationPolydisc{S,T}`: Current parameter values
-- `state::MCTSState{S,T}`: MCTS state (includes the search tree)
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values
+- `state::MCTSState{S,T,N}`: MCTS state (includes the search tree)
 - `config::MCTSConfig`: Configuration parameters
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, MCTSState{S,T}}`: New parameters and updated state
+`Tuple{ValuationPolydisc{S,T,N}, MCTSState{S,T,N}}`: New parameters and updated state
 """
 function mcts_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
-    state::MCTSState{S,T},
+    param::ValuationPolydisc{S,T,N},
+    state::MCTSState{S,T,N},
     config::MCTSConfig
-) where {S,T}
+) where {S,T,N}
     # Update root if param changed (shouldn't normally happen)
     if state.root.polydisc != param
         state.root = MCTSNode(param)
@@ -515,12 +515,12 @@ function mcts_descent(
 end
 
 @doc raw"""
-    mcts_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, config::MCTSConfig=MCTSConfig()) where {S,T}
+    mcts_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, config::MCTSConfig=MCTSConfig()) where {S,T,N}
 
 Initialize an optimization setup for MCTS.
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values
 - `loss::Loss`: The loss function structure
 - `config::MCTSConfig`: MCTS configuration (uses defaults if not provided)
 
@@ -528,10 +528,10 @@ Initialize an optimization setup for MCTS.
 `OptimSetup`: Configured optimization setup for MCTS
 """
 function mcts_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     config::MCTSConfig=MCTSConfig()
-) where {S,T}
+) where {S,T,N}
     # Initialize state
     root = MCTSNode(param)
     state = MCTSState{S,T}(root, 1, 0)

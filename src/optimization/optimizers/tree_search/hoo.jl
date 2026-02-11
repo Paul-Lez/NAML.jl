@@ -9,48 +9,48 @@
 ##################################################
 
 @doc raw"""
-    HOONode{S,T}
+    HOONode{S,T,N}
 
 A node in the HOO search tree.
 
 # Fields
-- `polydisc::ValuationPolydisc{S,T}`: The polydisc (region) at this node
+- `polydisc::ValuationPolydisc{S,T,N}`: The polydisc (region) at this node
 - `depth::Int`: Depth h in the tree (root has depth 0)
 - `position::Int`: Position i among siblings at this depth
-- `parent::Union{HOONode{S,T}, Nothing}`: Parent node (nothing for root)
-- `children::Vector{HOONode{S,T}}`: Child nodes that have been expanded
+- `parent::Union{HOONode{S,T,N}, Nothing}`: Parent node (nothing for root)
+- `children::Vector{HOONode{S,T,N}}`: Child nodes that have been expanded
 - `visits::Int`: Number of times this node has been visited (N(h,i))
 - `sum_values::Float64`: Sum of function values sampled at this node (for computing μ̂)
 - `is_expanded::Bool`: Whether this node's children have been generated
 """
-mutable struct HOONode{S,T}
-    polydisc::ValuationPolydisc{S,T}
+mutable struct HOONode{S,T,N}
+    polydisc::ValuationPolydisc{S,T,N}
     depth::Int
     position::Int
-    parent::Union{HOONode{S,T}, Nothing}
-    children::Vector{HOONode{S,T}}
+    parent::Union{HOONode{S,T,N}, Nothing}
+    children::Vector{HOONode{S,T,N}}
     visits::Int
     sum_values::Float64
     is_expanded::Bool
 end
 
 @doc raw"""
-    HOONode(polydisc::ValuationPolydisc{S,T}, depth::Int=0, position::Int=0, parent=nothing) where {S,T}
+    HOONode(polydisc::ValuationPolydisc{S,T,N}, depth::Int=0, position::Int=0, parent=nothing) where {S,T,N}
 
 Create a new HOO node with the given polydisc, depth, position, and optional parent.
 """
 function HOONode(
-    polydisc::ValuationPolydisc{S,T},
+    polydisc::ValuationPolydisc{S,T,N},
     depth::Int=0,
     position::Int=0,
     parent=nothing
-) where {S,T}
-    return HOONode{S,T}(
+) where {S,T,N}
+    return HOONode{S,T,N}(
         polydisc,
         depth,
         position,
         parent,
-        HOONode{S,T}[],
+        HOONode{S,T,N}[],
         0,
         0.0,
         false
@@ -133,18 +133,18 @@ end
 ##################################################
 
 @doc raw"""
-    HOOState{S,T}
+    HOOState{S,T,N}
 
 State maintained across HOO optimization steps.
 
 # Fields
-- `root::HOONode{S,T}`: The root node of the search tree
+- `root::HOONode{S,T,N}`: The root node of the search tree
 - `total_samples::Int`: Total number of samples taken (n in the B-value formula)
 - `next_branch::Int`: Next branch index for strict mode
 - `step_count::Int`: Number of optimization steps taken
 """
-mutable struct HOOState{S,T}
-    root::HOONode{S,T}
+mutable struct HOOState{S,T,N}
+    root::HOONode{S,T,N}
     total_samples::Int
     next_branch::Int
     step_count::Int
@@ -245,13 +245,13 @@ end
 ##################################################
 
 @doc raw"""
-    expand_node!(node::HOONode{S,T}, config::HOOConfig) where {S,T}
+    expand_node!(node::HOONode{S,T,N}, config::HOOConfig) where {S,T,N}
 
 Expand a node by generating its child polydiscs.
 
 Creates child nodes at depth h+1, each representing a subregion of the parent.
 """
-function expand_node!(node::HOONode{S,T}, config::HOOConfig) where {S,T}
+function expand_node!(node::HOONode{S,T,N}, config::HOOConfig) where {S,T,N}
     if node.is_expanded
         return
     end
@@ -356,7 +356,7 @@ end
 ##################################################
 
 @doc raw"""
-    hoo_iteration(root::HOONode{S,T}, loss::Loss, state::HOOState{S,T}, config::HOOConfig) where {S,T}
+    hoo_iteration(root::HOONode{S,T,N}, loss::Loss, state::HOOState{S,T,N}, config::HOOConfig) where {S,T,N}
 
 Perform one iteration of the HOO algorithm.
 
@@ -368,11 +368,11 @@ Complete HOO iteration following the specification:
 Returns the selected node and its loss value.
 """
 function hoo_iteration(
-    root::HOONode{S,T},
+    root::HOONode{S,T,N},
     loss::Loss,
-    state::HOOState{S,T},
+    state::HOOState{S,T,N},
     config::HOOConfig
-) where {S,T}
+) where {S,T,N}
     # Phase 1: Select node to sample (returns node and path from root)
     selected_node, path = select_node(root, state.total_samples + 1, config)
 
@@ -433,7 +433,7 @@ end
 ##################################################
 
 @doc raw"""
-    hoo_descent(loss::Loss, param::ValuationPolydisc{S,T}, state::HOOState{S,T}, config::HOOConfig) where {S,T}
+    hoo_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, state::HOOState{S,T,N}, config::HOOConfig) where {S,T,N}
 
 Perform one step of HOO optimization.
 
@@ -444,19 +444,19 @@ Each "step" performs multiple HOO iterations (samples) and returns the best poly
 
 # Arguments
 - `loss::Loss`: The loss function structure
-- `param::ValuationPolydisc{S,T}`: Current parameter values (used to verify state)
-- `state::HOOState{S,T}`: HOO state (includes the search tree and statistics)
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values (used to verify state)
+- `state::HOOState{S,T,N}`: HOO state (includes the search tree and statistics)
 - `config::HOOConfig`: Configuration parameters
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, HOOState{S,T}}`: Best parameters found and updated state
+`Tuple{ValuationPolydisc{S,T,N}, HOOState{S,T,N}}`: Best parameters found and updated state
 """
 function hoo_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
-    state::HOOState{S,T},
+    param::ValuationPolydisc{S,T,N},
+    state::HOOState{S,T,N},
     config::HOOConfig
-) where {S,T}
+) where {S,T,N}
     # Perform multiple HOO iterations per optimization step
     # (You can make this configurable if needed)
     num_iterations = 10
@@ -476,7 +476,7 @@ function hoo_descent(
 end
 
 @doc raw"""
-    hoo_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, config::HOOConfig=HOOConfig()) where {S,T}
+    hoo_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, config::HOOConfig=HOOConfig()) where {S,T,N}
 
 Initialize an optimization setup for HOO.
 
@@ -486,7 +486,7 @@ Initialization according to HOO specification:
 3. Expand root to create children with infinite B-values
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values (root region)
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values (root region)
 - `loss::Loss`: The loss function structure
 - `config::HOOConfig`: HOO configuration (uses defaults if not provided)
 
@@ -509,15 +509,15 @@ end
 ```
 """
 function hoo_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     config::HOOConfig=HOOConfig()
-) where {S,T}
+) where {S,T,N}
     # Initialize root node at depth 0, position 1 (as per spec: (h,i) = (0,1))
     root = HOONode(param, 0, 1, nothing)
 
     # Initialize state
-    state = HOOState{S,T}(root, 0, 1, 0)
+    state = HOOState{S,T,N}(root, 0, 1, 0)
 
     # Sample at the root to initialize
     loss_value = loss.eval([root.polydisc])[1]

@@ -30,7 +30,7 @@ using NAML
     @testset "Transposition Table - Basic Operations" begin
         # Test get_or_create_node!
         # Note: Polydisc equality uses STRICT inequality: v(center_diff) > radius
-        table = Dict{ValuationPolydisc{PadicFieldElem, Int64, 1}, DAGMCTSNode{PadicFieldElem, Int64, 1}}()
+        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
 
         p1 = ValuationPolydisc([K(1)], [2])
 
@@ -59,7 +59,7 @@ using NAML
     end
 
     @testset "Transposition Table - Parent Linking" begin
-        table = Dict{ValuationPolydisc{PadicFieldElem, Int64, 1}, DAGMCTSNode{PadicFieldElem, Int64, 1}}()
+        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
 
         parent1 = ValuationPolydisc([K(0)], [0])
         parent2 = ValuationPolydisc([K(1)], [0])
@@ -100,7 +100,7 @@ using NAML
     end
 
     @testset "Node Expansion with Transposition Detection" begin
-        table = Dict{ValuationPolydisc{PadicFieldElem, Int64, 2}, DAGMCTSNode{PadicFieldElem, Int64, 2}}()
+        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
         config = DAGMCTSConfig(num_simulations=10, degree=1)
 
         # Create 2D polydisc to test transpositions
@@ -156,7 +156,7 @@ using NAML
         R, x = polynomial_ring(K, ["x"])
 
         poly = AbsolutePolynomialSum([x[1]^2])
-        batch_eval = batch_evaluate_init(poly)
+        batch_eval = batch_evaluate_init(poly, ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1})
 
         function loss_eval(params::Vector)
             return [batch_eval(p) for p in params]
@@ -196,7 +196,7 @@ using NAML
     @testset "DAG Stats and Verification" begin
         R, x = polynomial_ring(K, ["x"])
         poly = AbsolutePolynomialSum([x[1]^2])
-        batch_eval = batch_evaluate_init(poly)
+        batch_eval = batch_evaluate_init(poly, ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1})
 
         function loss_eval(params::Vector)
             return [batch_eval(p) for p in params]
@@ -231,7 +231,7 @@ using NAML
         # We manually create the "same" polydisc to ensure transposition detection works
         # by using the hash-based lookup
 
-        table = Dict{ValuationPolydisc{PadicFieldElem, Int64, 2}, DAGMCTSNode{PadicFieldElem, Int64, 2}}()
+        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
 
         # Start point
         start = ValuationPolydisc([K(0), K(0)], [0, 0])
@@ -270,7 +270,7 @@ using NAML
     @testset "Persist Table Option" begin
         R, x = polynomial_ring(K, ["x"])
         poly = AbsolutePolynomialSum([x[1]^2])
-        batch_eval = batch_evaluate_init(poly)
+        batch_eval = batch_evaluate_init(poly, ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1})
 
         function loss_eval(params::Vector)
             return [batch_eval(p) for p in params]

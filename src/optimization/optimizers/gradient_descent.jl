@@ -3,14 +3,14 @@
 # In this section we implement the tools necessary for gradient descent, and the gradient descent algorithm
 
 @doc raw"""
-    gradient_param(m::AbstractModel{S}, val::ValuationPolydisc{S,T}, v::ValuationTangent{S,T}) where {S,T}
+    gradient_param(m::AbstractModel{S}, val::ValuationPolydisc{S,T,N1}, v::ValuationTangent{S,T,N2}) where {S,T,N1,N2}
 
 Compute the gradient of a model with respect to its parameters.
 
 # Arguments
 - `m::AbstractModel{S}`: The abstract model
-- `val::ValuationPolydisc{S,T}`: Data variable values
-- `v::ValuationTangent{S,T}`: Tangent vector in parameter space
+- `val::ValuationPolydisc{S,T,N1}`: Data variable values
+- `v::ValuationTangent{S,T,N2}`: Tangent vector in parameter space
 
 # Returns
 Gradient vector with respect to parameters
@@ -20,9 +20,9 @@ Currently assumes parameters are the last variables. More general shapes may be 
 """
 function gradient_param(
     m::AbstractModel{S},
-    val::ValuationPolydisc{S,T},
-    v::ValuationTangent{S,T}
-) where {S, T}
+    val::ValuationPolydisc{S,T,N1},
+    v::ValuationTangent{S,T,N2}
+) where {S, T, N1, N2}
     # TODO: this doesn't allow arbitrary shapes for the variable of the model (i.e.
     # this only works if the parameters are the last variables.
     # Do we really need to have something more general?    
@@ -57,7 +57,7 @@ function gradient_data(m::Model, data)
 end
 
 @doc raw"""
-    gradient_descent(loss::Loss, param::ValuationPolydisc{S,T}, state::U, degree::Int) where {S,T,U}
+    gradient_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, state::U, degree::Int) where {S,T,N,U}
 
 Perform one step of gradient descent optimization.
 
@@ -66,19 +66,19 @@ the gradient norm (steepest descent direction).
 
 # Arguments
 - `loss::Loss`: The loss function structure
-- `param::ValuationPolydisc{S,T}`: Current parameter values
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values
 - `state::U`: Current optimizer state (unused in gradient descent)
 - `degree::Int`: Degree for generating child polydiscs
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, U}`: New parameters and state (state unchanged)
+`Tuple{ValuationPolydisc{S,T,N}, U}`: New parameters and state (state unchanged)
 """
 function gradient_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     state::U,
     degree::Int
-) where {S, T, U}
+) where {S, T, N, U}
     # Compute the children of the point param
     below_nodes = children(param, degree)
     # Get the corresponding tangent vectors
@@ -91,12 +91,12 @@ function gradient_descent(
 end
 
 @doc raw"""
-    gradient_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, state::U, degree=1) where {S,T,U}
+    gradient_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, state::U, degree=1) where {S,T,N,U}
 
 Initialize an optimization setup for gradient descent.
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values
 - `loss::Loss`: The loss function structure
 - `state::U`: Initial state (unused in gradient descent, but included for API consistency)
 - `degree::Int=1`: Degree parameter for child generation (default: 1)
@@ -108,11 +108,11 @@ Initialize an optimization setup for gradient descent.
 The state parameter does nothing in gradient descent but is included for consistency.
 """
 function gradient_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     state::U,
     degree=1
-) where {S, T, U}
+) where {S, T, N, U}
     return OptimSetup(
         loss,
         param,

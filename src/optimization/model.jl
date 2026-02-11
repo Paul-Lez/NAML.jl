@@ -61,10 +61,15 @@ model = Model(f, params)
 Models are mutable so that optimization algorithms can update `param` in place.
 Use `update_weights!` to modify parameter values.
 """
-mutable struct Model{S,T,N}
-    fun::AbstractModel{S}
+mutable struct Model{FS,PS,T,N}
+    fun::AbstractModel{FS}
     # Current parameter values
-    param::ValuationPolydisc{S,T,N}
+    param::ValuationPolydisc{PS,T,N}
+end
+
+# Convenience constructor for when types match
+function Model(fun::AbstractModel{S}, param::ValuationPolydisc{S,T,N}) where {S,T,N}
+    return Model{S,S,T,N}(fun, param)
 end
 
 @doc raw"""
@@ -146,7 +151,7 @@ function getkeys(m::AbstractModel)
 end
 
 @doc raw"""
-    set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T}, param::ValuationPolydisc{S,T}) where {S,T}
+    set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T,N1}, param::ValuationPolydisc{S,T,N2}) where {S,T,N1,N2}
 
 Construct a polydisc by interleaving data and parameter values according to the model layout.
 
@@ -155,11 +160,11 @@ model variable space that can be evaluated using polynomial evaluation mechanism
 
 # Arguments
 - `m::AbstractModel{S}`: The abstract model defining the variable layout via `param_info`
-- `val::ValuationPolydisc{S,T}`: The data variable values (polydisc in data space)
-- `param::ValuationPolydisc{S,T}`: The parameter values (polydisc in parameter space)
+- `val::ValuationPolydisc{S,T,N1}`: The data variable values (polydisc in data space)
+- `param::ValuationPolydisc{S,T,N2}`: The parameter values (polydisc in parameter space)
 
 # Returns
-`ValuationPolydisc{S,T}`: A polydisc point with all variables interleaved in model order
+`ValuationPolydisc{S,T,N}`: A polydisc point with all variables interleaved in model order
 
 # Example
 For model ``f(x, \theta, y, \phi)`` with `param_info = [true, false, true, false]`:
@@ -178,8 +183,22 @@ function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc
     return ValuationPolydisc(abstract_model_variable_center, abstract_model_variable_radius)
 end
 
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{S,T,N1}, param::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N2}) where {S,P,Prec,T,N1,N2}
+    unwrapped_param_center = tuple([vp.elem for vp in param.center]...)
+    unwrapped_param = ValuationPolydisc{S,T,N2}(unwrapped_param_center, param.radius)
+    return set_abstract_model_variable(m, val, unwrapped_param)
+end
+
+function set_abstract_model_variable(m::AbstractModel{S}, val::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N1}, param::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N2}) where {S,P,Prec,T,N1,N2}
+    unwrapped_val_center = tuple([vp.elem for vp in val.center]...)
+    unwrapped_val = ValuationPolydisc{S,T,N1}(unwrapped_val_center, val.radius)
+    unwrapped_param_center = tuple([vp.elem for vp in param.center]...)
+    unwrapped_param = ValuationPolydisc{S,T,N2}(unwrapped_param_center, param.radius)
+    return set_abstract_model_variable(m, unwrapped_val, unwrapped_param)
+end
+
 @doc raw"""
-    set_model_variable(m::Model{S,T,N}, val::ValuationPolydisc{S,T,M}) where {S,T,N,M}
+    set_model_variable(m::Model{FS,PS,T,N}, val::ValuationPolydisc{S,T,M}) where {FS,PS,S,T,N,M}
 
 Construct an evaluation point using a model's stored parameter values and given data.
 
@@ -187,7 +206,7 @@ Convenience wrapper around `set_abstract_model_variable` that uses the model's c
 parameter values rather than requiring them as an argument.
 
 # Arguments
-- `m::Model{S,T,N}`: The model (containing stored parameters)
+- `m::Model{FS,PS,T,N}`: The model (containing stored parameters)
 - `val::ValuationPolydisc{S,T,M}`: The data variable values
 
 # Returns
@@ -196,7 +215,7 @@ A polydisc point with all variables interleaved in model order
 # See Also
 - `set_abstract_model_variable`: The underlying function with explicit parameters
 """
-function set_model_variable(m::Model{S,T,N}, val::ValuationPolydisc{S,T,M}) where {S, T, N, M}
+function set_model_variable(m::Model{FS,PS,T,N}, val::ValuationPolydisc{S,T,M}) where {FS, PS, S, T, N, M}
     return set_abstract_model_variable(m.fun, val, m.param)
 end
 
@@ -546,7 +565,7 @@ function batch_evaluate_init(m::AbstractModel{S}) where S
     batch_fun_eval = batch_evaluate_init(m.fun)
 
     # Return a closure that takes data and param values
-    function model_eval(val::ValuationPolydisc{S,T}, param::ValuationPolydisc{S,T}) where T
+    function model_eval(val::ValuationPolydisc{S,T,N1}, param::ValuationPolydisc{S,T,N2}) where {T,N1,N2}
         # Interleave the data and parameter values according to the model layout
         full_var = set_abstract_model_variable(m, val, param)
         # Evaluate the underlying function at the interleaved point
@@ -557,7 +576,7 @@ function batch_evaluate_init(m::AbstractModel{S}) where S
 end
 
 @doc raw"""
-    batch_evaluate_init(m::Model{S,T})
+    batch_evaluate_init(m::Model{FS,PS,T,N})
 
 Initialize a batch evaluation function for a model with stored parameters.
 
@@ -565,7 +584,7 @@ Returns a closure that evaluates the model at given data values using the model'
 stored parameter values. The returned function accepts a single argument: data (polydisc).
 
 # Arguments
-- `m::Model{S,T}`: The model (containing stored parameters)
+- `m::Model{FS,PS,T,N}`: The model (containing stored parameters)
 
 # Returns
 `Function`: A closure `(data::ValuationPolydisc) -> Float64` that evaluates the model
@@ -575,7 +594,7 @@ at the given data using the stored parameters
 This is a convenience wrapper around `batch_evaluate_init(::AbstractModel)` that captures
 the model's current parameters in the closure.
 """
-function batch_evaluate_init(m::Model{S,T}) where {S, T}
+function batch_evaluate_init(m::Model{FS,PS,T,N}) where {FS, PS, T, N}
     # Get the batch evaluation function for the abstract model
     abstract_batch_eval = batch_evaluate_init(m.fun)
 
@@ -583,9 +602,87 @@ function batch_evaluate_init(m::Model{S,T}) where {S, T}
     param = m.param
 
     # Return a closure that takes only data values
-    function model_eval_with_params(val::ValuationPolydisc{S,T}) where T
+    function model_eval_with_params(val::ValuationPolydisc{S,T,M}) where {S,T,M}
         return abstract_batch_eval(val, param)
     end
 
     return model_eval_with_params
+end
+
+#=============================================================================
+ Typed Model Evaluator - Refactor 2
+=============================================================================#
+
+@doc raw"""
+    ModelEvaluator{FS,PS,T,N1,N2,E}
+
+Typed evaluator for AbstractModel.
+
+Combines the model structure with a typed function evaluator for efficient
+computation with full compile-time type information.
+
+# Type Parameters
+- `FS`: Function coefficient type
+- `PS`: Parameter coefficient type (may differ from FS due to ValuedFieldPoint wrapping)
+- `T`: Radius type
+- `N1`: Dimension of data polydisc
+- `N2`: Dimension of parameter polydisc
+- `E`: Type of the underlying function evaluator
+
+# Fields
+- `model::AbstractModel{FS}`: The abstract model
+- `fun_eval::E`: Typed evaluator for the underlying function
+"""
+struct ModelEvaluator{FS,PS,T,N1,N2,E<:PolydiscFunctionEvaluator}
+    model::AbstractModel{FS}
+    fun_eval::E
+end
+
+@doc raw"""
+    batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+
+Create a typed evaluator for an AbstractModel.
+
+**NEW TYPED INTERFACE**: Returns a ModelEvaluator struct instead of a closure.
+
+# Arguments
+- `m::AbstractModel{S}`: The abstract model
+- `::Type{ValuationPolydisc{S,T,N}}`: The full variable polydisc type (data + parameters combined)
+
+# Returns
+`ModelEvaluator`: A typed evaluator callable as `eval(data_polydisc, param_polydisc)`
+
+# Example
+```julia
+model = AbstractModel(fun, param_info)
+# Determine full dimension (data_dim + param_dim)
+eval = batch_evaluate_init(model, ValuationPolydisc{S,T,FullDim})
+result = eval(data_polydisc, param_polydisc)
+```
+"""
+function batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
+    fun_eval = batch_evaluate_init(m.fun, ValuationPolydisc{S,T,N})
+    return ModelEvaluator{S,S,T,0,0,typeof(fun_eval)}(m, fun_eval)
+end
+
+@doc raw"""
+    batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+
+Lifting evaluator: when the model uses type `S` but data uses `ValuedFieldPoint{P,Prec,S}`,
+eagerly lift the function to ValuedFieldPoint at evaluator creation time.
+
+This avoids runtime type conversion on every evaluation call. The function-level
+`batch_evaluate_init` methods handle the coefficient lifting (e.g. converting
+`LinearPolynomial{S}` coefficients to `ValuedFieldPoint{P,Prec,S}`).
+"""
+function batch_evaluate_init(m::AbstractModel{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
+    VFP = ValuedFieldPoint{P,Prec,S}
+    fun_eval = batch_evaluate_init(m.fun, ValuationPolydisc{VFP,T,N})
+    return ModelEvaluator{S,VFP,T,0,0,typeof(fun_eval)}(m, fun_eval)
+end
+
+# Callable for (data, param) -> Float64
+function (eval::ModelEvaluator)(val::ValuationPolydisc{S1,T,N1}, param::ValuationPolydisc{S2,T,N2}) where {S1,S2,T,N1,N2}
+    full_var = set_abstract_model_variable(eval.model, val, param)
+    return eval.fun_eval(full_var)
 end
