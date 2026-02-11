@@ -8,7 +8,7 @@
 # Expected to perform poorly - serves as a lower bound for algorithm performance.
 
 @doc raw"""
-    random_descent(loss::Loss, param::ValuationPolydisc{S,T}, state::Int, settings::Tuple{Bool,Int}) where {S,T}
+    random_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, state::Int, settings::Tuple{Bool,Int}) where {S,T,N}
 
 Perform one step of random descent (baseline optimizer).
 
@@ -17,19 +17,19 @@ that structured optimization algorithms outperform random exploration.
 
 # Arguments
 - `loss::Loss`: The loss function structure (not used in selection)
-- `param::ValuationPolydisc{S,T}`: Current parameter values
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values
 - `state::Int`: Unused state parameter (for compatibility)
 - `settings::Tuple{Bool,Int}`: `(strict, degree)` where `strict` enables single-coordinate descent
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, Int}`: Randomly selected child and state
+`Tuple{ValuationPolydisc{S,T,N}, Int}`: Randomly selected child and state
 """
 function random_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     state::Int,
     settings::Tuple{Bool,Int}
-) where {S, T}
+) where {S, T, N}
     (strict, degree) = settings
     if strict
         # In strict mode, cycle through branches
@@ -49,7 +49,7 @@ function random_descent(
 end
 
 @doc raw"""
-    random_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, state::Int, settings::Tuple{Bool,Int}) where {S,T}
+    random_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, state::Int, settings::Tuple{Bool,Int}) where {S,T,N}
 
 Initialize an optimization setup for random descent.
 
@@ -57,7 +57,7 @@ Initialize an optimization setup for random descent.
 the effectiveness of structured optimization algorithms.
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values
 - `loss::Loss`: The loss function structure
 - `state::Int`: Starting state (typically 1)
 - `settings::Tuple{Bool,Int}`: `(strict, degree)` controlling descent behavior
@@ -82,11 +82,11 @@ println("Greedy: ", eval_loss(greedy_optim))  # Should be much better
 ```
 """
 function random_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     state::Int,
     settings::Tuple{Bool,Int}
-) where {S, T}
+) where {S, T, N}
     return OptimSetup(
         loss,
         param,
