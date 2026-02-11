@@ -19,15 +19,28 @@ using NAML
 
     @testset "Statistics" begin
         include("frechet.jl")
+        include("least_squares.jl")
     end
 
     @testset "Optimization" begin
         include("gradient_descent.jl")
         include("polynomial_learning.jl")
+        include("bivariate_optimization.jl")
+        include("linear_optimization.jl")
     end
 
     @testset "Tree Search Algorithms" begin
         include("dag_mcts.jl")
+        include("test_doo.jl")
+        include("test_doo_3d.jl")
+        include("test_all_optimizers.jl")
+    end
+
+    @testset "Visualization" begin
+        include("convex_hull.jl")
+        include("geodesic.jl")
+        include("loss_landscape.jl")
+        include("loss_landscape_visualization.jl")
     end
 end
 

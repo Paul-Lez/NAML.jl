@@ -1,9 +1,9 @@
 ## Loss Landscape Visualization Demo
 ## This script demonstrates the complete loss landscape visualization pipeline
 
-include("../src/NAML.jl")
-using .NAML
+using Test
 using Oscar
+# Note: NAML is loaded by runtests.jl
 
 println("=== Loss Landscape Visualization Demo ===\n")
 

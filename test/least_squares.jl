@@ -4,9 +4,9 @@
 # 1. make_ordinary_least_squares_loss: Learn matrix A and bias b for linear regression
 # 2. solve_linear_system: Solve Ax + b = y for x
 
+using Test
 using Oscar
-include("../src/NAML.jl")
-using .NAML
+# Note: NAML is loaded by runtests.jl
 
 
 println("=" ^ 80)

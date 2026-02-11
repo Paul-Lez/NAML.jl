@@ -1,6 +1,6 @@
-include("../src/NAML.jl")
-using .NAML
+using Test
 using Oscar
+# Note: NAML is loaded by runtests.jl
 
 println("=== Loss Landscape Sampling Test ===\n")
 

@@ -5,12 +5,10 @@
 # with the new module structure by running each one for 10 steps
 # on a simple polynomial function.
 
+using Test
 using Oscar
-using NAML
 using Printf
-
-# Import functions that may have conflicts
-import NAML: center, radius
+# Note: NAML is loaded by runtests.jl
 
 println("="^70)
 println("Testing All Optimizers")

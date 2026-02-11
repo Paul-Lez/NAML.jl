@@ -4,9 +4,8 @@ DOO 3D Test: Compare DOO with MCTS on 3D polynomial optimization
 
 using Test
 using Printf
-include("../src/NAML.jl")
-using .NAML
 using Oscar
+# Note: NAML is loaded by runtests.jl
 
 @testset "DOO 3D Experiments" begin
     println("\n" * "="^80)
@@ -30,7 +29,8 @@ using Oscar
     ]
 
     poly = LinearAbsolutePolynomialSum(linear_polys)
-    batch_eval = batch_evaluate_init(poly)
+    # Use typed batch evaluation to match auto-wrapped polydiscs
+    batch_eval = batch_evaluate_init(poly, ValuationPolydisc{ValuedFieldPoint{p,prec,PadicFieldElem},Int,3})
 
     function loss_eval(params::Vector)
         return [batch_eval(p) for p in params]
