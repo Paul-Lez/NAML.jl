@@ -86,7 +86,7 @@ function get_optimizer_names(experiments)
 
     # Return optimizer names in a consistent order
     opt_names = collect(keys(agg))
-    preferred_order = ["Random", "Greedy", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-100", "UCT", "HOO"]
+    preferred_order = ["Random", "Greedy", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-100", "UCT", "HOO", "DOO"]
     ordered = []
     for name in preferred_order
         if name in opt_names

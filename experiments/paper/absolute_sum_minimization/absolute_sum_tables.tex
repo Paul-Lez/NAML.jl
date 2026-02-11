@@ -1,6 +1,6 @@
 % ============================================================================
 % LaTeX Tables for Absolute Sum Minimization Experiment
-% Generated: 2026-02-11 12:26:46
+% Generated: 2026-02-11 12:44:45
 %
 % This file contains all tables for the absolute sum minimization experiments.
 % Include in your paper with: \input{absolute_sum_tables.tex}
@@ -16,12 +16,12 @@
 \centering
 \caption{Absolute sum minimization: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
 \label{tab:abssum-summary}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 \\
+Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 & DOO \\
 \midrule
-2poly\_1var\_linear & $1.6$ & \textbf{$6.6{\scriptstyle\times 10^{-1}}$} & \textbf{$6.6{\scriptstyle\times 10^{-1}}$} & \textbf{$6.6{\scriptstyle\times 10^{-1}}$} & \textbf{$6.6{\scriptstyle\times 10^{-1}}$} \\
-2poly\_1var\_quadratic & $2.0$ & \textbf{$1.5$} & \textbf{$1.5$} & \textbf{$1.5$} & \textbf{$1.5$} \\
+2poly\_1var\_linear & $1.5$ & \textbf{$1.0$} & \textbf{$1.0$} & \textbf{$1.0$} & \textbf{$1.0$} & $1.1$ \\
+2poly\_1var\_quadratic & $1.1$ & \textbf{$1.0$} & \textbf{$1.0$} & \textbf{$1.0$} & \textbf{$1.0$} & $1.1$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -34,12 +34,12 @@ Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 \\
 \centering
 \caption{Mean wall-clock time (seconds) per optimizer for absolute sum minimization.}
 \label{tab:abssum-timing}
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 \\
+Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 & DOO \\
 \midrule
-2poly\_1var\_linear & 0.00 & 0.15 & 0.12 & 0.00 & 0.00 \\
-2poly\_1var\_quadratic & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+2poly\_1var\_linear & 0.00 & 0.16 & 0.11 & 0.00 & 0.00 & 0.08 \\
+2poly\_1var\_quadratic & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -56,11 +56,12 @@ Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 \\
 \toprule
 Optimizer & Mean Loss & Improv.~(\%) & Mean Time (s) & Configs \\
 \midrule
-Random & $1.78e+00$ & 2.5 & 0.00 & 2 \\
-Greedy & \textbf{$1.08e+00$} & 44.0 & 0.07 & 2 \\
-MCTS-50 & \textbf{$1.08e+00$} & 44.0 & 0.06 & 2 \\
-MCTS-100 & \textbf{$1.08e+00$} & 44.0 & 0.00 & 2 \\
-MCTS-200 & \textbf{$1.08e+00$} & 44.0 & 0.00 & 2 \\
+Random & $1.31e+00$ & 25.0 & 0.00 & 2 \\
+Greedy & \textbf{$1.02e+00$} & 40.4 & 0.08 & 2 \\
+MCTS-50 & \textbf{$1.02e+00$} & 40.4 & 0.06 & 2 \\
+MCTS-100 & \textbf{$1.02e+00$} & 40.4 & 0.00 & 2 \\
+MCTS-200 & \textbf{$1.02e+00$} & 40.4 & 0.00 & 2 \\
+DOO & $1.09e+00$ & 35.9 & 0.04 & 2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -77,11 +78,12 @@ MCTS-200 & \textbf{$1.08e+00$} & 44.0 & 0.00 & 2 \\
 \toprule
 Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
 \midrule
-Random & $1.56e+00$ & 5.0 & 0.00 \\
-Greedy & \textbf{$6.56e-01$} & 63.0 & 0.15 \\
-MCTS-50 & \textbf{$6.56e-01$} & 63.0 & 0.12 \\
-MCTS-100 & \textbf{$6.56e-01$} & 63.0 & 0.00 \\
-MCTS-200 & \textbf{$6.56e-01$} & 63.0 & 0.00 \\
+Random & $1.50e+00$ & 25.0 & 0.00 \\
+Greedy & \textbf{$1.03e+00$} & 48.4 & 0.16 \\
+MCTS-50 & \textbf{$1.03e+00$} & 48.4 & 0.11 \\
+MCTS-100 & \textbf{$1.03e+00$} & 48.4 & 0.00 \\
+MCTS-200 & \textbf{$1.03e+00$} & 48.4 & 0.00 \\
+DOO & $1.06e+00$ & 46.9 & 0.08 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -94,11 +96,12 @@ MCTS-200 & \textbf{$6.56e-01$} & 63.0 & 0.00 \\
 \toprule
 Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
 \midrule
-Random & $2.00e+00$ & 0.0 & 0.00 \\
-Greedy & \textbf{$1.50e+00$} & 25.0 & 0.00 \\
-MCTS-50 & \textbf{$1.50e+00$} & 25.0 & 0.00 \\
-MCTS-100 & \textbf{$1.50e+00$} & 25.0 & 0.00 \\
-MCTS-200 & \textbf{$1.50e+00$} & 25.0 & 0.00 \\
+Random & $1.12e+00$ & 25.0 & 0.00 \\
+Greedy & \textbf{$1.02e+00$} & 32.3 & 0.00 \\
+MCTS-50 & \textbf{$1.02e+00$} & 32.3 & 0.00 \\
+MCTS-100 & \textbf{$1.02e+00$} & 32.3 & 0.00 \\
+MCTS-200 & \textbf{$1.02e+00$} & 32.3 & 0.00 \\
+DOO & $1.12e+00$ & 25.0 & 0.00 \\
 \bottomrule
 \end{tabular}
 \end{table}

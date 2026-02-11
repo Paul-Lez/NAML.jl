@@ -155,11 +155,28 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.uct_descent_init(param, loss, config)
             end
         ),
+        "DOO" => Dict(
+            "type" => "DOO",
+            "params" => Dict("max_depth" => quick ? 10 : 15, "degree" => 1),
+            "init" => (param, loss) -> begin
+                # Get prime from parameter polydisc
+                p = Float64(NAML.prime(param))
+                # Delta function: p^(-h) for depth h
+                delta = h -> p^(-h)
+                config = NAML.DOOConfig(
+                    delta=delta,
+                    max_depth=quick ? 10 : 15,
+                    degree=1,
+                    strict=false
+                )
+                NAML.doo_descent_init(param, loss, 1, config)
+            end
+        ),
     )
 end
 
 # Canonical ordering for display
-const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "UCT"]
+const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "UCT", "DOO"]
 
 # ============================================================================
 # Create target function loss
