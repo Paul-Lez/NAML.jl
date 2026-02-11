@@ -215,13 +215,6 @@ function canonical_center(p::ValuationPolydisc{S,T,N}) where {S,T,N}
         else
             pr ^ c.v * mod(c.u, pr ^ (r - c.v))
         end
-        # # Compute p^r as the modulus
-        # modulus = BigInt(pr)^r
-        # # Lift the p-adic number to an integer (truncated to precision)
-        # # For p-adic numbers, we can use lift to get the representative integer
-        # lifted = BigInt(lift(ZZ, c))
-        # # Take mod to get canonical form
-        # mod(lifted, modulus)
     end
 end
 
