@@ -1,0 +1,126 @@
+% ============================================================================
+% LaTeX Tables for Function Learning Experiment
+% Generated: 2026-02-11 12:32:22
+%
+% This file contains all tables for the function learning experiments.
+% Include in your paper with: \input{function_learning_tables.tex}
+%
+% Required packages: booktabs
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% Table: Summary (mean final loss)
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Function learning: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
+\label{tab:funclearn-summary}
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & Greedy & Greedy-deg2 & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT \\
+\midrule
+zero\_fn\_deg3\_2adic & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} \\
+one\_fn\_deg3\_2adic & \textbf{$1.9$} & \textbf{$1.9$} & $2.0$ & \textbf{$1.9$} & $2.6$ & \textbf{$1.9$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Timing comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Mean wall-clock time (seconds) per optimizer for function learning.}
+\label{tab:funclearn-timing}
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & Greedy & Greedy-deg2 & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT \\
+\midrule
+zero\_fn\_deg3\_2adic & 0.22 & 0.03 & 0.14 & 0.00 & 0.20 & 0.06 \\
+one\_fn\_deg3\_2adic & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Overall optimizer comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Overall optimizer comparison aggregated across all function learning configurations. Shows mean performance metrics.}
+\label{tab:funclearn-optimizer-aggregate}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Mean Loss & Improv.~(\%) & Mean Time (s) & Configs \\
+\midrule
+Greedy & \textbf{$1.90e+00$} & 25.7 & 0.11 & 2 \\
+Greedy-deg2 & \textbf{$1.90e+00$} & 25.7 & 0.01 & 2 \\
+MCTS-50 & $1.93e+00$ & 24.7 & 0.07 & 2 \\
+MCTS-100 & \textbf{$1.90e+00$} & 25.7 & 0.00 & 2 \\
+DAG-MCTS-100 & $2.23e+00$ & 17.1 & 0.10 & 2 \\
+UCT & \textbf{$1.90e+00$} & 25.7 & 0.03 & 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Function type comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Performance comparison by target function type. Shows mean final loss aggregated over configurations for each function type.}
+\label{tab:funclearn-function-type}
+\begin{tabular}{lcccccc}
+\toprule
+Function Type & Greedy & Greedy-deg2 & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT \\
+\midrule
+one & $1.9$ & $1.9$ & $2.0$ & $1.9$ & $2.6$ & $1.9$ \\
+zero & $1.9$ & $1.9$ & $1.9$ & $1.9$ & $1.9$ & $1.9$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Tables: Detailed results per configuration
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: zero\_fn\_deg3\_2adic. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-1}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Greedy & \textbf{$1.90e+00$} & 0.0 & 0.22 \\
+Greedy-deg2 & \textbf{$1.90e+00$} & 0.0 & 0.03 \\
+MCTS-50 & \textbf{$1.90e+00$} & 0.0 & 0.14 \\
+MCTS-100 & \textbf{$1.90e+00$} & 0.0 & 0.00 \\
+DAG-MCTS-100 & \textbf{$1.90e+00$} & 0.0 & 0.20 \\
+UCT & \textbf{$1.90e+00$} & 0.0 & 0.06 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: one\_fn\_deg3\_2adic. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-2}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Greedy & \textbf{$1.90e+00$} & 51.3 & 0.00 \\
+Greedy-deg2 & \textbf{$1.90e+00$} & 51.3 & 0.00 \\
+MCTS-50 & $1.97e+00$ & 49.5 & 0.00 \\
+MCTS-100 & \textbf{$1.90e+00$} & 51.3 & 0.00 \\
+DAG-MCTS-100 & $2.56e+00$ & 34.2 & 0.00 \\
+UCT & \textbf{$1.90e+00$} & 51.3 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

@@ -1,0 +1,119 @@
+% ============================================================================
+% LaTeX Tables for Polynomial Learning Experiment
+% Generated: 2026-02-11 12:25:53
+%
+% This file contains all tables for the polynomial learning experiments.
+% Include in your paper with: \input{polynomial_learning_tables.tex}
+%
+% Required packages: booktabs
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% Table: Summary (mean final loss)
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Polynomial learning: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
+\label{tab:poly-learning-summary}
+\begin{tabular}{lcccccc}
+\toprule
+Experiment & Greedy & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT & HOO \\
+\midrule
+2adic\_deg2\_3pts & \textbf{$6.6{\scriptstyle\times 10^{-1}}$} & $7.5{\scriptstyle\times 10^{-1}}$ & $9.4{\scriptstyle\times 10^{-1}}$ & $9.4{\scriptstyle\times 10^{-1}}$ & $1.6$ & $1.1$ \\
+2adic\_deg3\_4pts & $2.7$ & \textbf{$2.2$} & $2.5$ & $3.0$ & $2.7$ & $2.9$ \\
+3adic\_deg3\_4pts & $2.4$ & $2.4$ & \textbf{$9.1{\scriptstyle\times 10^{-1}}$} & $1.9$ & $2.4$ & $2.5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Detailed results
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Detailed polynomial learning results: mean final loss, improvement ratio (\%), and wall-clock time (s).}
+\label{tab:poly-learning-detailed}
+\begin{tabular}{llrrr}
+\toprule
+Experiment & Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+2adic\_deg2\_3pts & Greedy & $6.56e-01$ & 78.1 & 0.14 \\
+ & MCTS-50 & $7.50e-01$ & 75.0 & 0.13 \\
+ & MCTS-100 & $9.38e-01$ & 68.8 & 0.00 \\
+ & DAG-MCTS-100 & $9.38e-01$ & 68.8 & 0.17 \\
+ & UCT & $1.56e+00$ & 47.9 & 0.06 \\
+ & HOO & $1.12e+00$ & 62.5 & 0.19 \\
+\midrule
+2adic\_deg3\_4pts & Greedy & $2.71e+00$ & 32.2 & 0.10 \\
+ & MCTS-50 & $2.23e+00$ & 44.1 & 0.08 \\
+ & MCTS-100 & $2.53e+00$ & 36.7 & 0.01 \\
+ & DAG-MCTS-100 & $3.00e+00$ & 25.0 & 0.17 \\
+ & UCT & $2.71e+00$ & 32.1 & 0.06 \\
+ & HOO & $2.88e+00$ & 28.1 & 0.05 \\
+\midrule
+3adic\_deg3\_4pts & Greedy & $2.42e+00$ & 39.5 & 0.00 \\
+ & MCTS-50 & $2.38e+00$ & 40.4 & 0.00 \\
+ & MCTS-100 & $9.05e-01$ & 77.4 & 0.00 \\
+ & DAG-MCTS-100 & $1.86e+00$ & 53.5 & 0.01 \\
+ & UCT & $2.38e+00$ & 40.4 & 0.06 \\
+ & HOO & $2.52e+00$ & 37.0 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Degree sweep
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Effect of polynomial degree on learning performance (mean final loss). Each row is a different degree.}
+\label{tab:poly-learning-degree}
+\begin{tabular}{cccccccc}
+\toprule
+$p$ & Degree & Greedy & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT & HOO \\
+\midrule
+2 & 2 & $6.6{\scriptstyle\times 10^{-1}}$ & $7.5{\scriptstyle\times 10^{-1}}$ & $9.4{\scriptstyle\times 10^{-1}}$ & $9.4{\scriptstyle\times 10^{-1}}$ & $1.6$ & $1.1$ \\
+ & 3 & $2.7$ & $2.2$ & $2.5$ & $3.0$ & $2.7$ & $2.9$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Prime sweep
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Effect of base prime on learning performance (mean final loss). Each row is a different prime.}
+\label{tab:poly-learning-prime}
+\begin{tabular}{cccccccc}
+\toprule
+Degree & $p$ & Greedy & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT & HOO \\
+\midrule
+3 & 2 & $2.7$ & $2.2$ & $2.5$ & $3.0$ & $2.7$ & $2.9$ \\
+ & 3 & $2.4$ & $2.4$ & $9.1{\scriptstyle\times 10^{-1}}$ & $1.9$ & $2.4$ & $2.5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Timing comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Mean wall-clock time (seconds) per optimizer across experiments.}
+\label{tab:poly-learning-timing}
+\begin{tabular}{lcccccc}
+\toprule
+Experiment & Greedy & MCTS-50 & MCTS-100 & DAG-MCTS-100 & UCT & HOO \\
+\midrule
+2adic\_deg2\_3pts & 0.14 & 0.13 & 0.00 & 0.17 & 0.06 & 0.19 \\
+2adic\_deg3\_4pts & 0.10 & 0.08 & 0.01 & 0.17 & 0.06 & 0.05 \\
+3adic\_deg3\_4pts & 0.00 & 0.00 & 0.00 & 0.01 & 0.06 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
