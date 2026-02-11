@@ -254,6 +254,18 @@ Delegates to the underlying element's valuation.
 valuation(x::ValuedFieldPoint) = valuation(x.elem)
 
 @doc raw"""
+    unit(x::ValuedFieldPoint)
+
+Extract the unit part of a wrapped valued field element.
+
+For a p-adic number ``a = p^v \cdot u`` where ``u`` is a p-adic unit,
+returns the unit ``u``.
+
+Delegates to the underlying element's unit part.
+"""
+unit(x::ValuedFieldPoint) = unit(x.elem)
+
+@doc raw"""
     Base.abs(x::ValuedFieldPoint{P,Prec,S}) where {P,Prec,S}
 
 Compute the absolute value of a wrapped valued field element.

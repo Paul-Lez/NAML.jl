@@ -59,14 +59,26 @@ using NAML
     end
 
     @testset "Transposition Table - Parent Linking" begin
-        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
+        # Use 2D to create truly different parent nodes via different refinement paths
+        table = Dict{ValuationPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
 
-        parent1 = ValuationPolydisc([K(0)], [0])
-        parent2 = ValuationPolydisc([K(1)], [0])
-        child_p = ValuationPolydisc([K(0)], [1])
+        # Start with a root polydisc
+        root = ValuationPolydisc([K(0), K(0)], [0, 0])
+        root_node = NAML.get_or_create_node!(table, root)
 
-        parent1_node = NAML.get_or_create_node!(table, parent1)
-        parent2_node = NAML.get_or_create_node!(table, parent2)
+        # Create two different parents by refining different coordinates
+        parent1 = children_along_branch(root, 1)[1]  # Refine coordinate 1
+        parent2 = children_along_branch(root, 2)[1]  # Refine coordinate 2
+
+        parent1_node = NAML.get_or_create_node!(table, parent1, root_node)
+        parent2_node = NAML.get_or_create_node!(table, parent2, root_node)
+
+        # Verify parents are different
+        @test parent1 != parent2
+        @test parent1_node !== parent2_node
+
+        # Create a child that both parents can reach
+        child_p = ValuationPolydisc([K(0), K(0)], [1, 1])
 
         # Create child with first parent
         child_node = NAML.get_or_create_node!(table, child_p, parent1_node)
