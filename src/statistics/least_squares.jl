@@ -130,3 +130,107 @@ function solve_linear_system(A::Matrix{S}, b::Vector{S}, y::Vector{S})::Loss whe
 
     return Loss(loss_eval, loss_grad)
 end
+
+#################################################
+# Lifting Dispatch: PadicFieldElem auto-wrapping
+#################################################
+#
+# When S = PadicFieldElem, polydiscs get auto-wrapped to ValuedFieldPoint.
+# These methods create typed evaluators with the correct wrapped type.
+
+function make_ordinary_least_squares_loss(data::Vector{Tuple{Vector{PadicFieldElem}, Vector{T}}})::Loss where {T}
+    # Extract prime and precision from the first data element
+    K = Base.parent(data[1][1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    # Get dimensions from first data point
+    n = length(data[1][1])  # input dimension
+    m = length(data[1][2])  # output dimension
+    num_params = m * (n + 1)  # m*n for A, m for b
+
+    # Get field elements for constructing zero and one
+    zero_elem = data[1][1][1] - data[1][1][1]  # 0 in the field
+    one_elem = data[1][1][1] / data[1][1][1]   # 1 in the field
+
+    # Build loss as sum of squared residuals over all data points and output dimensions
+    loss_terms = []
+
+    for (x, y) in data
+        for i in 1:m
+            # Build coefficients for LinearPolynomial representing (Ax + b)ᵢ - yᵢ
+            all_coeffs = []
+
+            for param_idx in 1:num_params
+                if param_idx <= m*n
+                    row = div(param_idx - 1, n) + 1
+                    col = mod(param_idx - 1, n) + 1
+                    if row == i
+                        push!(all_coeffs, x[col])
+                    else
+                        push!(all_coeffs, zero_elem)
+                    end
+                elseif param_idx == m*n + i
+                    push!(all_coeffs, one_elem)
+                else
+                    push!(all_coeffs, zero_elem)
+                end
+            end
+
+            poly = LinearPolynomial{PadicFieldElem}(all_coeffs, -y[i])
+            poly_sum = LinearAbsolutePolynomialSum{PadicFieldElem}([poly])
+            push!(loss_terms, poly_sum^2)
+        end
+    end
+
+    # Total loss function: sum of all squared residuals
+    loss_function = sum(loss_terms)
+
+    # Use typed batch evaluation with ValuedFieldPoint (matches auto-wrapped polydiscs)
+    batch_eval = batch_evaluate_init(loss_function, ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},Int,num_params})
+
+    function loss_eval(params::Vector{<:ValuationPolydisc})
+        return map(batch_eval, params)
+    end
+
+    function loss_grad(vs::Vector{<:ValuationTangent})
+        return [directional_derivative(loss_function, v) for v in vs]
+    end
+
+    return Loss(loss_eval, loss_grad)
+end
+
+function solve_linear_system(A::Matrix{PadicFieldElem}, b::Vector{PadicFieldElem}, y::Vector{PadicFieldElem})::Loss
+    # Extract prime and precision
+    K = Base.parent(A[1,1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    m, n = size(A)  # m equations, n unknowns
+
+    # Build residual polynomials: (Ax + b - y)ᵢ for each equation i
+    residual_polys = []
+
+    for i in 1:m
+        coeffs = [A[i, j] for j in 1:n]
+        constant = b[i] - y[i]
+        poly = LinearPolynomial{PadicFieldElem}(coeffs, constant)
+        push!(residual_polys, LinearAbsolutePolynomialSum{PadicFieldElem}([poly]))
+    end
+
+    # Total loss: sum of squared residuals
+    loss_function = sum([r^2 for r in residual_polys])
+
+    # Use typed batch evaluation with ValuedFieldPoint (matches auto-wrapped polydiscs)
+    batch_eval = batch_evaluate_init(loss_function, ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},Int,n})
+
+    function loss_eval(params::Vector{<:ValuationPolydisc})
+        return map(batch_eval, params)
+    end
+
+    function loss_grad(vs::Vector{<:ValuationTangent})
+        return [directional_derivative(loss_function, v) for v in vs]
+    end
+
+    return Loss(loss_eval, loss_grad)
+end

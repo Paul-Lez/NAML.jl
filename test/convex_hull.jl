@@ -1,8 +1,8 @@
 ## Test file for convex hull computation
 
-include("../src/naml.jl")
-using .NAML
+using Test
 using Oscar
+# Note: NAML is loaded by runtests.jl
 
 println("=== Testing Convex Hull Computation ===\n")
 
@@ -101,7 +101,7 @@ println("  join: center=$(j_12.center), radius=$(j_12.radius)")
 println()
 
 # Check if this join is in the tree
-join_idx = find_polydisc_index(tree_4.nodes, j_12)
+join_idx = NAML.find_polydisc_index(tree_4.nodes, j_12)
 if join_idx > 0
     println("✓ Join found in tree at index $join_idx")
 else

@@ -3,9 +3,8 @@ Test file for DOO (Deterministic Optimistic Optimization) implementation.
 """
 
 using Test
-include("../src/NAML.jl")
-using .NAML
 using Oscar
+# Note: NAML is loaded by runtests.jl
 
 @testset "DOO Optimizer Tests" begin
     # Setup: 2-adic field and simple quadratic loss

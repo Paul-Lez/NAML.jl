@@ -73,7 +73,7 @@ function MSE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{S,U}}) where 
     specialized_models = [specialise(model, [val]) for (val, _) in data]
 
     # Count parameters (false entries in param_info)
-    param_dim = count(!model.param_info)
+    param_dim = count(!, model.param_info)
 
     # Initialize TYPED batch evaluation for each specialized model
     # Specialized models are just PolydiscFunctions with only parameters
@@ -212,7 +212,7 @@ function MPE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{S,U}}, p::Int
     specialized_models = [specialise(model, [val]) for (val, _) in data]
 
     # Count parameters (false entries in param_info)
-    param_dim = count(!model.param_info)
+    param_dim = count(!, model.param_info)
 
     # Initialize TYPED batch evaluation for each specialized model
     batch_evals = [batch_evaluate_init(specialized_models[i], ValuationPolydisc{S,Int,param_dim}) for i in eachindex(specialized_models)]
@@ -255,7 +255,7 @@ function MPE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{Vector{S},U}}
     specialized_models = [specialise(model, val) for (val, _) in data]
 
     # Count parameters (false entries in param_info)
-    param_dim = count(!model.param_info)
+    param_dim = count(!, model.param_info)
 
     # Initialize TYPED batch evaluation for each specialized model
     batch_evals = [batch_evaluate_init(specialized_models[i], ValuationPolydisc{S,Int,param_dim}) for i in eachindex(specialized_models)]
@@ -307,4 +307,99 @@ function MSE_loss_init(model::AbstractModel{S}, data::Vector{Tuple{ValuationPoly
     end
 
     return Loss(MSE_compute, MSE_grad)
+end
+
+#################################################
+# Lifting Dispatch: model{S} + PadicFieldElem data (field-valued)
+#################################################
+#
+# When users define models with type S = PadicFieldElem and pass field-valued data,
+# the optimizer creates polydiscs that get auto-wrapped to ValuedFieldPoint.
+# These methods detect this case and create evaluators with the wrapped type.
+
+function MSE_loss_init(model::AbstractModel{PadicFieldElem}, data::Vector{Tuple{PadicFieldElem,U}}) where {U}
+    # Extract prime and precision from the first data element
+    K = Base.parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    # Specialize the model at each data point
+    specialized_models = [specialise(model, [val]) for (val, _) in data]
+
+    # Count parameters (false entries in param_info)
+    param_dim = count(!, model.param_info)
+
+    # Use ValuedFieldPoint type for batch evaluation (matches auto-wrapped polydiscs)
+    batch_evals = [batch_evaluate_init(specialized_models[i], ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},Int,param_dim}) for i in eachindex(specialized_models)]
+
+    # Convert outputs to Float64 (p-adic absolute values)
+    out_values = [abs(out) for (_, out) in data]
+
+    function MSE_compute(params::Vector{<:ValuationPolydisc})
+        return 1 / length(data) * [sum([(batch_evals[i](param) - out_values[i])^2 for i in eachindex(data)]) for param in params]
+    end
+
+    function MSE_grad(vs::Vector{<:ValuationTangent})
+        return 1 / length(data) * [sum([2 * (batch_evals[i](v.point) - out_values[i]) * directional_derivative(specialized_models[i], v) for i in eachindex(data)]) for v in vs]
+    end
+
+    return Loss(MSE_compute, MSE_grad)
+end
+
+function MPE_loss_init(model::AbstractModel{PadicFieldElem}, data::Vector{Tuple{PadicFieldElem,U}}, p::Int) where {U}
+    # Extract prime and precision from the first data element
+    K = Base.parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    # Specialize the model at each data point
+    specialized_models = [specialise(model, [val]) for (val, _) in data]
+
+    # Count parameters (false entries in param_info)
+    param_dim = count(!, model.param_info)
+
+    # Use ValuedFieldPoint type for batch evaluation (matches auto-wrapped polydiscs)
+    batch_evals = [batch_evaluate_init(specialized_models[i], ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},Int,param_dim}) for i in eachindex(specialized_models)]
+
+    # Convert outputs to Float64 (p-adic absolute values)
+    out_values = [abs(out) for (_, out) in data]
+
+    function MPE_compute(params::Vector{<:ValuationPolydisc})
+        return 1 / length(data) * [sum([(batch_evals[i](param) - out_values[i])^p for i in eachindex(data)]) for param in params]
+    end
+
+    function MPE_grad(vs::Vector{<:ValuationTangent})
+        return 1 / length(data) * [sum([p * (batch_evals[i](v.point) - out_values[i])^(p - 1) * directional_derivative(specialized_models[i], v) for i in eachindex(data)]) for v in vs]
+    end
+
+    return Loss(MPE_compute, MPE_grad)
+end
+
+function MPE_loss_init(model::AbstractModel{PadicFieldElem}, data::Vector{Tuple{Vector{PadicFieldElem},U}}, p::Int) where {U}
+    # Extract prime and precision from the first data element
+    K = Base.parent(data[1][1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+
+    # Specialize the model at each data point vector
+    specialized_models = [specialise(model, val) for (val, _) in data]
+
+    # Count parameters (false entries in param_info)
+    param_dim = count(!, model.param_info)
+
+    # Use ValuedFieldPoint type for batch evaluation (matches auto-wrapped polydiscs)
+    batch_evals = [batch_evaluate_init(specialized_models[i], ValuationPolydisc{ValuedFieldPoint{P,Prec,PadicFieldElem},Int,param_dim}) for i in eachindex(specialized_models)]
+
+    # Convert outputs to Float64 (p-adic absolute values)
+    out_values = [abs(out) for (_, out) in data]
+
+    function MPE_compute(params::Vector{<:ValuationPolydisc})
+        return [1 / length(data) * sum([(batch_evals[i](param) - out_values[i])^p for i in eachindex(data)]) for param in params]
+    end
+
+    function MPE_grad(vs::Vector{<:ValuationTangent})
+        return [1 / length(data) * sum([p * (batch_evals[i](v.point) - out_values[i])^(p - 1) * directional_derivative(specialized_models[i], v) for i in eachindex(data)]) for v in vs]
+    end
+
+    return Loss(MPE_compute, MPE_grad)
 end
