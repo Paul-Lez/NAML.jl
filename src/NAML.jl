@@ -6,6 +6,7 @@ using Printf
 
 # Include all source files
 include("basic/valuation.jl")
+include("basic/valued_point.jl")
 include("basic/polydisc.jl")
 include("basic/tangent_vector.jl")
 include("basic/functions.jl")
@@ -20,6 +21,7 @@ include("optimization/optimizers/tree_search/mcts.jl")
 include("optimization/optimizers/tree_search/uct.jl")
 include("optimization/optimizers/tree_search/modified_uct.jl")
 include("optimization/optimizers/tree_search/flat_ucb.jl")
+include("optimization/optimizers/tree_search/doo.jl")
 include("optimization/optimizers/tree_search/dag_mcts.jl")
 include("statistics/frechet.jl")
 include("statistics/least_squares.jl")
@@ -29,6 +31,11 @@ include("visualization/loss_landscape.jl")
 
 # From basic/valuation.jl
 export valuation
+
+# From basic/valued_point.jl
+export ValuedFieldPoint
+export unwrap, lift
+# Note: prime and precision are exported via polydisc.jl (prime) and Base (precision)
 
 # From basic/polydisc.jl
 export ValuationPolydisc, AbsPolydisc
@@ -43,11 +50,16 @@ export ValuationTangent
 
 # From basic/functions.jl
 export PolydiscFunction, AbsolutePolynomialSum, LinearAbsolutePolynomialSum, LinearPolynomial
+export PolydiscFunctionEvaluator  # Abstract evaluator type
+export LinearPolynomialEvaluator, ConstantEvaluator
+export AddEvaluator, SubEvaluator, MulEvaluator, DivEvaluator
+export SMulEvaluator, CompEvaluator, SumEvaluator
+export LambdaEvaluator, MPolyEvaluator
 export directional_exponent, directional_derivative, grad, eval_abs
 # Note: evaluate not exported to avoid conflicts with Oscar/AbstractAlgebra - use NAML.evaluate
 
 # From optimization/model.jl
-export AbstractModel, Model
+export AbstractModel, Model, ModelEvaluator
 export var_indices, param_indices, set_abstract_model_variable, batch_evaluate_init
 
 # From optimization/optim_setup.jl
@@ -87,6 +99,11 @@ export modified_uct_descent, modified_uct_descent_init
 # From optimization/optimizers/tree_search/flat_ucb.jl
 export FlatUCBNode, FlatUCBConfig, FlatUCBState
 export flat_ucb_descent, flat_ucb_descent_init
+
+# From optimization/optimizers/tree_search/doo.jl
+export DOONode, DOOConfig, DOOState
+export doo_descent, doo_descent_init
+export get_best_node, get_best_value, get_leaf_count, get_all_leaves
 
 # From optimization/optimizers/tree_search/dag_mcts.jl
 export DAGMCTSNode, DAGMCTSConfig, DAGMCTSState

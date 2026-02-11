@@ -10,9 +10,11 @@ using NAML
 
 @testset "NAML.jl" begin
     @testset "Basic Structures" begin
+        include("valued_point.jl")
         include("polydisc.jl")
         include("tangent_vector.jl")
         include("functions.jl")
+        include("test_typed_evaluators.jl")
     end
 
     @testset "Statistics" begin

@@ -30,7 +30,7 @@ end
 # "get_param!" available.  
 
 @doc raw"""
-    OptimSetup{S,T,U,V}
+    OptimSetup{S,T,N,U,V}
 
 Complete optimization setup containing loss, parameters, optimizer, and state.
 
@@ -39,7 +39,7 @@ should have data baked in as a closure.
 
 # Fields
 - `loss::Loss`: Loss function (closure over data) with `eval: (param) -> scalar` and `grad: (tangent) -> scalar`
-- `param::ValuationPolydisc{S,T}`: Current parameter values (mutable during optimization)
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values (mutable during optimization)
 - `optimiser::Function`: Optimizer function `(loss, param, state, context) -> (new_param, new_state)`
 - `state::U`: Optimization state (e.g., previous steps, momentum, etc.)
 - `context::V`: Optimizer settings (e.g., learning rate, degree, etc.)
@@ -47,16 +47,17 @@ should have data baked in as a closure.
 # Type Parameters
 - `S`: Coefficient type (typically p-adic numbers)
 - `T`: Radius/valuation type
+- `N`: Dimension of parameter space
 - `U`: State type
 - `V`: Context type
 """
-mutable struct OptimSetup{S,T,U,V}
+mutable struct OptimSetup{S,T,N,U,V}
     # The loss function (should be a closure over any data)
     # loss.eval should have type (param) -> scalar
     # loss.grad should have type (tangent_vector) -> scalar
     loss::Loss
     # The current parameter value
-    param::ValuationPolydisc{S,T}
+    param::ValuationPolydisc{S,T,N}
     # An optimiser is a function that takes in the loss and param
     # (plus eventually other parameters, e.g. learning rate)
     # and outputs a new choice of parameters
@@ -87,37 +88,37 @@ function eval_loss(optim::OptimSetup)
 end
 
 @doc raw"""
-    update_param!(optim::OptimSetup{S,T,U,V}, param::ValuationPolydisc{S,T}) where {S,T,U,V}
+    update_param!(optim::OptimSetup{S,T,N,U,V}, param::ValuationPolydisc{S,T,N}) where {S,T,N,U,V}
 
 Update the parameter values in the optimization setup.
 
 # Arguments
-- `optim::OptimSetup{S,T,U,V}`: The optimization setup
-- `param::ValuationPolydisc{S,T}`: New parameter values
+- `optim::OptimSetup{S,T,N,U,V}`: The optimization setup
+- `param::ValuationPolydisc{S,T,N}`: New parameter values
 
 # Notes
 Mutates the optimization setup in place.
 """
 function update_param!(
-    optim::OptimSetup{S,T,U,V},
-    param::ValuationPolydisc{S,T}
-) where {S, T, U, V}
+    optim::OptimSetup{S,T,N,U,V},
+    param::ValuationPolydisc{S,T,N}
+) where {S, T, N, U, V}
     optim.param = param
 end
 
 @doc raw"""
-    update_state!(optim::OptimSetup{S,T,U,V}, state::U) where {S,T,U,V}
+    update_state!(optim::OptimSetup{S,T,N,U,V}, state::U) where {S,T,N,U,V}
 
 Update the optimizer state in the optimization setup.
 
 # Arguments
-- `optim::OptimSetup{S,T,U,V}`: The optimization setup
+- `optim::OptimSetup{S,T,N,U,V}`: The optimization setup
 - `state::U`: New state value
 
 # Notes
 Mutates the optimization setup in place.
 """
-function update_state!(optim::OptimSetup{S,T,U,V}, state::U) where {S, T, U, V}
+function update_state!(optim::OptimSetup{S,T,N,U,V}, state::U) where {S, T, N, U, V}
     optim.state = state
 end
 

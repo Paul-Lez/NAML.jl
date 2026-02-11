@@ -9,37 +9,37 @@
 ##################################################
 
 @doc raw"""
-    UCTNode{S,T}
+    UCTNode{S,T,N}
 
 A node in the UCT search tree.
 
 # Fields
-- `polydisc::ValuationPolydisc{S,T}`: The polydisc at this node
-- `parent::Union{UCTNode{S,T}, Nothing}`: Parent node (nothing for root)
-- `children::Vector{UCTNode{S,T}}`: Child nodes that have been expanded
+- `polydisc::ValuationPolydisc{S,T,N}`: The polydisc at this node
+- `parent::Union{UCTNode{S,T,N}, Nothing}`: Parent node (nothing for root)
+- `children::Vector{UCTNode{S,T,N}}`: Child nodes that have been expanded
 - `visits::Int`: Number of times this node has been visited (n_i in spec)
 - `total_value::Float64`: Sum of all values backpropagated through this node
 - `depth::Int`: Depth of this node in the tree (0 for root)
 """
-mutable struct UCTNode{S,T}
-    polydisc::ValuationPolydisc{S,T}
-    parent::Union{UCTNode{S,T}, Nothing}
-    children::Vector{UCTNode{S,T}}
+mutable struct UCTNode{S,T,N}
+    polydisc::ValuationPolydisc{S,T,N}
+    parent::Union{UCTNode{S,T,N}, Nothing}
+    children::Vector{UCTNode{S,T,N}}
     visits::Int
     total_value::Float64
     depth::Int
 end
 
 @doc raw"""
-    UCTNode(polydisc::ValuationPolydisc{S,T}, parent=nothing, depth=0) where {S,T}
+    UCTNode(polydisc::ValuationPolydisc{S,T,N}, parent=nothing, depth=0) where {S,T,N}
 
 Create a new UCT node with the given polydisc, optional parent, and depth.
 """
-function UCTNode(polydisc::ValuationPolydisc{S,T}, parent=nothing, depth=0) where {S,T}
-    return UCTNode{S,T}(
+function UCTNode(polydisc::ValuationPolydisc{S,T,N}, parent=nothing, depth=0) where {S,T,N}
+    return UCTNode{S,T,N}(
         polydisc,
         parent,
-        UCTNode{S,T}[],
+        UCTNode{S,T,N}[],
         0,
         0.0,
         depth
@@ -118,16 +118,16 @@ end
 ##################################################
 
 @doc raw"""
-    UCTState{S,T}
+    UCTState{S,T,N}
 
 State maintained across UCT optimization steps.
 
 # Fields
-- `root::UCTNode{S,T}`: The current root node of the search tree
+- `root::UCTNode{S,T,N}`: The current root node of the search tree
 - `step_count::Int`: Number of optimization steps taken
 """
-mutable struct UCTState{S,T}
-    root::UCTNode{S,T}
+mutable struct UCTState{S,T,N}
+    root::UCTNode{S,T,N}
     step_count::Int
 end
 
@@ -191,12 +191,12 @@ end
 ##################################################
 
 @doc raw"""
-    expand_node!(node::UCTNode{S,T}, config::UCTConfig) where {S,T}
+    expand_node!(node::UCTNode{S,T,N}, config::UCTConfig) where {S,T,N}
 
 Expand a node by generating all its child polydiscs.
 Children are created at depth = parent.depth + 1.
 """
-function expand_node!(node::UCTNode{S,T}, config::UCTConfig) where {S,T}
+function expand_node!(node::UCTNode{S,T,N}, config::UCTConfig) where {S,T,N}
     if !isempty(node.children)
         return  # Already expanded
     end
@@ -252,14 +252,14 @@ function traverse_to_leaf(root::UCTNode, config::UCTConfig)
 end
 
 @doc raw"""
-    evaluate_node(node::UCTNode{S,T}, loss::Loss, config::UCTConfig) where {S,T}
+    evaluate_node(node::UCTNode{S,T,N}, loss::Loss, config::UCTConfig) where {S,T,N}
 
 Phase 2 (Sampling) from spec:
 Evaluate the loss at a node and transform to value.
 
 Returns the transformed value (higher is better).
 """
-function evaluate_node(node::UCTNode{S,T}, loss::Loss, config::UCTConfig) where {S,T}
+function evaluate_node(node::UCTNode{S,T,N}, loss::Loss, config::UCTConfig) where {S,T,N}
     # Get reward x_n from environment (spec Phase 2)
     loss_value = loss.eval([node.polydisc])[1]
 
@@ -321,7 +321,7 @@ end
 ##################################################
 
 @doc raw"""
-    uct_search(root::UCTNode{S,T}, loss::Loss, config::UCTConfig) where {S,T}
+    uct_search(root::UCTNode{S,T,N}, loss::Loss, config::UCTConfig) where {S,T,N}
 
 Run UCT from a root node and return the best child.
 
@@ -330,7 +330,7 @@ After all simulations, selects the child with the best average value.
 
 Returns: (best_polydisc, best_child_node)
 """
-function uct_search(root::UCTNode{S,T}, loss::Loss, config::UCTConfig) where {S,T}
+function uct_search(root::UCTNode{S,T,N}, loss::Loss, config::UCTConfig) where {S,T,N}
     # Ensure root is expanded (needed to have children to select from)
     expand_node!(root, config)
 
@@ -355,7 +355,7 @@ end
 ##################################################
 
 @doc raw"""
-    uct_descent(loss::Loss, param::ValuationPolydisc{S,T}, state::UCTState{S,T}, config::UCTConfig) where {S,T}
+    uct_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, state::UCTState{S,T,N}, config::UCTConfig) where {S,T,N}
 
 Perform one step of UCT optimization.
 
@@ -364,19 +364,19 @@ making it compatible with `OptimSetup`.
 
 # Arguments
 - `loss::Loss`: The loss function structure
-- `param::ValuationPolydisc{S,T}`: Current parameter values
-- `state::UCTState{S,T}`: UCT state (includes the search tree)
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values
+- `state::UCTState{S,T,N}`: UCT state (includes the search tree)
 - `config::UCTConfig`: Configuration parameters
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, UCTState{S,T}}`: New parameters and updated state
+`Tuple{ValuationPolydisc{S,T,N}, UCTState{S,T,N}}`: New parameters and updated state
 """
 function uct_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
-    state::UCTState{S,T},
+    param::ValuationPolydisc{S,T,N},
+    state::UCTState{S,T,N},
     config::UCTConfig
-) where {S,T}
+) where {S,T,N}
     # Update root if param changed (shouldn't normally happen)
     if state.root.polydisc != param
         state.root = UCTNode(param, nothing, 0)
@@ -393,12 +393,12 @@ function uct_descent(
 end
 
 @doc raw"""
-    uct_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, config::UCTConfig=UCTConfig()) where {S,T}
+    uct_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, config::UCTConfig=UCTConfig()) where {S,T,N}
 
 Initialize an optimization setup for UCT.
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values
 - `loss::Loss`: The loss function structure
 - `config::UCTConfig`: UCT configuration (uses defaults if not provided)
 
@@ -406,13 +406,13 @@ Initialize an optimization setup for UCT.
 `OptimSetup`: Configured optimization setup for UCT
 """
 function uct_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     config::UCTConfig=UCTConfig()
-) where {S,T}
+) where {S,T,N}
     # Initialize state with root at depth 0
     root = UCTNode(param, nothing, 0)
-    state = UCTState{S,T}(root, 0)
+    state = UCTState{S,T,N}(root, 0)
 
     return OptimSetup(
         loss,

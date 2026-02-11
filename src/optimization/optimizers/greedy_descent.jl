@@ -3,7 +3,7 @@
 # In this section we implement greedy descent algorithms
 
 @doc raw"""
-    greedy_descent(loss::Loss, param::ValuationPolydisc{S,T}, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T}
+    greedy_descent(loss::Loss, param::ValuationPolydisc{S,T,N}, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T,N}
 
 Perform one step of greedy descent optimization.
 
@@ -12,19 +12,19 @@ Can operate in strict mode (one coordinate at a time) or full mode (all coordina
 
 # Arguments
 - `loss::Loss`: The loss function structure
-- `param::ValuationPolydisc{S,T}`: Current parameter values
+- `param::ValuationPolydisc{S,T,N}`: Current parameter values
 - `next_branch::Int`: Index of next branch to descend (in strict mode)
 - `settings::Tuple{Bool,Int}`: `(strict, degree)` where `strict` enables single-coordinate descent
 
 # Returns
-`Tuple{ValuationPolydisc{S,T}, Int}`: New parameters and next branch index
+`Tuple{ValuationPolydisc{S,T,N}, Int}`: New parameters and next branch index
 """
 function greedy_descent(
     loss::Loss,
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     next_branch::Int,
     settings::Tuple{Bool,Int}
-) where {S, T}
+) where {S, T, N}
     (strict, degree) = settings
     if strict
         below_nodes = children_along_branch(param, next_branch)
@@ -42,12 +42,12 @@ function greedy_descent(
 end
 
 @doc raw"""
-    greedy_descent_init(param::ValuationPolydisc{S,T}, loss::Loss, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T}
+    greedy_descent_init(param::ValuationPolydisc{S,T,N}, loss::Loss, next_branch::Int, settings::Tuple{Bool,Int}) where {S,T,N}
 
 Initialize an optimization setup for greedy descent.
 
 # Arguments
-- `param::ValuationPolydisc{S,T}`: Initial parameter values
+- `param::ValuationPolydisc{S,T,N}`: Initial parameter values
 - `loss::Loss`: The loss function structure
 - `next_branch::Int`: Starting branch index for strict mode (typically 1)
 - `settings::Tuple{Bool,Int}`: `(strict, degree)` controlling descent behavior
@@ -56,11 +56,11 @@ Initialize an optimization setup for greedy descent.
 `OptimSetup`: Configured optimization setup for greedy descent
 """
 function greedy_descent_init(
-    param::ValuationPolydisc{S,T},
+    param::ValuationPolydisc{S,T,N},
     loss::Loss,
     next_branch::Int,
     settings::Tuple{Bool,Int}
-) where {S, T}
+) where {S, T, N}
     return OptimSetup(
         loss,
         param,
