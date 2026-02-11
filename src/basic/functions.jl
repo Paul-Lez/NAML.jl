@@ -192,18 +192,18 @@ function parent(F::AbsolutePolynomialSum{S}) where S
 end
 
 @doc raw"""
-    evaluate(f::PolydiscFunction{S}, p::ValuationPolydisc{S,T}) where {S, T}
+    evaluate(f::PolydiscFunction{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
 
 Evaluate a polydisc function at a polydisc.
 
 # Arguments
 - `f::PolydiscFunction{S}`: The polydisc function
-- `p::ValuationPolydisc{S,T}`: The evaluation point
+- `p::ValuationPolydisc{S,T,N}`: The evaluation point
 
 # Returns
 The function value at the point
 """
-function evaluate(f::PolydiscFunction{S}, p::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(f::PolydiscFunction{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(f, p)
 end
 
@@ -231,7 +231,7 @@ Evaluate the directional derivative of a polydisc function at a tangent vector.
 # 2) Too much time is spent allocating memory, i.e AbstractAlgebra.evaluate is suboptimal here. In particular we
 #   may want to preallocate memory when computing the expansion at a given point
 @doc raw"""
-    evaluate(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{S,T}) where {S, T}
+    evaluate(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
 
 Evaluate the absolute value of a multivariate polynomial at a polydisc.
 
@@ -240,53 +240,54 @@ and finding the maximum absolute value term weighted by the radius.
 
 # Arguments
 - `f::AbstractAlgebra.Generic.MPoly{S}`: A multivariate polynomial
-- `p::ValuationPolydisc{S,T}`: The evaluation point (polydisc)
+- `p::ValuationPolydisc{S,T,N}`: The evaluation point (polydisc)
 
 # Returns
 `Float64`: The absolute value of the polynomial at the polydisc
 """
-function evaluate(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(f::AbstractAlgebra.Generic.MPoly{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
     t = gens(f.parent)
     vec = [t[i] + p.center[i] for i in eachindex(p.center)]
     g = AbstractAlgebra.evaluate(f, vec)
-    max, _ = findmax([abs(Nemo.coeff(g, v)) * (Float64(prime(p))^(-sum(p.radius .* v))) for v in Nemo.exponent_vectors(g)])
+    monomials = [abs(Nemo.coeff(g, v)) * (Float64(prime(p))^(-sum(p.radius .* v))) for v in Nemo.exponent_vectors(g)]
+    max, _ = findmax(monomials)
     return max
 end
 
-function evaluate(fun::Add{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::Add{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(fun.left, var) + evaluate(fun.right, var)
 end
 
-function evaluate(fun::Mul{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::Mul{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(fun.left, var) * evaluate(fun.right, var)
 end
 
-function evaluate(fun::Sub{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::Sub{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(fun.left, var) - evaluate(fun.right, var)
 end
 
-function evaluate(fun::Div{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::Div{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(fun.top, var) / evaluate(fun.bottom, var)
 end
 
-function evaluate(fun::SMul{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::SMul{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return fun.left * evaluate(fun.right, var)
 end
 
-function evaluate(fun::Comp{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::Comp{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return fun.left(evaluate(fun.right, var))
 end
 
-function evaluate(c::Constant{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(c::Constant{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return c.value
 end
 
-function evaluate(l::Lambda{S}, var::ValuationPolydisc{S,T}) where S where T
+function evaluate(l::Lambda{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return l.func(var)
 end
 
 @doc raw"""
-    evaluate(fun::AbsolutePolynomialSum{S}, var::ValuationPolydisc{S,T}) where {S, T}
+    evaluate(fun::AbsolutePolynomialSum{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
 
 Evaluate an absolute polynomial sum at a polydisc.
 
@@ -294,20 +295,20 @@ Computes the sum of absolute values of each polynomial in the sum evaluated at t
 
 # Arguments
 - `fun::AbsolutePolynomialSum{S}`: The polynomial sum
-- `var::ValuationPolydisc{S,T}`: The evaluation point
+- `var::ValuationPolydisc{S,T,N}`: The evaluation point
 
 # Returns
 `Float64`: The sum of polynomial evaluations
 """
-function evaluate(fun::AbsolutePolynomialSum{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(fun::AbsolutePolynomialSum{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return sum([evaluate(f, var) for f in fun.polys])
 end
 
-function evaluate(f::LinearRationalFunction{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(f::LinearRationalFunction{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return evaluate(f.num, var) / evaluate(f.den, var)
 end
 
-function evaluate(f::LinearRationalFunctionSum{S}, var::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(f::LinearRationalFunctionSum{S}, var::ValuationPolydisc{S,T,N}) where {S, T, N}
     return sum([evaluate(fun, var) for fun in f.rats])
 end
 
@@ -361,7 +362,7 @@ function directional_derivative(c::Constant{S}, v::ValuationTangent{S,T}) where 
 end
 
 @doc raw"""
-    evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T}) where {S, T}
+    evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
 
 Evaluate a sum of linear polynomials at a polydisc.
 
@@ -371,17 +372,17 @@ where ``r`` is the radius and ``c`` the center of the polydisc.
 
 # Arguments
 - `f::LinearAbsolutePolynomialSum{S}`: The sum of linear polynomials
-- `p::ValuationPolydisc{S,T}`: The evaluation point
+- `p::ValuationPolydisc{S,T,N}`: The evaluation point
 
 # Returns
 `Float64`: The sum of evaluations across all linear polynomials
 """
-function evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
     return sum([evaluate(poly, p) for poly in f.polys])
 end
 
 @doc raw"""
-    evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T}) where {S, T}
+    evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
 
 Evaluate a single linear polynomial at a polydisc.
 
@@ -390,14 +391,14 @@ For a linear polynomial ``a_1 T_1 + \cdots + a_n T_n + b``, computes
 
 # Arguments
 - `poly::LinearPolynomial{S}`: The linear polynomial
-- `p::ValuationPolydisc{S,T}`: The evaluation point
+- `p::ValuationPolydisc{S,T,N}`: The evaluation point
 
 # Returns
 `Float64`: The maximum absolute value term
 """
-function evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T}) where {S, T}
+function evaluate(poly::LinearPolynomial{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
     # Evaluate the constant term plus the dot product of coefficients with center
-    constant_term = poly.constant + sum(poly.coefficients[i] * p.center[i] for i in eachindex(poly.coefficients))
+    constant_term = poly.constant + sum([poly.coefficients[i] * p.center[i] for i in eachindex(poly.coefficients)])
     # TODO(Paul-Lez): it's probably more efficient to do this in terms of valuation?
     # Compute absolute values of all terms
     abs_values = [abs(poly.coefficients[i]) * (Float64(prime(p))^(-p.radius[i])) for i in eachindex(poly.coefficients)]
@@ -454,11 +455,7 @@ end
 
 function (eval::LinearPolynomialEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
     # Compute constant term
-    constant_term = eval.constant
-    # TODO: vectorize this (again ...)
-    for i in 1:N
-        constant_term += eval.coefficients[i] * p.center[i]
-    end
+    constant_term = eval.constant + sum([eval.coefficients[i] * p.center[i] for i in 1:N])
 
     # Find minimum valuation
     abs_values = [eval.coeff_valuations[i] + p.radius[i] for i in 1:N]
@@ -695,7 +692,7 @@ end
 function batch_evaluate_init(poly::LinearPolynomial{S})::Function where S
     abs_poly_coeffs = map(valuation, poly.coefficients)
     num_coeffs = length(poly.coefficients)
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         # Only use the first num_coeffs coordinates (in case the polydisc is higher dimensional)
         constant_term = poly.constant + sum(poly.coefficients[i] * p.center[i] for i in 1:num_coeffs)
         # Compute valuations of all terms
@@ -738,14 +735,14 @@ end
 
 function batch_evaluate_init(f::Comp{S})::Function where S
     right_eval = batch_evaluate_init(f.right)
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         return f.left(right_eval(p))
     end
     return eval
 end
 
 function batch_evaluate_init(f::Constant{S})::Function where S
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         return f.value
     end
     return eval
@@ -759,7 +756,7 @@ function batch_evaluate_init(f::LinearAbsolutePolynomialSum{S})::Function where 
     # Get the array of functions
     evaluation_functions::Array{Function} = map(batch_evaluate_init, f.polys)
     # Return the lambda function that sends `p`` to the sum of the evaluations of each element of `evaluation_functions` at `p`
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         return sum(
             map(f -> f(p), evaluation_functions))
     end
@@ -767,7 +764,7 @@ function batch_evaluate_init(f::LinearAbsolutePolynomialSum{S})::Function where 
 end
 
 function batch_evaluate_init(f::AbstractAlgebra.Generic.MPoly{S})::Function where S
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         return evaluate(f, p)
     end
     return eval
@@ -777,7 +774,7 @@ function batch_evaluate_init(f::AbsolutePolynomialSum{S})::Function where S
     # Get the array of functions
     evaluation_functions = map(batch_evaluate_init, f.polys)
     # Return the lambda function that sends `p`` to the sum of the evaluations of each element of `evaluation_functions` at `p`
-    function eval(p::ValuationPolydisc{S,T}) where T
+    function eval(p::ValuationPolydisc{S,T,N}) where {T,N}
         return sum(map(f -> f(p), evaluation_functions))
     end
     return eval

@@ -277,13 +277,16 @@ function canonical_center(p::ValuationPolydisc{S,T,N}) where {S,T,N}
         # The canonical form is center mod p^radius[i]
         c = p.center[i]
         r = p.radius[i]
-        # Compute p^r as the modulus
-        modulus = BigInt(pr)^r
         # Lift the p-adic number to an integer (truncated to precision)
-        # For p-adic numbers, we can use lift to get the representative integer
         lifted = BigInt(lift(ZZ, c))
-        # Take mod to get canonical form
-        mod(lifted, modulus)
+        # Special case: radius=0 means a single point, use full lifted value
+        # Otherwise mod by p^r to get canonical form
+        if r == 0
+            lifted
+        else
+            modulus = BigInt(pr)^r
+            mod(lifted, modulus)
+        end
     end
 end
 
@@ -380,7 +383,7 @@ function dim(p::ValuationPolydisc)
 end
 
 @doc raw"""
-    join(b1::ValuationPolydisc{S,T}, b2::ValuationPolydisc{S,T}) where {S,T}
+    join(b1::ValuationPolydisc{S,T,N}, b2::ValuationPolydisc{S,T,N}) where {S,T,N}
 
 Compute the join (smallest common ancestor) of two polydiscs in the Bruhat-Tits tree.
 
@@ -389,11 +392,11 @@ the radius is ``\min(r_1^i, v(c_1^i - c_2^i), r_2^i)`` where ``r_j^i`` is the ``
 of polydisc ``j`` and ``c_j^i`` is the ``i``-th center coordinate.
 
 # Arguments
-- `b1::ValuationPolydisc{S,T}`: First polydisc
-- `b2::ValuationPolydisc{S,T}`: Second polydisc
+- `b1::ValuationPolydisc{S,T,N}`: First polydisc
+- `b2::ValuationPolydisc{S,T,N}`: Second polydisc
 
 # Returns
-`ValuationPolydisc{S,T}`: The join polydisc with center from `b1` and computed radii
+`ValuationPolydisc{S,T,N}`: The join polydisc with center from `b1` and computed radii
 """
 function join(b1::ValuationPolydisc{S,T,N}, b2::ValuationPolydisc{S,T,N}) where {S, T, N}
     r = tuple([min(b1.radius[i], valuation(b1.center[i] - b2.center[i]), b2.radius[i]) for i in Base.eachindex(b1)]...)
@@ -402,7 +405,7 @@ function join(b1::ValuationPolydisc{S,T,N}, b2::ValuationPolydisc{S,T,N}) where 
 end
 
 @doc raw"""
-    dist(b1::ValuationPolydisc{S,T}, b2::ValuationPolydisc{S,T}) where {S,T}
+    dist(b1::ValuationPolydisc{S,T,N}, b2::ValuationPolydisc{S,T,N}) where {S,T,N}
 
 Compute the distance between two polydiscs in the polydisc space.
 
@@ -412,8 +415,8 @@ between the discs, measured using the formula:
 where ``r_j^i`` is the radius of the join in coordinate ``i``.
 
 # Arguments
-- `b1::ValuationPolydisc{S,T}`: First polydisc
-- `b2::ValuationPolydisc{S,T}`: Second polydisc
+- `b1::ValuationPolydisc{S,T,N}`: First polydisc
+- `b2::ValuationPolydisc{S,T,N}`: Second polydisc
 
 # Returns
 `Float64`: The distance between the two polydiscs
@@ -429,7 +432,7 @@ end
 # TODO: this should also work when the valuation is negative...
 
 @doc raw"""
-    children(p::ValuationPolydisc{S,T}, degree=1) where {S,T}
+    children(p::ValuationPolydisc{S,T,N}, degree=1) where {S,T,N}
 
 Generate all child polydiscs obtained by refining the polydisc in a specified number of coordinates.
 
@@ -438,11 +441,11 @@ coordinates and adjusting centers according to residue classes. For `degree=1`, 
 ``p \cdot n`` children where ``n = \dim(p)`` is the dimension and ``p`` is the prime.
 
 # Arguments
-- `p::ValuationPolydisc{S,T}`: The parent polydisc
+- `p::ValuationPolydisc{S,T,N}`: The parent polydisc
 - `degree::Int=1`: Number of coordinates to refine simultaneously (must satisfy `degree ≤ dim(p)`)
 
 # Returns
-`Vector{ValuationPolydisc{S,T}}`: All child polydiscs (of length ``\binom{n}{degree} \cdot p^{degree}``)
+`Vector{ValuationPolydisc{S,T,N}}`: All child polydiscs (of length ``\binom{n}{degree} \cdot p^{degree}``)
 
 # Notes
 - Currently only works for ``\mathbb{Q}_p`` (not general extensions)
@@ -531,7 +534,7 @@ end
 # TODO: this should also work when the valuation is negative...
 
 @doc raw"""
-    children_along_branch(p::ValuationPolydisc{S,T}, branch_index::Int) where {S,T}
+    children_along_branch(p::ValuationPolydisc{S,T,N}, branch_index::Int) where {S,T,N}
 
 Generate all child polydiscs obtained by refining along a single coordinate branch.
 
@@ -539,11 +542,11 @@ Produces ``p`` children (where ``p`` is the prime) by increasing the radius in c
 `branch_index` by 1 and varying the center over all residue classes in that coordinate.
 
 # Arguments
-- `p::ValuationPolydisc{S,T}`: The parent polydisc
+- `p::ValuationPolydisc{S,T,N}`: The parent polydisc
 - `branch_index::Int`: The coordinate index to refine (must satisfy `1 ≤ branch_index ≤ dim(p)`)
 
 # Returns
-`Vector{ValuationPolydisc{S,T}}`: All child polydiscs along this branch (of length `prime(p)`)
+`Vector{ValuationPolydisc{S,T,N}}`: All child polydiscs along this branch (of length `prime(p)`)
 """
 function children_along_branch(
     p::ValuationPolydisc{S,T,N},
@@ -613,7 +616,7 @@ end
 
 
 @doc raw"""
-    concatenate(p::ValuationPolydisc{S,T}, q::ValuationPolydisc{S,T}) where {S,T}
+    concatenate(p::ValuationPolydisc{S,T,N1}, q::ValuationPolydisc{S,T,N2}) where {S,T,N1,N2}
 
 Concatenate two polydiscs to form a higher-dimensional polydisc.
 
@@ -621,11 +624,11 @@ If ``p = B(a, r)`` is an ``n``-dimensional polydisc and ``q = B(a', r')`` is an 
 polydisc, returns the ``(n+m)``-dimensional polydisc ``B((a, a'), (r, r'))``.
 
 # Arguments
-- `p::ValuationPolydisc{S,T}`: First polydisc
-- `q::ValuationPolydisc{S,T}`: Second polydisc
+- `p::ValuationPolydisc{S,T,N1}`: First polydisc
+- `q::ValuationPolydisc{S,T,N2}`: Second polydisc
 
 # Returns
-`ValuationPolydisc{S,T}`: The concatenated polydisc with `dim(p) + dim(q)` dimensions
+`ValuationPolydisc{S,T,N1+N2}`: The concatenated polydisc with `dim(p) + dim(q)` dimensions
 """
 function concatenate(p::ValuationPolydisc{S,T,N1}, q::ValuationPolydisc{S,T,N2}) where {S, T, N1, N2}
     new_center = (p.center..., q.center...)

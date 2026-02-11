@@ -127,14 +127,14 @@ function MSE_loss_init_new(model::AbstractModel{S}, data::Vector{Tuple{S,U}}) wh
     # implementation. Do some profiling!
 
     # Create a closure that computes the MSE for a batch of parameter values
-    function MSE_compute(params::Vector{ValuationPolydisc{S,T}}) where {S, T}
+    function MSE_compute(params::Vector{ValuationPolydisc{S,T,N}}) where {S, T, N}
         return map(batch_eval, params)
     end
 
     # TODO Paul: do same as above for the gradient computation!
 
     # Create a closure that computes the gradient of the loss along a batch of tangent directions
-    function MSE_grad(vs::Vector{ValuationTangent{S,T}}) where {S, T}
+    function MSE_grad(vs::Vector{ValuationTangent{S,T,N}}) where {S, T, N}
         return 1 / length(data) * [sum([2 * (batch_evals[i](v.point) - out) * directional_derivative(specialized_models[i], v) for (i, (_, out)) in enumerate(data)]) for v in vs]
     end
     return Loss(MSE_compute, MSE_grad)

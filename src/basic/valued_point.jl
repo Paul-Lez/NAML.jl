@@ -358,3 +358,30 @@ function lift(t::NTuple{N,S}) where {N,S<:PadicFieldElem}
     return ntuple(i -> ValuedFieldPoint{P,Prec,S}(t[i]), N)
 end
 
+@doc raw"""
+    lift(R::ZZRing, x::ValuedFieldPoint{P,Prec,S})
+
+Lift a `ValuedFieldPoint` to the integer ring ZZ by delegating to the underlying element.
+This is used primarily by `canonical_center` for polydisc hashing.
+
+# Example
+```julia
+K = PadicField(2, 20)
+x = ValuedFieldPoint{2,20,PadicFieldElem}(K(5))
+lifted = lift(ZZ, x)  # ZZRingElem
+```
+"""
+function lift(R::ZZRing, x::ValuedFieldPoint{P,Prec,S}) where {P,Prec,S}
+    return Oscar.lift(R, x.elem)
+end
+
+@doc raw"""
+    lift(x::ValuedFieldPoint{P,Prec,S})
+
+Scalar lift for `ValuedFieldPoint` (delegates to underlying element).
+Provided for consistency with Oscar's lift interface.
+"""
+function lift(x::ValuedFieldPoint{P,Prec,S}) where {P,Prec,S}
+    return Oscar.lift(x.elem)
+end
+
