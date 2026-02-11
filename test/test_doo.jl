@@ -128,7 +128,7 @@ using Oscar
 
         best_value = get_best_value(optim.state)
         @test best_value !== nothing
-        @test best_value > 0  # Since value_transform converts loss to 1/(loss+eps)
+        @test best_value < 0  # Since value_transform converts loss to -loss
     end
 
     @testset "DOO B-value Computation" begin
@@ -168,7 +168,11 @@ using Oscar
         doo_optim = doo_descent_init(param, loss, 1, doo_config)
 
         hoo_config = HOOConfig(rho=0.5, nu1=0.1, max_depth=10, degree=1)
-        hoo_optim = hoo_descent_init(param, loss, 1, hoo_config)
+        hoo_optim = hoo_descent_init(param, loss, hoo_config)
+
+        # Record initial losses
+        initial_doo_loss = eval_loss(doo_optim)
+        initial_hoo_loss = eval_loss(hoo_optim)
 
         # Run both for same number of steps
         for i in 1:15
@@ -186,8 +190,8 @@ using Oscar
         println("HOO samples: ", hoo_optim.state.total_samples)
 
         # Both should improve from initial loss
-        @test doo_loss < initial_loss
-        @test hoo_loss < initial_loss
+        @test doo_loss < initial_doo_loss
+        @test hoo_loss < initial_hoo_loss
 
         # Both should have reasonable sample counts
         @test doo_optim.state.total_samples > 0
