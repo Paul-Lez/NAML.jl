@@ -30,7 +30,7 @@ include("visualization/loss_landscape.jl")
 # Export types and functions
 
 # From basic/valuation.jl
-export valuation
+export valuation, unit
 
 # From basic/valued_point.jl
 export ValuedFieldPoint

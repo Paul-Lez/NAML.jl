@@ -277,10 +277,11 @@ function canonical_center(p::ValuationPolydisc{S,T,N}) where {S,T,N}
         # The canonical form is center mod p^radius[i]
         c = p.center[i]
         r = p.radius[i]
-        if c.v >= r
+        v = valuation(c)
+        if v >= r
             0
         else
-            pr ^ c.v * mod(c.u, pr ^ (r - c.v))
+            pr ^ v * mod(unit(c), pr ^ (r - v))
         end
     end
 end
