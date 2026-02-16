@@ -1,0 +1,321 @@
+% ============================================================================
+% LaTeX Tables for Absolute Sum Minimization Experiment
+% Generated: 2026-02-16 12:57:04
+%
+% This file contains all tables for the absolute sum minimization experiments.
+% Include in your paper with: \input{absolute_sum_tables.tex}
+%
+% Required packages: booktabs
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% Table: Summary (mean final loss)
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Absolute sum minimization: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
+\label{tab:abssum-summary}
+\begin{tabular}{lccccccc}
+\toprule
+Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-100 & DOO \\
+\midrule
+1D\_2poly\_linear\_deg1 & $1.6$ & \textbf{$1.1$} & \textbf{$1.1$} & \textbf{$1.1$} & \textbf{$1.1$} & \textbf{$1.1$} & $1.1$ \\
+1D\_2poly\_quadratic\_deg1 & $1.1$ & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & $9.5{\scriptstyle\times 10^{-1}}$ \\
+1D\_3poly\_linear\_deg1 & $2.2$ & \textbf{$1.6$} & \textbf{$1.6$} & \textbf{$1.6$} & \textbf{$1.6$} & \textbf{$1.6$} & $1.6$ \\
+2D\_2poly\_linear\_deg1 & $1.7$ & $1.5{\scriptstyle\times 10^{-1}}$ & $1.1{\scriptstyle\times 10^{-1}}$ & \textbf{$1.0{\scriptstyle\times 10^{-1}}$} & $1.0{\scriptstyle\times 10^{-1}}$ & $1.3{\scriptstyle\times 10^{-1}}$ & $1.4{\scriptstyle\times 10^{-1}}$ \\
+2D\_3poly\_linear\_deg1 & $1.8$ & \textbf{$3.4{\scriptstyle\times 10^{-1}}$} & $3.5{\scriptstyle\times 10^{-1}}$ & $3.4{\scriptstyle\times 10^{-1}}$ & $3.4{\scriptstyle\times 10^{-1}}$ & $3.6{\scriptstyle\times 10^{-1}}$ & $3.6{\scriptstyle\times 10^{-1}}$ \\
+2D\_2poly\_quadratic\_deg1 & $1.7$ & $7.2{\scriptstyle\times 10^{-1}}$ & \textbf{$3.2{\scriptstyle\times 10^{-1}}$} & $3.2{\scriptstyle\times 10^{-1}}$ & \textbf{$3.2{\scriptstyle\times 10^{-1}}$} & $4.0{\scriptstyle\times 10^{-1}}$ & $3.3{\scriptstyle\times 10^{-1}}$ \\
+2D\_2poly\_linear\_deg2 & $8.0{\scriptstyle\times 10^{-1}}$ & $3.3{\scriptstyle\times 10^{-1}}$ & \textbf{$3.0{\scriptstyle\times 10^{-1}}$} & \textbf{$3.0{\scriptstyle\times 10^{-1}}$} & \textbf{$3.0{\scriptstyle\times 10^{-1}}$} & $3.3{\scriptstyle\times 10^{-1}}$ & $3.3{\scriptstyle\times 10^{-1}}$ \\
+2D\_3poly\_linear\_deg2 & $1.9$ & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & \textbf{$9.5{\scriptstyle\times 10^{-1}}$} & $9.6{\scriptstyle\times 10^{-1}}$ \\
+5D\_3poly\_linear\_deg1 & $2.8$ & $5.8{\scriptstyle\times 10^{-1}}$ & $5.4{\scriptstyle\times 10^{-1}}$ & $4.6{\scriptstyle\times 10^{-1}}$ & \textbf{$3.1{\scriptstyle\times 10^{-1}}$} & $1.3$ & $6.8{\scriptstyle\times 10^{-1}}$ \\
+5D\_5poly\_linear\_deg1 & $3.4$ & $1.3$ & $1.3$ & \textbf{$1.1$} & \textbf{$1.1$} & $1.8$ & $1.4$ \\
+5D\_3poly\_linear\_deg2 & $2.1$ & $7.6{\scriptstyle\times 10^{-1}}$ & $5.6{\scriptstyle\times 10^{-1}}$ & $5.6{\scriptstyle\times 10^{-1}}$ & \textbf{$4.8{\scriptstyle\times 10^{-1}}$} & $8.7{\scriptstyle\times 10^{-1}}$ & $6.6{\scriptstyle\times 10^{-1}}$ \\
+5D\_5poly\_linear\_deg2 & $3.8$ & $1.1$ & $1.1$ & $1.3$ & \textbf{$7.2{\scriptstyle\times 10^{-1}}$} & $1.1$ & $8.7{\scriptstyle\times 10^{-1}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Timing comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Mean wall-clock time (seconds) per optimizer for absolute sum minimization.}
+\label{tab:abssum-timing}
+\begin{tabular}{lccccccc}
+\toprule
+Configuration & Random & Greedy & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-100 & DOO \\
+\midrule
+1D\_2poly\_linear\_deg1 & 0.00 & 0.01 & 0.03 & 0.01 & 0.03 & 0.10 & 0.02 \\
+1D\_2poly\_quadratic\_deg1 & 0.00 & 0.00 & 0.01 & 0.02 & 0.09 & 0.02 & 0.00 \\
+1D\_3poly\_linear\_deg1 & 0.00 & 0.00 & 0.01 & 0.02 & 0.03 & 0.04 & 0.00 \\
+2D\_2poly\_linear\_deg1 & 0.00 & 0.01 & 0.03 & 0.02 & 0.04 & 0.64 & 0.02 \\
+2D\_3poly\_linear\_deg1 & 0.00 & 0.00 & 0.01 & 0.02 & 0.19 & 0.03 & 0.00 \\
+2D\_2poly\_quadratic\_deg1 & 0.00 & 0.00 & 0.02 & 0.11 & 0.14 & 0.17 & 0.00 \\
+2D\_2poly\_linear\_deg2 & 0.00 & 0.00 & 0.01 & 0.02 & 0.04 & 1.63 & 0.00 \\
+2D\_3poly\_linear\_deg2 & 0.00 & 0.00 & 0.01 & 0.03 & 0.05 & 0.31 & 0.00 \\
+5D\_3poly\_linear\_deg1 & 0.00 & 0.01 & 0.20 & 0.04 & 0.08 & 0.14 & 0.03 \\
+5D\_5poly\_linear\_deg1 & 0.00 & 0.00 & 0.02 & 0.04 & 0.18 & 0.05 & 0.00 \\
+5D\_3poly\_linear\_deg2 & 0.00 & 0.00 & 0.07 & 0.12 & 0.28 & 0.17 & 0.01 \\
+5D\_5poly\_linear\_deg2 & 0.00 & 0.01 & 0.07 & 0.12 & 0.28 & 0.19 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Overall optimizer comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Overall optimizer comparison aggregated across all absolute sum configurations. Shows mean performance metrics.}
+\label{tab:abssum-optimizer-aggregate}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Mean Loss & Improv.~(\%) & Mean Time (s) & Configs \\
+\midrule
+Random & $2.07e+00$ & 24.7 & 0.00 & 12 \\
+Greedy & $8.11e-01$ & 68.9 & 0.00 & 12 \\
+MCTS-50 & $7.58e-01$ & 71.5 & 0.04 & 12 \\
+MCTS-100 & $7.43e-01$ & 71.9 & 0.05 & 12 \\
+MCTS-200 & \textbf{$6.78e-01$} & 73.5 & 0.12 & 12 \\
+DAG-MCTS-100 & $8.93e-01$ & 67.2 & 0.29 & 12 \\
+DOO & $7.69e-01$ & 70.7 & 0.01 & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Tables: Detailed results per configuration
+% ----------------------------------------------------------------------------
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 1D\_2poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-1}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.65e+00$ & 12.5 & 0.00 \\
+Greedy & \textbf{$1.05e+00$} & 46.7 & 0.01 \\
+MCTS-50 & \textbf{$1.05e+00$} & 46.7 & 0.03 \\
+MCTS-100 & \textbf{$1.05e+00$} & 46.7 & 0.01 \\
+MCTS-200 & \textbf{$1.05e+00$} & 46.7 & 0.03 \\
+DAG-MCTS-100 & \textbf{$1.05e+00$} & 46.7 & 0.10 \\
+DOO & $1.05e+00$ & 46.7 & 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 1D\_2poly\_quadratic\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-2}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.07e+00$ & 36.2 & 0.00 \\
+Greedy & \textbf{$9.50e-01$} & 42.5 & 0.00 \\
+MCTS-50 & \textbf{$9.50e-01$} & 42.5 & 0.01 \\
+MCTS-100 & \textbf{$9.50e-01$} & 42.5 & 0.02 \\
+MCTS-200 & \textbf{$9.50e-01$} & 42.5 & 0.09 \\
+DAG-MCTS-100 & \textbf{$9.50e-01$} & 42.5 & 0.02 \\
+DOO & $9.50e-01$ & 42.5 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 1D\_3poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-3}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.18e+00$ & 17.5 & 0.00 \\
+Greedy & \textbf{$1.55e+00$} & 44.7 & 0.00 \\
+MCTS-50 & \textbf{$1.55e+00$} & 44.7 & 0.01 \\
+MCTS-100 & \textbf{$1.55e+00$} & 44.7 & 0.02 \\
+MCTS-200 & \textbf{$1.55e+00$} & 44.7 & 0.03 \\
+DAG-MCTS-100 & \textbf{$1.55e+00$} & 44.7 & 0.04 \\
+DOO & $1.55e+00$ & 44.7 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 2D\_2poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-4}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.70e+00$ & 10.0 & 0.00 \\
+Greedy & $1.52e-01$ & 91.6 & 0.01 \\
+MCTS-50 & $1.08e-01$ & 94.5 & 0.03 \\
+MCTS-100 & \textbf{$1.04e-01$} & 94.8 & 0.02 \\
+MCTS-200 & $1.04e-01$ & 94.8 & 0.04 \\
+DAG-MCTS-100 & $1.29e-01$ & 93.1 & 0.64 \\
+DOO & $1.43e-01$ & 92.4 & 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 2D\_3poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-5}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.77e+00$ & 36.3 & 0.00 \\
+Greedy & \textbf{$3.43e-01$} & 87.9 & 0.00 \\
+MCTS-50 & $3.45e-01$ & 87.8 & 0.01 \\
+MCTS-100 & $3.44e-01$ & 87.8 & 0.02 \\
+MCTS-200 & $3.44e-01$ & 87.8 & 0.19 \\
+DAG-MCTS-100 & $3.59e-01$ & 87.3 & 0.03 \\
+DOO & $3.62e-01$ & 87.2 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 2D\_2poly\_quadratic\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-6}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.71e+00$ & 14.7 & 0.00 \\
+Greedy & $7.22e-01$ & 63.9 & 0.00 \\
+MCTS-50 & \textbf{$3.20e-01$} & 84.0 & 0.02 \\
+MCTS-100 & $3.21e-01$ & 84.0 & 0.11 \\
+MCTS-200 & \textbf{$3.20e-01$} & 84.0 & 0.14 \\
+DAG-MCTS-100 & $4.00e-01$ & 80.0 & 0.17 \\
+DOO & $3.28e-01$ & 83.6 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 2D\_2poly\_linear\_deg2. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-7}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $8.00e-01$ & 50.8 & 0.00 \\
+Greedy & $3.25e-01$ & 78.3 & 0.00 \\
+MCTS-50 & \textbf{$3.00e-01$} & 80.0 & 0.01 \\
+MCTS-100 & \textbf{$3.00e-01$} & 80.0 & 0.02 \\
+MCTS-200 & \textbf{$3.00e-01$} & 80.0 & 0.04 \\
+DAG-MCTS-100 & $3.25e-01$ & 78.3 & 1.63 \\
+DOO & $3.25e-01$ & 78.1 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 2D\_3poly\_linear\_deg2. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-8}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.91e+00$ & 26.8 & 0.00 \\
+Greedy & \textbf{$9.50e-01$} & 63.3 & 0.00 \\
+MCTS-50 & \textbf{$9.50e-01$} & 63.3 & 0.01 \\
+MCTS-100 & \textbf{$9.50e-01$} & 63.3 & 0.03 \\
+MCTS-200 & \textbf{$9.50e-01$} & 63.3 & 0.05 \\
+DAG-MCTS-100 & \textbf{$9.50e-01$} & 63.3 & 0.31 \\
+DOO & $9.63e-01$ & 62.8 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 5D\_3poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-9}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.75e+00$ & 8.3 & 0.00 \\
+Greedy & $5.81e-01$ & 80.6 & 0.01 \\
+MCTS-50 & $5.37e-01$ & 82.1 & 0.20 \\
+MCTS-100 & $4.63e-01$ & 84.6 & 0.04 \\
+MCTS-200 & \textbf{$3.06e-01$} & 89.8 & 0.08 \\
+DAG-MCTS-100 & $1.27e+00$ & 57.5 & 0.14 \\
+DOO & $6.75e-01$ & 77.5 & 0.03 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 5D\_5poly\_linear\_deg1. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-10}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.40e+00$ & 32.0 & 0.00 \\
+Greedy & $1.27e+00$ & 74.6 & 0.00 \\
+MCTS-50 & $1.34e+00$ & 73.2 & 0.02 \\
+MCTS-100 & \textbf{$1.06e+00$} & 78.9 & 0.04 \\
+MCTS-200 & \textbf{$1.06e+00$} & 78.9 & 0.18 \\
+DAG-MCTS-100 & $1.75e+00$ & 65.0 & 0.05 \\
+DOO & $1.35e+00$ & 73.0 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 5D\_3poly\_linear\_deg2. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-11}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.12e+00$ & 26.8 & 0.00 \\
+Greedy & $7.59e-01$ & 74.3 & 0.00 \\
+MCTS-50 & $5.64e-01$ & 80.8 & 0.07 \\
+MCTS-100 & $5.62e-01$ & 81.2 & 0.12 \\
+MCTS-200 & \textbf{$4.79e-01$} & 83.9 & 0.28 \\
+DAG-MCTS-100 & $8.70e-01$ & 70.3 & 0.17 \\
+DOO & $6.59e-01$ & 77.8 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Detailed results for configuration: 5D\_5poly\_linear\_deg2. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:abssum-detail-12}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.76e+00$ & 24.8 & 0.00 \\
+Greedy & $1.08e+00$ & 78.5 & 0.01 \\
+MCTS-50 & $1.09e+00$ & 78.3 & 0.07 \\
+MCTS-100 & $1.26e+00$ & 74.7 & 0.12 \\
+MCTS-200 & \textbf{$7.24e-01$} & 85.5 & 0.28 \\
+DAG-MCTS-100 & $1.10e+00$ & 77.9 & 0.19 \\
+DOO & $8.69e-01$ & 82.6 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

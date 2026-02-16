@@ -1,0 +1,107 @@
+Loaded sanity check configurations
+Number of experiments: 3
+Epochs per optimizer: 20
+
+======================================================================
+SANITY CHECK: MCTS vs DAG-MCTS COMPARISON
+======================================================================
+Start time: 2026-02-16T13:34:46.266
+======================================================================
+
+
+######################################################################
+# EXPERIMENT 1/3
+######################################################################
+
+======================================================================
+Experiment: sanity_1D_2poly
+======================================================================
+Prime: 2, Polynomials: 2, Variables: 1, Degree: 1, Samples: 5
+Dimension: 1
+----------------------------------------------------------------------
+
+  [Sample 1/5]
+    ✗ Error in DAG-MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    Initial: 1.500000e+00
+
+  [Sample 2/5]
+    ✗ Error in DAG-MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    Initial: 2.000000e+00
+
+  [Sample 3/5]
+    ✗ Error in DAG-MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    Initial: 2.000000e+00
+
+  [Sample 4/5]
+    ✗ Error in DAG-MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    Initial: 2.000000e+00
+
+  [Sample 5/5]
+    ✗ Error in DAG-MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in DAG-MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-200-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-50-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    ✗ Error in MCTS-100-deg2: ArgumentError("degree exceeding dimension of polydisc")
+    Initial: 2.000000e+00
+
+
+######################################################################
+# EXPERIMENT 2/3
+######################################################################
+
+======================================================================
+Experiment: sanity_2D_3poly
+======================================================================
+Prime: 2, Polynomials: 3, Variables: 2, Degree: 1, Samples: 5
+Dimension: 2
+----------------------------------------------------------------------
+
+  [Sample 1/5]
+    Initial: 3.000000e+00
+
+  [Sample 2/5]
+    Initial: 3.000000e+00
+
+  [Sample 3/5]
+    Initial: 2.500000e+00
+
+  [Sample 4/5]
+    Initial: 2.500000e+00
+
+  [Sample 5/5]
+    Initial: 2.500000e+00
+
+
+######################################################################
+# EXPERIMENT 3/3
+######################################################################
+
+======================================================================
+Experiment: sanity_5D_3poly
+======================================================================
+Prime: 2, Polynomials: 3, Variables: 5, Degree: 1, Samples: 5
+Dimension: 5
+----------------------------------------------------------------------
+
+  [Sample 1/5]

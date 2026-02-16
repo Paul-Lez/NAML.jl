@@ -141,20 +141,6 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.dag_mcts_descent_init(param, loss, config)
             end
         ),
-        "UCT" => Dict(
-            "type" => "UCT",
-            "params" => Dict("max_depth" => 10, "num_simulations" => quick ? 20 : 100,
-                             "exploration_constant" => 1.41, "degree" => 1),
-            "init" => (param, loss) -> begin
-                config = NAML.UCTConfig(
-                    max_depth=10,
-                    num_simulations=quick ? 20 : 100,
-                    exploration_constant=1.41,
-                    degree=1
-                )
-                NAML.uct_descent_init(param, loss, config)
-            end
-        ),
         "DOO" => Dict(
             "type" => "DOO",
             "params" => Dict("max_depth" => quick ? 10 : 15, "degree" => 1),
@@ -176,7 +162,7 @@ function get_optimizer_configs(; quick::Bool=false)
 end
 
 # Canonical ordering for display
-const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "UCT", "DOO"]
+const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "DOO"]
 
 # ============================================================================
 # Create target function loss

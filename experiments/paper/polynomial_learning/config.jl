@@ -87,9 +87,9 @@ comprehensive = [
 # ============================================================================
 
 # Default: use small experiments for quick testing
-experiment_configs = small_experiments
+# experiment_configs = small_experiments
 
 # Uncomment one of these to use a different experiment set:
 # experiment_configs = degree_sweep
 # experiment_configs = prime_sweep
-# experiment_configs = comprehensive
+experiment_configs = comprehensive

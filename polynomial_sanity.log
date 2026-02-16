@@ -1,0 +1,110 @@
+Loaded sanity check configurations
+Number of experiments: 3
+Epochs per optimizer: 20
+
+======================================================================
+SANITY CHECK: MCTS vs DAG-MCTS COMPARISON
+======================================================================
+Start time: 2026-02-16T13:34:28.748
+======================================================================
+
+
+######################################################################
+# EXPERIMENT 1/3
+######################################################################
+
+======================================================================
+Experiment: sanity_2adic_deg2
+======================================================================
+Prime: 2, Degree: 2, Points: 3, Samples: 5
+Dimension (num coefficients): 3
+----------------------------------------------------------------------
+
+  [Sample 1/5]
+    ✗ Sample 1 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 2/5]
+    ✗ Sample 2 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 3/5]
+    ✗ Sample 3 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 4/5]
+    ✗ Sample 4 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 5/5]
+    ✗ Sample 5 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+
+######################################################################
+# EXPERIMENT 2/3
+######################################################################
+
+======================================================================
+Experiment: sanity_2adic_deg3
+======================================================================
+Prime: 2, Degree: 3, Points: 4, Samples: 5
+Dimension (num coefficients): 4
+----------------------------------------------------------------------
+
+  [Sample 1/5]
+    ✗ Sample 1 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 2/5]
+    ✗ Sample 2 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 3/5]
+    ✗ Sample 3 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 4/5]
+    ✗ Sample 4 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 5/5]
+    ✗ Sample 5 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+
+######################################################################
+# EXPERIMENT 3/3
+######################################################################
+
+======================================================================
+Experiment: sanity_2adic_deg5
+======================================================================
+Prime: 2, Degree: 5, Points: 6, Samples: 5
+Dimension (num coefficients): 6
+----------------------------------------------------------------------
+
+  [Sample 1/5]
+    ✗ Sample 1 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 2/5]
+    ✗ Sample 2 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 3/5]
+    ✗ Sample 3 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 4/5]
+    ✗ Sample 4 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+  [Sample 5/5]
+    ✗ Sample 5 failed: MethodError(Main.generate_random_padic, (2, 20, 1), 0x0000000000009ebd)
+
+
+======================================================================
+SUMMARY: MCTS vs DAG-MCTS COMPARISON
+======================================================================
+ERROR: LoadError: ParseError:
+# Error @ /Users/pl24/Documents/naml/experiments/paper/polynomial_learning/sanity_run.jl:360:27
+                        println("    → DAG-MCTS achieves better loss (lower is better)")
+                    elsif loss_ratio > 1.0
+#                         └ ── Expected `end`
+Stacktrace:
+ [1] top-level scope
+   @ ~/Documents/naml/experiments/paper/polynomial_learning/sanity_run.jl:360
+ [2] include(mod::Module, _path::String)
+   @ Base ./Base.jl:306
+ [3] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:317
+ [4] _start()
+   @ Base ./client.jl:550
+in expression starting at /Users/pl24/Documents/naml/experiments/paper/polynomial_learning/sanity_run.jl:360
