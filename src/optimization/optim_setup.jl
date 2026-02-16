@@ -12,9 +12,9 @@ closures that capture any necessary data (e.g., training data).
 - `eval::Function`: Function to evaluate the loss, signature: `(param) -> scalar`
 - `grad::Function`: Function to compute gradient, signature: `(tangent_vector) -> scalar`
 """
-struct Loss
-    eval::Function
-    grad::Function
+struct Loss{F1,F2}
+    eval::F1
+    grad::F2
 end
 
 function Base.:+(f::Loss, g::Loss)
@@ -51,17 +51,17 @@ should have data baked in as a closure.
 - `U`: State type
 - `V`: Context type
 """
-mutable struct OptimSetup{S,T,N,U,V}
+mutable struct OptimSetup{S,T,N,U,V,L<:Loss,O}
     # The loss function (should be a closure over any data)
     # loss.eval should have type (param) -> scalar
     # loss.grad should have type (tangent_vector) -> scalar
-    loss::Loss
+    loss::L
     # The current parameter value
     param::ValuationPolydisc{S,T,N}
     # An optimiser is a function that takes in the loss and param
     # (plus eventually other parameters, e.g. learning rate)
     # and outputs a new choice of parameters
-    optimiser::Function
+    optimiser::O
     # The state is an optional field that records the state of the optimisation
     # process, e.g. previous steps that were made, etc.
     # This is useful since some optimisation methods may depend on the state.
@@ -100,9 +100,9 @@ Update the parameter values in the optimization setup.
 Mutates the optimization setup in place.
 """
 function update_param!(
-    optim::OptimSetup{S,T,N,U,V},
+    optim::OptimSetup{S,T,N,U,V,L,O},
     param::ValuationPolydisc{S,T,N}
-) where {S, T, N, U, V}
+) where {S, T, N, U, V, L, O}
     optim.param = param
 end
 
@@ -118,7 +118,7 @@ Update the optimizer state in the optimization setup.
 # Notes
 Mutates the optimization setup in place.
 """
-function update_state!(optim::OptimSetup{S,T,N,U,V}, state::U) where {S, T, N, U, V}
+function update_state!(optim::OptimSetup{S,T,N,U,V,L,O}, state::U) where {S, T, N, U, V, L, O}
     optim.state = state
 end
 

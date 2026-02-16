@@ -455,12 +455,14 @@ end
 
 function (eval::LinearPolynomialEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
     # Compute constant term
-    constant_term = eval.constant + sum([eval.coefficients[i] * p.center[i] for i in 1:N])
+    constant_term = eval.constant + sum(eval.coefficients[i] * p.center[i] for i in 1:N)
 
     # Find minimum valuation
-    abs_values = [eval.coeff_valuations[i] + p.radius[i] for i in 1:N]
-    push!(abs_values, valuation(constant_term))
-    min_val = minimum(abs_values)
+    min_val = valuation(constant_term)
+    for i in 1:N
+        v = eval.coeff_valuations[i] + p.radius[i]
+        v < min_val && (min_val = v)
+    end
 
     # Compute absolute value
     return Float64(prime(p))^(-min_val)
