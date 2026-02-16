@@ -55,3 +55,25 @@ function Base.abs(a::padic)
     v = valuation(a)
     return Float64(Nemo.prime(a.parent))^(-v)
 end
+
+@doc raw"""
+    unit(a::padic)
+
+Extract the unit part of a p-adic number.
+
+For a p-adic number ``a = p^v \cdot u`` where ``u`` is a p-adic unit,
+returns the unit ``u``.
+
+# Arguments
+- `a::padic`: A p-adic number
+
+# Returns
+The unit part ``u`` (accessed via `a.u` for `PadicFieldElem`)
+
+# Note
+This provides a generic interface to the unit part of p-adic numbers.
+For custom p-adic implementations, define `unit(a::YourType)` for your type.
+"""
+function unit(a::padic)
+    return a.u
+end
