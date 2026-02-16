@@ -90,25 +90,29 @@ end
 
 
 """
-    create_absolute_sum_loss(polys::Vector{<:NAML.PolydiscFunction{S}}) where S
+    create_absolute_sum_loss(f::NAML.PolydiscFunction{S}, ::Type{VP}) where {S, VP<:NAML.ValuationPolydisc}
     -> NAML.Loss
 
-Create a loss function that computes the sum of absolute values: |f₁| + |f₂| + ... + |fₙ|
+Create a loss function from a PolydiscFunction using typed evaluators (zero dynamic dispatch).
 
 # Arguments
-- `polys::Vector{<:NAML.PolydiscFunction{S}}`: Vector of polynomial functions
+- `f::NAML.PolydiscFunction{S}`: The function to minimize (e.g., LinearAbsolutePolynomialSum)
+- `::Type{VP}`: The polydisc type for typed evaluator construction
 
 # Returns
-- A `NAML.Loss` struct that evaluates the sum of absolute values
+- A `NAML.Loss` struct that evaluates using typed evaluators
 """
-function create_absolute_sum_loss(polys::Vector{<:NAML.PolydiscFunction{S}}) where S
-    # Create the sum: |f₁| + |f₂| + ... + |fₙ|
-    total_sum = sum(polys)
+function create_absolute_sum_loss(f::NAML.PolydiscFunction{S}, ::Type{VP}) where {S, VP<:NAML.ValuationPolydisc}
+    batch_eval = NAML.batch_evaluate_init(f, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    return NAML.Loss(batch_fn, x -> 0)
+end
 
-    # Create batch evaluator
+# Legacy fallback for backward compatibility
+function create_absolute_sum_loss(polys::Vector{<:NAML.PolydiscFunction{S}}) where S
+    total_sum = sum(polys)
     batch_eval = NAML.batch_evaluate_init(total_sum)
     batch_fn = (params) -> map(batch_eval, params)
-
     return NAML.Loss(batch_fn, x -> 0)
 end
 
@@ -139,20 +143,23 @@ function generate_random_absolute_sum_problem(p::Int, prec::Int, num_polys::Int,
                                              num_vars::Int, degree::Int)
     K = PadicField(p, prec)
 
+    # Construct polydisc type for typed evaluators
+    VP = NAML.ValuationPolydisc{PadicFieldElem, Int, num_vars}
+
     if degree == 1
-        # Use LinearAbsolutePolynomialSum for linear case (optimized)
+        # Flatten all linear polynomials into a single LinearAbsolutePolynomialSum
         linear_polys = [generate_random_linear_polynomial(K, num_vars) for _ in 1:num_polys]
-        poly_funcs = [NAML.LinearAbsolutePolynomialSum([lp]) for lp in linear_polys]
+        total_func = NAML.LinearAbsolutePolynomialSum(linear_polys)
     else
-        # Use AbsolutePolynomialSum for higher degrees
+        # Flatten all polynomials into a single AbsolutePolynomialSum
         var_names = ["x$i" for i in 1:num_vars]
         R, _ = polynomial_ring(K, var_names)
 
         polys = [generate_random_polynomial(K, num_vars, degree, var_names) for _ in 1:num_polys]
-        poly_funcs = [NAML.AbsolutePolynomialSum([poly]) for poly in polys]
+        total_func = NAML.AbsolutePolynomialSum(polys)
     end
 
-    return create_absolute_sum_loss(poly_funcs)
+    return create_absolute_sum_loss(total_func, VP)
 end
 
 
