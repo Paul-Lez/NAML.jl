@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# generate_paper_tables.sh
+#
+# Runs all paper experiments and regenerates the corresponding LaTeX tables.
+#
+# Usage:
+#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N]
+#
+# Flags:
+#   --quick      Use reduced epochs/simulations for a fast smoke-test run
+#   --epochs N   Override number of epochs (default: 20)
+#
+# The script must be run from the repository root, e.g.:
+#   bash experiments/paper/generate_paper_tables.sh
+# ==============================================================================
+
+set -euo pipefail
+
+# ----------------------------------------------------------------------------
+# Parse flags
+# ----------------------------------------------------------------------------
+QUICK_FLAG=""
+EPOCHS_FLAG=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --quick)   QUICK_FLAG="--quick" ;;
+        --epochs)  shift; EPOCHS_FLAG="--epochs $1" ;;
+        --epochs=*) EPOCHS_FLAG="--epochs ${arg#*=}" ;;
+    esac
+done
+
+# ----------------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------------
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+step() { echo; echo "==== $* ===="; }
+ok()   { echo "  OK: $*"; }
+err()  { echo "  ERROR: $*" >&2; exit 1; }
+
+# ----------------------------------------------------------------------------
+# Absolute sum minimization
+# ----------------------------------------------------------------------------
+
+ABSSUM_DIR="$SCRIPT_DIR/absolute_sum_minimization"
+ABSSUM_RESULTS="$ABSSUM_DIR/absolute_sum_results_paper.json"
+
+step "Running absolute_sum_minimization experiments"
+julia --project="$REPO_ROOT" \
+    "$ABSSUM_DIR/run_experiments.jl" \
+    --paper --save \
+    --output absolute_sum_results_paper.json \
+    $QUICK_FLAG $EPOCHS_FLAG
+ok "Experiments done"
+
+step "Generating absolute_sum_minimization tables"
+if [ ! -f "$ABSSUM_RESULTS" ]; then
+    err "Expected results file not found: $ABSSUM_RESULTS"
+fi
+julia --project="$REPO_ROOT" \
+    "$ABSSUM_DIR/generate_tables.jl" \
+    "$ABSSUM_RESULTS" \
+    --output absolute_sum_tables.tex
+ok "Tables written to $ABSSUM_DIR/absolute_sum_tables.tex"
+
+# ----------------------------------------------------------------------------
+# Function learning
+# ----------------------------------------------------------------------------
+
+FUNCLEARN_DIR="$SCRIPT_DIR/function_learning"
+FUNCLEARN_RESULTS="$FUNCLEARN_DIR/function_learning_results_paper.json"
+
+step "Running function_learning experiments"
+julia --project="$REPO_ROOT" \
+    "$FUNCLEARN_DIR/run_experiments.jl" \
+    --paper --save \
+    --output function_learning_results_paper.json \
+    $QUICK_FLAG $EPOCHS_FLAG
+ok "Experiments done"
+
+step "Generating function_learning tables"
+if [ ! -f "$FUNCLEARN_RESULTS" ]; then
+    err "Expected results file not found: $FUNCLEARN_RESULTS"
+fi
+julia --project="$REPO_ROOT" \
+    "$FUNCLEARN_DIR/generate_tables.jl" \
+    "$FUNCLEARN_RESULTS" \
+    --output function_learning_tables.tex
+ok "Tables written to $FUNCLEARN_DIR/function_learning_tables.tex"
+
+# ----------------------------------------------------------------------------
+# Polynomial learning
+# ----------------------------------------------------------------------------
+
+POLYLEARN_DIR="$SCRIPT_DIR/polynomial_learning"
+POLYLEARN_RESULTS="$POLYLEARN_DIR/poly_learning_results_paper.json"
+
+step "Running polynomial_learning experiments"
+julia --project="$REPO_ROOT" \
+    "$POLYLEARN_DIR/run_experiments.jl" \
+    --paper --save \
+    --output poly_learning_results_paper.json \
+    $QUICK_FLAG $EPOCHS_FLAG
+ok "Experiments done"
+
+step "Generating polynomial_learning tables"
+if [ ! -f "$POLYLEARN_RESULTS" ]; then
+    err "Expected results file not found: $POLYLEARN_RESULTS"
+fi
+julia --project="$REPO_ROOT" \
+    "$POLYLEARN_DIR/generate_tables.jl" \
+    "$POLYLEARN_RESULTS" \
+    --output polynomial_learning_tables.tex
+ok "Tables written to $POLYLEARN_DIR/polynomial_learning_tables.tex"
+
+# ----------------------------------------------------------------------------
+# Done
+# ----------------------------------------------------------------------------
+
+echo
+echo "======================================================================"
+echo "All paper experiments complete and tables regenerated."
+echo "  $ABSSUM_DIR/absolute_sum_tables.tex"
+echo "  $FUNCLEARN_DIR/function_learning_tables.tex"
+echo "  $POLYLEARN_DIR/polynomial_learning_tables.tex"
+echo "======================================================================"
