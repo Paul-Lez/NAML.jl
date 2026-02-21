@@ -82,6 +82,26 @@ function latex_sci_compact(x::Float64; digits::Int=1)
 end
 
 # ============================================================================
+# Helper: escape special characters for LaTeX
+# ============================================================================
+
+function escape_latex(s::String)
+    # Escape LaTeX special characters in order
+    # Note: backslash must be first, and we need to be careful with replacement order
+    s = replace(s, "\\" => "\\textbackslash{}")
+    s = replace(s, "~" => "\\~{}")
+    s = replace(s, "^" => "\\^{}")
+    s = replace(s, "_" => "\\_")
+    s = replace(s, "#" => "\\#")
+    s = replace(s, "&" => "\\&")
+    s = replace(s, "%" => "\\%")
+    s = replace(s, "\$" => "\\\$")
+    s = replace(s, "{" => "\\{")
+    s = replace(s, "}" => "\\}")
+    return s
+end
+
+# ============================================================================
 # Helper: Get optimizer names from first valid experiment
 # ============================================================================
 
@@ -98,7 +118,7 @@ function get_optimizer_names(experiments)
 
     # Return optimizer names in a consistent order
     opt_names = collect(keys(agg))
-    preferred_order = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "UCT", "HOO", "DOO"]
+    preferred_order = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "UCT", "HOO", "DOO"]
     ordered = []
     for name in preferred_order
         if name in opt_names
@@ -114,9 +134,55 @@ function get_optimizer_names(experiments)
     return ordered
 end
 
-optimizer_order = get_optimizer_names(experiments)
+optimizer_order = haskey(metadata, "optimizer_order") ? metadata["optimizer_order"] : get_optimizer_names(experiments)
 println("Optimizers: $(join(optimizer_order, ", "))")
 println()
+
+# ============================================================================
+# Table 0: Configuration summary table
+# ============================================================================
+
+function generate_config_table(experiments)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "config"), experiments)
+    if isempty(valid)
+        return "% No valid experiments to tabulate\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Function learning experiment configurations. " *
+                 "Each row describes one experimental setup.}")
+    push!(lines, "\\label{tab:funclearn-config}")
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{lcccccccc}")
+    push!(lines, "\\toprule")
+    push!(lines, "Experiment & Prime (\$p\$) & Precision & Degree & \\#Points & Target & Threshold & Scale & \\#Samples \\\\")
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        prime = config["prime"]
+        prec = config["prec"]
+        degree = config["degree"]
+        n_points = config["n_points"]
+        target_fn = config["target_fn"]
+        threshold = config["threshold"]
+        scale = config["scale"]
+        num_samples = config["num_samples"]
+
+        row = "$name & $prime & $prec & $degree & $n_points & $target_fn & $threshold & $scale & $num_samples \\\\"
+        push!(lines, row)
+    end
+
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
 
 # ============================================================================
 # Table 1: Summary table (mean final loss across all experiments)
@@ -139,6 +205,7 @@ function generate_summary_table(experiments, optimizer_order)
 
     # Build column spec
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -167,7 +234,7 @@ function generate_summary_table(experiments, optimizer_order)
             end
         end
 
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
@@ -188,6 +255,7 @@ function generate_summary_table(experiments, optimizer_order)
 
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -211,6 +279,7 @@ function generate_timing_table(experiments, optimizer_order)
 
     n_opts = length(optimizer_order)
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -225,13 +294,13 @@ function generate_timing_table(experiments, optimizer_order)
     for exp in valid
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.2f", t)
+                row *= " & " * @sprintf("%.4f", t)
             else
                 row *= " & ---"
             end
@@ -242,13 +311,91 @@ function generate_timing_table(experiments, optimizer_order)
 
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
 end
 
 # ============================================================================
-# Table 3: Detailed results (per configuration)
+# Table 3: Accuracy comparison
+# ============================================================================
+
+function generate_accuracy_table(experiments, optimizer_order)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
+    if isempty(valid)
+        return "% No valid experiments for accuracy table\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Mean classification accuracy (\\%) per optimizer for function learning. " *
+                 "Higher is better. Accuracy improvement (delta) shows change from initial accuracy.}")
+    push!(lines, "\\label{tab:funclearn-accuracy}")
+
+    n_opts = length(optimizer_order)
+    col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{$col_spec}")
+    push!(lines, "\\toprule")
+
+    header = "Configuration"
+    for opt_name in optimizer_order
+        header *= " & $opt_name"
+    end
+    header *= " \\\\"
+    push!(lines, header)
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        agg = exp["aggregate"]
+
+        # Find best (maximum) mean final accuracy for bolding
+        best_accuracy = -Inf
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                acc = agg[opt_name]["mean_final_accuracy"]
+                if acc > best_accuracy
+                    best_accuracy = acc
+                end
+            end
+        end
+
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        row = name
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                acc = agg[opt_name]["mean_final_accuracy"]
+                acc_pct = acc * 100
+                acc_delta = agg[opt_name]["mean_accuracy_improvement"] * 100
+
+                # Format: XX.X% (+YY.Y%)
+                formatted = @sprintf("%.1f\\%% (%+.1f)", acc_pct, acc_delta)
+                if acc == best_accuracy
+                    row *= " & \\textbf{$formatted}"
+                else
+                    row *= " & $formatted"
+                end
+            else
+                row *= " & ---"
+            end
+        end
+        row *= " \\\\"
+        push!(lines, row)
+    end
+
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
+# Table 4: Detailed results (per configuration)
 # ============================================================================
 
 function generate_detailed_tables(experiments, optimizer_order)
@@ -262,17 +409,17 @@ function generate_detailed_tables(experiments, optimizer_order)
     for (idx, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         lines = String[]
         push!(lines, "\\begin{table}[ht]")
         push!(lines, "\\centering")
         push!(lines, "\\caption{Detailed results for configuration: $(name). " *
-                     "Shows mean final loss, improvement ratio (\\%), and wall-clock time.}")
+                     "Shows mean final loss, accuracy (\\%), improvement ratio (\\%), and wall-clock time.}")
         push!(lines, "\\label{tab:funclearn-detail-$(idx)}")
-        push!(lines, "\\begin{tabular}{lrrr}")
+        push!(lines, "\\begin{tabular}{lrrrr}")
         push!(lines, "\\toprule")
-        push!(lines, "Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
+        push!(lines, "Optimizer & Final Loss & Accuracy (\\%) & Improv.~(\\%) & Time (s) \\\\")
         push!(lines, "\\midrule")
 
         # Find best loss for bolding
@@ -294,10 +441,11 @@ function generate_detailed_tables(experiments, optimizer_order)
                 if loss == best_loss
                     loss_str = "\\textbf{$loss_str}"
                 end
+                acc_str = @sprintf("%.1f", stats["mean_final_accuracy"] * 100)
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
-                time_str = @sprintf("%.2f", stats["mean_time"])
+                time_str = @sprintf("%.4f", stats["mean_time"])
 
-                push!(lines, "$opt_name & $loss_str & $improv_str & $time_str \\\\")
+                push!(lines, "$opt_name & $loss_str & $acc_str & $improv_str & $time_str \\\\")
             end
         end
 
@@ -430,6 +578,7 @@ function generate_function_type_table(experiments, optimizer_order)
 
     n_opts = length(optimizer_order)
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -445,7 +594,7 @@ function generate_function_type_table(experiments, optimizer_order)
 
     for fn_type in sort(collect(keys(by_type)))
         exps = by_type[fn_type]
-        row = replace(fn_type, "_" => "\\_")
+        row = "\\texttt{" * fn_type * "}"
 
         for opt_name in optimizer_order
             losses = Float64[]
@@ -468,6 +617,7 @@ function generate_function_type_table(experiments, optimizer_order)
 
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -486,13 +636,16 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% Generated: $(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))")
     push!(lines, "%")
     push!(lines, "% This file contains all tables for the function learning experiments.")
-    push!(lines, "% Include in your paper with: \\input{function_learning_tables.tex}")
-    push!(lines, "%")
-    push!(lines, "% Required packages: booktabs")
     push!(lines, "% ============================================================================")
     push!(lines, "")
 
     # Generate all tables
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Configuration Summary")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, generate_config_table(experiments))
+
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Summary (mean final loss)")
     push!(lines, "% ----------------------------------------------------------------------------")
@@ -504,6 +657,12 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
     push!(lines, generate_timing_table(experiments, optimizer_order))
+
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Accuracy comparison")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, generate_accuracy_table(experiments, optimizer_order))
 
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Overall optimizer comparison")

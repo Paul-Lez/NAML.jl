@@ -45,11 +45,11 @@ degree_sweep = [
 prime_sweep = [
     Dict("name" => "2adic_deg3_4pts", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
-    Dict("name" => "3adic_deg3_4pts", "prime" => 3, "prec" => 15,
+    Dict("name" => "3adic_deg3_4pts", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
-    Dict("name" => "5adic_deg3_4pts", "prime" => 5, "prec" => 12,
+    Dict("name" => "5adic_deg3_4pts", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
-    Dict("name" => "7adic_deg3_4pts", "prime" => 7, "prec" => 10,
+    Dict("name" => "7adic_deg3_4pts", "prime" => 7, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
 ]
 
@@ -68,18 +68,24 @@ comprehensive = [
          "degree" => 5, "n_points" => 6, "num_samples" => 5),
 
     # 3-adic
-    Dict("name" => "3adic_deg2_3pts", "prime" => 3, "prec" => 15,
+    Dict("name" => "3adic_deg2_3pts", "prime" => 3, "prec" => 20,
          "degree" => 2, "n_points" => 3, "num_samples" => 5),
-    Dict("name" => "3adic_deg3_4pts", "prime" => 3, "prec" => 15,
+    Dict("name" => "3adic_deg3_4pts", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
-    Dict("name" => "3adic_deg4_5pts", "prime" => 3, "prec" => 15,
+    Dict("name" => "3adic_deg4_5pts", "prime" => 3, "prec" => 20,
          "degree" => 4, "n_points" => 5, "num_samples" => 5),
+    Dict("name" => "3adic_deg5_6pts", "prime" => 3, "prec" => 20,
+         "degree" => 5, "n_points" => 6, "num_samples" => 5),
 
     # 5-adic
-    Dict("name" => "5adic_deg2_3pts", "prime" => 5, "prec" => 12,
+    Dict("name" => "5adic_deg2_3pts", "prime" => 5, "prec" => 20,
          "degree" => 2, "n_points" => 3, "num_samples" => 5),
-    Dict("name" => "5adic_deg3_4pts", "prime" => 5, "prec" => 12,
+    Dict("name" => "5adic_deg3_4pts", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
+    Dict("name" => "5adic_deg4_5pts", "prime" => 5, "prec" => 20,
+         "degree" => 4, "n_points" => 5, "num_samples" => 5),
+    Dict("name" => "5adic_deg5_6pts", "prime" => 5, "prec" => 20,
+         "degree" => 5, "n_points" => 6, "num_samples" => 5),
 ]
 
 # ============================================================================

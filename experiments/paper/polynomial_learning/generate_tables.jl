@@ -87,6 +87,67 @@ function latex_sci_compact(x::Float64; digits::Int=1)
 end
 
 # ============================================================================
+# Helper: escape special characters for LaTeX
+# ============================================================================
+
+function escape_latex(s::String)
+    # Escape LaTeX special characters in order
+    # Note: backslash must be first, and we need to be careful with replacement order
+    s = replace(s, "\\" => "\\textbackslash{}")
+    s = replace(s, "~" => "\\~{}")
+    s = replace(s, "^" => "\\^{}")
+    s = replace(s, "_" => "\\_")
+    s = replace(s, "#" => "\\#")
+    s = replace(s, "&" => "\\&")
+    s = replace(s, "%" => "\\%")
+    s = replace(s, "\$" => "\\\$")
+    s = replace(s, "{" => "\\{")
+    s = replace(s, "}" => "\\}")
+    return s
+end
+
+# ============================================================================
+# Table 0: Configuration summary table
+# ============================================================================
+
+function generate_config_table(experiments)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "config"), experiments)
+    if isempty(valid)
+        return "% No valid experiments to tabulate\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Polynomial learning experiment configurations. " *
+                 "Each row describes one experimental setup.}")
+    push!(lines, "\\label{tab:poly-learning-config}")
+    push!(lines, "\\begin{tabular}{lcccccc}")
+    push!(lines, "\\toprule")
+    push!(lines, "Experiment & Prime (\$p\$) & Precision & Degree & \\#Points & \\#Samples \\\\")
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        prime = config["prime"]
+        prec = config["prec"]
+        degree = config["degree"]
+        n_points = config["n_points"]
+        num_samples = config["num_samples"]
+
+        row = "$name & $prime & $prec & $degree & $n_points & $num_samples \\\\"
+        push!(lines, row)
+    end
+
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
 # Table 1: Summary table (all experiments, all optimizers)
 # ============================================================================
 
@@ -135,7 +196,7 @@ function generate_summary_table(experiments, optimizer_order)
             end
         end
 
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
@@ -185,14 +246,14 @@ function generate_detailed_table(experiments, optimizer_order)
     for (ei, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         for (oi, opt_name) in enumerate(optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 stats = agg[opt_name]
                 loss_str = @sprintf("\$%.2e\$", stats["mean_final_loss"])
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
-                time_str = @sprintf("%.2f", stats["mean_time"])
+                time_str = @sprintf("%.4f", stats["mean_time"])
 
                 exp_label = oi == 1 ? name : ""
                 push!(lines, "$exp_label & $opt_name & $loss_str & $improv_str & $time_str \\\\")
@@ -412,13 +473,13 @@ function generate_timing_table(experiments, optimizer_order)
     for exp in valid
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.2f", t)
+                row *= " & " * @sprintf("%.4f", t)
             else
                 row *= " & ---"
             end
@@ -447,13 +508,16 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% Generated: $(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))")
     push!(lines, "%")
     push!(lines, "% This file contains all tables for the polynomial learning experiments.")
-    push!(lines, "% Include in your paper with: \\input{polynomial_learning_tables.tex}")
-    push!(lines, "%")
-    push!(lines, "% Required packages: booktabs")
     push!(lines, "% ============================================================================")
     push!(lines, "")
 
     # Generate all tables
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Configuration Summary")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, generate_config_table(experiments))
+
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Summary (mean final loss)")
     push!(lines, "% ----------------------------------------------------------------------------")

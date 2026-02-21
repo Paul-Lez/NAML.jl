@@ -154,6 +154,274 @@ paper_experiments = [
         "num_samples" => 5,
         "opt_degree" => 2
     ),
+
+    # ========================================================================
+    # PRIME = 3 EXPERIMENTS (same structure as prime=2)
+    # ========================================================================
+
+    # GROUP 1: 1D Problems (opt_degree must be 1)
+    Dict(
+        "name" => "1D_2poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 1,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "1D_2poly_quadratic_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 1,
+        "degree" => 2,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "1D_3poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 1,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 2: 2D Problems with opt_degree=1
+    Dict(
+        "name" => "2D_2poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "2D_3poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "2D_2poly_quadratic_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 2,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 3: 2D Problems with opt_degree=2 (finer search)
+    Dict(
+        "name" => "2D_2poly_linear_deg2_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+    Dict(
+        "name" => "2D_3poly_linear_deg2_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+
+    # GROUP 4: 5D Problems with opt_degree=1 (coarse search)
+    Dict(
+        "name" => "5D_3poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "5D_5poly_linear_deg1_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 5,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 5: 5D Problems with opt_degree=2 (fine search)
+    Dict(
+        "name" => "5D_3poly_linear_deg2_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+    Dict(
+        "name" => "5D_5poly_linear_deg2_3adic",
+        "prime" => 3,
+        "prec" => 20,
+        "num_polys" => 5,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+
+    # ========================================================================
+    # PRIME = 5 EXPERIMENTS (same structure as prime=2)
+    # ========================================================================
+
+    # GROUP 1: 1D Problems (opt_degree must be 1)
+    Dict(
+        "name" => "1D_2poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 1,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "1D_2poly_quadratic_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 1,
+        "degree" => 2,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "1D_3poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 1,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 2: 2D Problems with opt_degree=1
+    Dict(
+        "name" => "2D_2poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "2D_3poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "2D_2poly_quadratic_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 2,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 3: 2D Problems with opt_degree=2 (finer search)
+    Dict(
+        "name" => "2D_2poly_linear_deg2_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 2,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+    Dict(
+        "name" => "2D_3poly_linear_deg2_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 2,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+
+    # GROUP 4: 5D Problems with opt_degree=1 (coarse search)
+    Dict(
+        "name" => "5D_3poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+    Dict(
+        "name" => "5D_5poly_linear_deg1_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 5,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 1
+    ),
+
+    # GROUP 5: 5D Problems with opt_degree=2 (fine search)
+    Dict(
+        "name" => "5D_3poly_linear_deg2_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 3,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
+    Dict(
+        "name" => "5D_5poly_linear_deg2_5adic",
+        "prime" => 5,
+        "prec" => 20,
+        "num_polys" => 5,
+        "num_vars" => 5,
+        "degree" => 1,
+        "num_samples" => 5,
+        "opt_degree" => 2
+    ),
 ]
 
 # Use paper experiments by default

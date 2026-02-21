@@ -34,11 +34,28 @@ using Oscar
 using .NAML
 using Printf
 using Dates
+using Random
 
 # Parse command line arguments
 quick_mode = "--quick" in ARGS
 save_results = "--save" in ARGS
 use_config_file = "--config" in ARGS
+
+# Parse --epochs N
+global n_epochs_arg = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--epochs" && i < length(ARGS)
+        global n_epochs_arg = parse(Int, ARGS[i+1])
+    end
+end
+
+# Parse --output filename
+global output_filename = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--output" && i < length(ARGS)
+        global output_filename = ARGS[i+1]
+    end
+end
 
 # ============================================================================
 # Experiment Configuration
@@ -66,13 +83,14 @@ else
 end
 
 # Set epochs based on mode
+global n_epochs = quick_mode ? 5 : 20
+if !isnothing(n_epochs_arg)
+    global n_epochs = n_epochs_arg
+end
 if quick_mode
-    n_epochs = 5
     println("="^70)
     println("QUICK MODE: Running with only $n_epochs epochs per optimizer")
     println("="^70)
-else
-    n_epochs = 20
 end
 
 # ============================================================================
@@ -88,7 +106,7 @@ function get_optimizer_configs(K, opt_degree)
                 NAML.random_descent_init(param, loss, state, config)
             end
         ),
-        "Greedy" => Dict(
+        "Best-First" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
                 config = (false, opt_degree)
@@ -117,10 +135,34 @@ function get_optimizer_configs(K, opt_degree)
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
+        "DAG-MCTS-50" => Dict(
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick_mode ? 10 : 50,
+                    exploration_constant=1.41,
+                    degree=opt_degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
         "DAG-MCTS-100" => Dict(
             "init" => (param, loss) -> begin
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 20 : 100,
+                    exploration_constant=1.41,
+                    degree=opt_degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-200" => Dict(
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
                     degree=opt_degree,
                     persist_table=true,
@@ -140,6 +182,13 @@ function get_optimizer_configs(K, opt_degree)
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
+        "Best-First-deg2" => Dict(
+            "init" => (param, loss) -> begin
+                state = 1
+                config = (false, 2)
+                NAML.greedy_descent_init(param, loss, state, config)
+            end
+        ),
         "DOO" => Dict(
             "init" => (param, loss) -> begin
                 # Get prime from field K
@@ -157,6 +206,9 @@ function get_optimizer_configs(K, opt_degree)
         ),
     )
 end
+
+# Canonical ordering for display (shared across all experiments)
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
 
 # ============================================================================
 # Run single sample (one random problem instance)
@@ -252,7 +304,7 @@ function run_single_experiment(config::Dict)
 
             # Print brief summary
             println(@sprintf("    Initial: %.6e", sample_result["initial_loss"]))
-            for opt_name in ["Random", "Greedy", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "MCTS-200", "DOO"]
+            for opt_name in OPTIMIZER_ORDER
                 if haskey(sample_result["optimizers"], opt_name)
                     opt_result = sample_result["optimizers"][opt_name]
                     if !haskey(opt_result, "error")
@@ -329,12 +381,16 @@ end
 # Run all experiments
 # ============================================================================
 
+# Set random seed for reproducibility
+Random.seed!(42)
+
 println("\n" * "="^70)
 println("ABSOLUTE SUM MINIMIZATION EXPERIMENT RUNNER")
 println("="^70)
 println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
+println("Random seed: 42 (for reproducibility)")
 println("="^70)
 
 all_results = []
@@ -379,7 +435,7 @@ for (i, result) in enumerate(all_results)
             "Optimizer", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
         println("  " * "-"^75)
 
-        for opt_name in ["Random", "Greedy", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "MCTS-200", "DOO"]
+        for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
                 println(@sprintf("  %-15s %15.6e %15.6e %14.1f%% %12.2f",
@@ -404,12 +460,8 @@ if save_results
     try
         using JSON
 
-        timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
-        filename = "absolute_sum_results_$(timestamp).json"
-        filepath = joinpath(@__DIR__, filename)
-
         # Convert results to JSON-serializable format
-        json_results = []
+        json_experiments = []
         for result in all_results
             json_result = Dict{String, Any}()
             json_result["config"] = result["config"]
@@ -423,11 +475,26 @@ if save_results
                 end
             end
 
-            push!(json_results, json_result)
+            push!(json_experiments, json_result)
         end
 
+        json_output = Dict{String, Any}()
+        json_output["metadata"] = Dict(
+            "timestamp" => string(Dates.now()),
+            "n_epochs" => n_epochs,
+            "quick_mode" => quick_mode,
+            "optimizer_order" => OPTIMIZER_ORDER,
+        )
+        json_output["experiments"] = json_experiments
+
+        if isnothing(output_filename)
+            timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
+            global output_filename = "absolute_sum_results_$(timestamp).json"
+        end
+        filepath = joinpath(@__DIR__, output_filename)
+
         open(filepath, "w") do f
-            JSON.print(f, json_results, 2)
+            JSON.print(f, json_output, 2)
         end
 
         println("\n✓ Results saved to: $filepath")

@@ -11,12 +11,14 @@ Flags:
     --quick     Reduced epochs (5) and simulations (10) for quick testing
     --save      Save results to JSON file (default filename with timestamp)
     --config    Load experiment configurations from config.jl
+    --paper     Use paper-ready configurations from paper_config.jl
     --epochs N  Set number of epochs (default: 20)
     --output F  Specify output JSON filename
 
 Examples:
     julia --project=. experiments/paper/function_learning/run_experiments.jl --quick --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --config --save
+    julia --project=. experiments/paper/function_learning/run_experiments.jl --paper --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --epochs 50 --save --output results.json
 """
 
@@ -27,6 +29,7 @@ using Oscar
 using .NAML
 using Printf
 using Dates
+using Random
 
 # ============================================================================
 # Parse command line arguments
@@ -35,6 +38,7 @@ using Dates
 quick_mode = "--quick" in ARGS
 save_results = "--save" in ARGS
 use_config_file = "--config" in ARGS
+use_paper_config = "--paper" in ARGS
 
 # Parse --epochs N
 global n_epochs = quick_mode ? 5 : 20
@@ -56,7 +60,11 @@ end
 # Experiment Configuration
 # ============================================================================
 
-if use_config_file
+if use_paper_config
+    include("paper_config.jl")
+    configs = experiment_configs
+    println("Loaded PAPER-READY experiment configurations from paper_config.jl")
+elseif use_config_file
     include("config.jl")
     configs = experiment_configs
     println("Loaded experiment configurations from config.jl")
@@ -83,15 +91,22 @@ Each initializer takes (param, loss) and returns an OptimSetup.
 """
 function get_optimizer_configs(; quick::Bool=false)
     return Dict(
-        "Greedy" => Dict(
-            "type" => "Greedy",
+        "Random" => Dict(
+            "type" => "Random",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.random_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
+        "Best-First" => Dict(
+            "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 1),
             "init" => (param, loss) -> begin
                 NAML.greedy_descent_init(param, loss, 1, (false, 1))
             end
         ),
-        "Greedy-deg2" => Dict(
-            "type" => "Greedy",
+        "Best-First-deg2" => Dict(
+            "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 2),
             "init" => (param, loss) -> begin
                 NAML.greedy_descent_init(param, loss, 1, (false, 2))
@@ -125,6 +140,36 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
+        "MCTS-200" => Dict(
+            "type" => "MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => 1),
+            "init" => (param, loss) -> begin
+                config = NAML.MCTSConfig(
+                    num_simulations=quick ? 40 : 200,
+                    exploration_constant=1.41,
+                    selection_mode=NAML.BestValue,
+                    degree=1
+                )
+                NAML.mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-50" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 10 : 50,
+                             "exploration_constant" => 1.41, "degree" => 1,
+                             "persist_table" => true),
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick ? 10 : 50,
+                    exploration_constant=1.41,
+                    degree=1,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
         "DAG-MCTS-100" => Dict(
             "type" => "DAG-MCTS",
             "params" => Dict("num_simulations" => quick ? 20 : 100,
@@ -133,6 +178,22 @@ function get_optimizer_configs(; quick::Bool=false)
             "init" => (param, loss) -> begin
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick ? 20 : 100,
+                    exploration_constant=1.41,
+                    degree=1,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-200" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => 1,
+                             "persist_table" => true),
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick ? 40 : 200,
                     exploration_constant=1.41,
                     degree=1,
                     persist_table=true,
@@ -161,8 +222,8 @@ function get_optimizer_configs(; quick::Bool=false)
     )
 end
 
-# Canonical ordering for display
-const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "DOO"]
+# Canonical ordering for display (shared across all experiments)
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
 
 # ============================================================================
 # Create target function loss
@@ -184,6 +245,9 @@ function create_function_learning_loss(K, degree, n_points, target_fn, threshold
         y_values = [0.0 for _ in 1:n_points]
     elseif target_fn == "one"
         y_values = [1.0 for _ in 1:n_points]
+    elseif target_fn == "random"
+        # Random binary labels (0 or 1)
+        y_values = [Float64(rand(0:1)) for _ in 1:n_points]
     else
         error("Unknown target function: $target_fn")
     end
@@ -240,6 +304,53 @@ function create_function_learning_loss(K, degree, n_points, target_fn, threshold
 end
 
 # ============================================================================
+# Compute classification accuracy
+# ============================================================================
+
+"""
+Compute classification accuracy for a polynomial classifier.
+
+Given polynomial coefficients, evaluates accuracy on the data using:
+- Polynomial evaluation: f(x) = a0 + a1*x + ... + an*x^n
+- Sigmoid activation: p = 1/(1 + exp(-(|f(x)| - threshold)/scale))
+- Binary prediction: predict 1 if p > 0.5, else 0
+"""
+function compute_accuracy(coeffs, data, threshold, scale)
+    # Simple polynomial evaluation function
+    function eval_polynomial(coeffs, x)
+        result = coeffs[1]  # a0
+        x_power = x
+        for i in 2:length(coeffs)
+            result += coeffs[i] * x_power
+            x_power *= x
+        end
+        return result
+    end
+
+    correct = 0
+    total = length(data)
+
+    for (x, y) in data
+        # Evaluate polynomial at x
+        poly_val = eval_polynomial(coeffs, x)
+        val_float = Float64(abs(poly_val))
+
+        # Sigmoid activation
+        z = (val_float - threshold) / scale
+        prob = 1.0 / (1.0 + exp(-z))
+
+        # Predict: 1 if prob > 0.5, else 0
+        prediction = prob > 0.5 ? 1.0 : 0.0
+
+        if prediction == y
+            correct += 1
+        end
+    end
+
+    return correct / total
+end
+
+# ============================================================================
 # Run a single sample (one random problem instance)
 # ============================================================================
 
@@ -262,6 +373,10 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_param = NAML.ValuationPolydisc(param_center, [0 for _ in 1:degree+1])
     initial_loss = loss.eval([initial_param])[1]
 
+    # Compute initial accuracy
+    initial_coeffs = [NAML.unwrap(c) for c in NAML.center(initial_param)]
+    initial_accuracy = compute_accuracy(initial_coeffs, data, threshold, scale)
+
     # Get optimizer configs
     opt_configs = get_optimizer_configs(quick=quick_mode)
 
@@ -269,6 +384,7 @@ function run_single_sample(config::Dict, sample_num::Int)
     sample_results = Dict{String, Any}()
     sample_results["sample_num"] = sample_num
     sample_results["initial_loss"] = initial_loss
+    sample_results["initial_accuracy"] = initial_accuracy
 
     # Store data info (as floats for JSON serializability)
     sample_results["data"] = Dict(
@@ -303,13 +419,19 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
+            # Compute final accuracy
+            final_coeffs = [NAML.unwrap(c) for c in NAML.center(optim.param)]
+            final_accuracy = compute_accuracy(final_coeffs, data, threshold, scale)
+
             sample_results["optimizers"][opt_name] = Dict(
                 "time" => elapsed,
                 "final_loss" => final_loss,
+                "final_accuracy" => final_accuracy,
                 "losses" => losses,
                 "improvement" => initial_loss - final_loss,
                 "improvement_ratio" => (initial_loss > 0) ?
                     (initial_loss - final_loss) / initial_loss : 0.0,
+                "accuracy_improvement" => final_accuracy - initial_accuracy,
                 "hyperparameters" => opt_setup["params"],
             )
 
@@ -346,14 +468,19 @@ function run_single_experiment(config::Dict)
             push!(results["samples"], sample_result)
 
             # Brief summary
-            println(@sprintf("    Initial loss: %.6e", sample_result["initial_loss"]))
+            println(@sprintf("    Initial loss: %.6e, accuracy: %.2f%%",
+                sample_result["initial_loss"], sample_result["initial_accuracy"] * 100))
             for opt_name in OPTIMIZER_ORDER
                 if haskey(sample_result["optimizers"], opt_name)
                     opt_result = sample_result["optimizers"][opt_name]
                     if !haskey(opt_result, "error")
-                        println(@sprintf("    %-15s Final: %.6e  (%.1f%% improvement, %.2fs)",
+                        acc_imp = opt_result["accuracy_improvement"] * 100
+                        acc_imp_str = acc_imp >= 0 ? "+$(Printf.@sprintf("%.2f", acc_imp))" : Printf.@sprintf("%.2f", acc_imp)
+                        println(@sprintf("    %-15s Final: %.6e, accuracy: %.2f%%  (loss: %.1f%%, acc: %s%%, %.2fs)",
                             opt_name, opt_result["final_loss"],
+                            opt_result["final_accuracy"] * 100,
                             opt_result["improvement_ratio"] * 100,
+                            acc_imp_str,
                             opt_result["time"]))
                     else
                         println("    $opt_name: ERROR - $(opt_result["error"])")
@@ -406,11 +533,19 @@ function compute_aggregate_stats!(results::Dict)
 
         if !isempty(opt_data)
             final_losses = [d["final_loss"] for d in opt_data]
+            final_accuracies = [d["final_accuracy"] for d in opt_data]
+            accuracy_improvements = [d["accuracy_improvement"] for d in opt_data]
+
             results["aggregate"][opt_name] = Dict(
                 "mean_final_loss" => _mean(final_losses),
                 "std_final_loss" => length(opt_data) > 1 ? _std(final_losses) : 0.0,
                 "min_final_loss" => minimum(final_losses),
                 "max_final_loss" => maximum(final_losses),
+                "mean_final_accuracy" => _mean(final_accuracies),
+                "std_final_accuracy" => length(opt_data) > 1 ? _std(final_accuracies) : 0.0,
+                "min_final_accuracy" => minimum(final_accuracies),
+                "max_final_accuracy" => maximum(final_accuracies),
+                "mean_accuracy_improvement" => _mean(accuracy_improvements),
                 "mean_improvement" => _mean([d["improvement"] for d in opt_data]),
                 "mean_improvement_ratio" => _mean([d["improvement_ratio"] for d in opt_data]),
                 "mean_time" => _mean([d["time"] for d in opt_data]),
@@ -425,6 +560,9 @@ end
 # Main execution
 # ============================================================================
 
+# Set random seed for reproducibility
+Random.seed!(42)
+
 println("\n" * "="^70)
 println("FUNCTION LEARNING EXPERIMENT RUNNER")
 println("="^70)
@@ -432,6 +570,7 @@ println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
 println("Quick mode: $quick_mode")
+println("Random seed: 42 (for reproducibility)")
 println("="^70)
 
 all_results = []
@@ -471,16 +610,19 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(@sprintf("  %-15s %15s %12s %12s %12s",
-            "Optimizer", "Mean Final", "Std", "Improv %", "Time (s)"))
-        println("  " * "-"^65)
+        println(@sprintf("  %-15s %15s %12s %12s %12s %12s",
+            "Optimizer", "Mean Final", "Std", "Accuracy", "Acc Δ", "Time (s)"))
+        println("  " * "-"^80)
 
         for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
-                println(@sprintf("  %-15s %15.6e %12.2e %11.1f%% %12.2f",
+                acc_delta = agg["mean_accuracy_improvement"] * 100
+                acc_delta_str = acc_delta >= 0 ? "+$(Printf.@sprintf("%.1f", acc_delta))" : Printf.@sprintf("%.1f", acc_delta)
+                println(@sprintf("  %-15s %15.6e %12.2e %11.1f%% %12s%% %12.2f",
                     opt_name, agg["mean_final_loss"], agg["std_final_loss"],
-                    agg["mean_improvement_ratio"] * 100, agg["mean_time"]))
+                    agg["mean_final_accuracy"] * 100,
+                    acc_delta_str, agg["mean_time"]))
             end
         end
     end

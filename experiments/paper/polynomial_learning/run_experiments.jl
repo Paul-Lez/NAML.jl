@@ -11,12 +11,14 @@ Flags:
     --quick     Reduced epochs (5) and simulations (10) for quick testing
     --save      Save results to JSON file (default filename with timestamp)
     --config    Load experiment configurations from config.jl
+    --paper     Use paper-ready configurations from paper_config.jl
     --epochs N  Set number of epochs (default: 20)
     --output F  Specify output JSON filename
 
 Examples:
     julia --project=. experiments/paper/polynomial_learning/run_experiments.jl --quick --save
     julia --project=. experiments/paper/polynomial_learning/run_experiments.jl --config --save
+    julia --project=. experiments/paper/polynomial_learning/run_experiments.jl --paper --save
     julia --project=. experiments/paper/polynomial_learning/run_experiments.jl --epochs 50 --save --output results.json
 """
 
@@ -27,6 +29,7 @@ using Oscar
 using .NAML
 using Printf
 using Dates
+using Random
 
 # ============================================================================
 # Parse command line arguments
@@ -35,6 +38,7 @@ using Dates
 quick_mode = "--quick" in ARGS
 save_results = "--save" in ARGS
 use_config_file = "--config" in ARGS
+use_paper_config = "--paper" in ARGS
 
 # Parse --epochs N
 global n_epochs = quick_mode ? 5 : 20
@@ -56,7 +60,11 @@ end
 # Experiment Configuration
 # ============================================================================
 
-if use_config_file
+if use_paper_config
+    include("paper_config.jl")
+    configs = experiment_configs
+    println("Loaded PAPER-READY experiment configurations from paper_config.jl")
+elseif use_config_file
     include("config.jl")
     configs = experiment_configs
     println("Loaded experiment configurations from config.jl")
@@ -84,11 +92,25 @@ The optimizer names encode the hyperparameters used.
 """
 function get_optimizer_configs(; quick::Bool=false)
     return Dict(
-        "Greedy" => Dict(
-            "type" => "Greedy",
+        "Random" => Dict(
+            "type" => "Random",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.random_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
+        "Best-First" => Dict(
+            "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 1),
             "init" => (param, loss) -> begin
                 NAML.greedy_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
+        "Best-First-deg2" => Dict(
+            "type" => "Best-First",
+            "params" => Dict("strict" => false, "degree" => 2),
+            "init" => (param, loss) -> begin
+                NAML.greedy_descent_init(param, loss, 1, (false, 2))
             end
         ),
         "MCTS-50" => Dict(
@@ -119,6 +141,36 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
+        "MCTS-200" => Dict(
+            "type" => "MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => 1),
+            "init" => (param, loss) -> begin
+                config = NAML.MCTSConfig(
+                    num_simulations=quick ? 40 : 200,
+                    exploration_constant=1.41,
+                    selection_mode=NAML.BestValue,
+                    degree=1
+                )
+                NAML.mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-50" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 10 : 50,
+                             "exploration_constant" => 1.41, "degree" => 1,
+                             "persist_table" => true),
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick ? 10 : 50,
+                    exploration_constant=1.41,
+                    degree=1,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
         "DAG-MCTS-100" => Dict(
             "type" => "DAG-MCTS",
             "params" => Dict("num_simulations" => quick ? 20 : 100,
@@ -127,6 +179,22 @@ function get_optimizer_configs(; quick::Bool=false)
             "init" => (param, loss) -> begin
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick ? 20 : 100,
+                    exploration_constant=1.41,
+                    degree=1,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-200" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => 1,
+                             "persist_table" => true),
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick ? 40 : 200,
                     exploration_constant=1.41,
                     degree=1,
                     persist_table=true,
@@ -155,8 +223,8 @@ function get_optimizer_configs(; quick::Bool=false)
     )
 end
 
-# Canonical ordering for display
-const OPTIMIZER_ORDER = ["Greedy", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "DOO"]
+# Canonical ordering for display (shared across all experiments)
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
 
 # ============================================================================
 # Run a single sample (one random problem instance)
@@ -354,6 +422,9 @@ end
 # Main execution
 # ============================================================================
 
+# Set random seed for reproducibility
+Random.seed!(42)
+
 println("\n" * "="^70)
 println("POLYNOMIAL LEARNING EXPERIMENT RUNNER")
 println("="^70)
@@ -361,6 +432,7 @@ println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
 println("Quick mode: $quick_mode")
+println("Random seed: 42 (for reproducibility)")
 println("="^70)
 
 all_results = []

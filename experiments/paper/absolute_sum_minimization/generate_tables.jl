@@ -46,8 +46,13 @@ if !isfile(json_file)
 end
 
 data = JSON.parsefile(json_file)
-experiments = isa(data, Dict) && haskey(data, "experiments") ? data["experiments"] : data
-metadata = isa(data, Dict) && haskey(data, "metadata") ? data["metadata"] : Dict()
+experiments = isa(data, AbstractDict) && haskey(data, "experiments") ? data["experiments"] : data
+metadata = isa(data, AbstractDict) && haskey(data, "metadata") ? data["metadata"] : Dict()
+
+# Ensure experiments is a proper array/vector
+if !isa(experiments, AbstractVector)
+    experiments = [experiments[k] for k in sort(collect(keys(experiments)))]
+end
 
 println("Loaded $(length(experiments)) experiments from $json_file")
 println()
@@ -70,6 +75,26 @@ function latex_sci_compact(x::Float64; digits::Int=1)
 end
 
 # ============================================================================
+# Helper: escape special characters for LaTeX
+# ============================================================================
+
+function escape_latex(s::String)
+    # Escape LaTeX special characters in order
+    # Note: backslash must be first, and we need to be careful with replacement order
+    s = replace(s, "\\" => "\\textbackslash{}")
+    s = replace(s, "~" => "\\~{}")
+    s = replace(s, "^" => "\\^{}")
+    s = replace(s, "_" => "\\_")
+    s = replace(s, "#" => "\\#")
+    s = replace(s, "&" => "\\&")
+    s = replace(s, "%" => "\\%")
+    s = replace(s, "\$" => "\\\$")
+    s = replace(s, "{" => "\\{")
+    s = replace(s, "}" => "\\}")
+    return s
+end
+
+# ============================================================================
 # Helper: Get optimizer names from first valid experiment
 # ============================================================================
 
@@ -86,7 +111,7 @@ function get_optimizer_names(experiments)
 
     # Return optimizer names in a consistent order
     opt_names = collect(keys(agg))
-    preferred_order = ["Random", "Greedy", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-100", "UCT", "HOO", "DOO"]
+    preferred_order = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "UCT", "HOO", "DOO"]
     ordered = []
     for name in preferred_order
         if name in opt_names
@@ -102,9 +127,52 @@ function get_optimizer_names(experiments)
     return ordered
 end
 
-optimizer_order = get_optimizer_names(experiments)
+optimizer_order = haskey(metadata, "optimizer_order") ? metadata["optimizer_order"] : get_optimizer_names(experiments)
 println("Optimizers: $(join(optimizer_order, ", "))")
 println()
+
+# ============================================================================
+# Table 0: Configuration summary table
+# ============================================================================
+
+function generate_config_table(experiments)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "config"), experiments)
+    if isempty(valid)
+        return "% No valid experiments to tabulate\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Absolute sum minimization experiment configurations. " *
+                 "Each row describes one experimental setup.}")
+    push!(lines, "\\label{tab:abssum-config}")
+    push!(lines, "\\begin{tabular}{lcccccccc}")
+    push!(lines, "\\toprule")
+    push!(lines, "Experiment & Prime (\$p\$) & Precision & \\#Polys & \\#Vars & Poly Deg. & Opt Deg. & \\#Samples \\\\")
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        prime = config["prime"]
+        prec = config["prec"]
+        num_polys = config["num_polys"]
+        num_vars = config["num_vars"]
+        degree = config["degree"]
+        opt_degree = config["opt_degree"]
+        num_samples = config["num_samples"]
+
+        row = "$name & $prime & $prec & $num_polys & $num_vars & $degree & $opt_degree & $num_samples \\\\"
+        push!(lines, row)
+    end
+
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
 
 # ============================================================================
 # Table 1: Summary table (mean final loss across all experiments)
@@ -155,7 +223,7 @@ function generate_summary_table(experiments, optimizer_order)
             end
         end
 
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
@@ -213,13 +281,13 @@ function generate_timing_table(experiments, optimizer_order)
     for exp in valid
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.2f", t)
+                row *= " & " * @sprintf("%.4f", t)
             else
                 row *= " & ---"
             end
@@ -250,7 +318,7 @@ function generate_detailed_tables(experiments, optimizer_order)
     for (idx, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
-        name = replace(config["name"], "_" => "\\_")
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         lines = String[]
         push!(lines, "\\begin{table}[ht]")
@@ -283,7 +351,7 @@ function generate_detailed_tables(experiments, optimizer_order)
                     loss_str = "\\textbf{$loss_str}"
                 end
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
-                time_str = @sprintf("%.2f", stats["mean_time"])
+                time_str = @sprintf("%.4f", stats["mean_time"])
 
                 push!(lines, "$opt_name & $loss_str & $improv_str & $time_str \\\\")
             end
@@ -396,13 +464,16 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% Generated: $(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))")
     push!(lines, "%")
     push!(lines, "% This file contains all tables for the absolute sum minimization experiments.")
-    push!(lines, "% Include in your paper with: \\input{absolute_sum_tables.tex}")
-    push!(lines, "%")
-    push!(lines, "% Required packages: booktabs")
     push!(lines, "% ============================================================================")
     push!(lines, "")
 
     # Generate all tables
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Configuration Summary")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, generate_config_table(experiments))
+
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Summary (mean final loss)")
     push!(lines, "% ----------------------------------------------------------------------------")
