@@ -826,18 +826,18 @@ all maximum exponents, returns the minimal ones in terms of sum of components.
 function directional_exponent(f::AbstractAlgebra.Generic.MPoly{S}, v::ValuationTangent{S,T}) where {S, T}
     t = gens(f.parent)
     g = AbstractAlgebra.evaluate(f, t + v.direction)
-    abs_terms = [abs(Nemo.coeff(g, n)) * prod(v.point.radius .^ n) for n in Nemo.exponent_vectors(g)]
-    # Find all exponents at which the max is attained
-    max_exponents = findall(a -> a == maximum(abs_terms), abs_terms)
-    # In principle this if clause isn't necessary (the "else" part works for all possible cases)
-    # However I think this makes things faster.
-    if length(max_exponents) == 1
-        return max_exponents
-    else
-        # Find minimal exponents at which the max is attained. These
-        # are the directional exponents.
-        return findall(a -> sum(a) == minimum([sum(n) for n in max_exponents]), max_exponents)
-    end
+    exp_vecs  = collect(Nemo.exponent_vectors(g))
+    # Weight each term by the Gauss norm factor p^{-sum(radius * n)},
+    # matching the formula used in `evaluate`. The directional exponent is
+    # the exponent vector that achieves the maximum of |a_n| * p^{-<radius,n>}.
+    p = Float64(prime(v.point))
+    abs_terms = [abs(Nemo.coeff(g, i)) * p^(-sum(v.point.radius .* exp_vecs[i])) for i in eachindex(exp_vecs)]
+    # Find all exponent vectors at which the max is attained
+    max_val   = maximum(abs_terms)
+    max_evecs = [exp_vecs[i] for i in eachindex(exp_vecs) if abs_terms[i] == max_val]
+    # Among those, return the ones with minimal total degree (sum of exponents)
+    min_deg   = minimum(sum(n) for n in max_evecs)
+    return [n for n in max_evecs if sum(n) == min_deg]
 end
 
 @doc raw"""

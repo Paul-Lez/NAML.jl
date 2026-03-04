@@ -118,8 +118,11 @@ function gradient_descent(
 ) where {S, T, N, U}
     # Compute the children of the point param
     below_nodes = children(param, degree)
-    # Get the corresponding tangent vectors
-    tangents = [ValuationTangent(param, collect(lower_point.center), zeros(T, dim(param))) for lower_point in below_nodes]
+    # Get the corresponding tangent vectors.
+    # Evaluate gradient at each child (not at param): children have positive radius in one
+    # coordinate, which makes the p-adic directional derivative non-trivial. Evaluating at
+    # param (radius 0 everywhere) would give gradient 0 for all children.
+    tangents = [ValuationTangent(lower_point, collect(lower_point.center), zeros(T, dim(lower_point))) for lower_point in below_nodes]
     # In gradient descent, we look at the children of the current parameter point and take the child
     # that maximises the norm of the (downwards pointing) gradient
     grad_values = loss.grad(tangents)
