@@ -453,8 +453,8 @@ function children(p::ValuationPolydisc{S,T,N}, degree=1) where {S, T, N}
     P = Int(prime(p))
     K = base_field(p)
     prec = Int(Oscar.precision(K))
-    # Only produce children along dimensions where precision >= radius
-    valid_dims = [i for i in 1:N if prec >= p.radius[i]]
+    # Only produce children along dimensions where precision > radius
+    valid_dims = [i for i in 1:N if prec > p.radius[i]]
     length(valid_dims) < degree && return output
     sizehint!(output, binomial(length(valid_dims), degree) * P^degree)
     prime_as_padic = K(P)
@@ -504,8 +504,8 @@ optimize loops and potentially unroll iterations for small primes.
 function children(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, degree=1) where {P,Prec,PFE,T,N}
     @req dim(p) >= degree "degree exceeding dimension of polydisc"
     output = Vector{ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}}()
-    # Only produce children along dimensions where precision >= radius
-    valid_dims = [i for i in 1:N if Prec >= p.radius[i]]
+    # Only produce children along dimensions where precision > radius
+    valid_dims = [i for i in 1:N if Prec > p.radius[i]]
     length(valid_dims) < degree && return output
     sizehint!(output, binomial(length(valid_dims), degree) * P^degree)
     K = Base.parent(p.center[1].elem)
@@ -570,7 +570,7 @@ function children_along_branch(
 ) where {S, T, N}
     output = Vector{ValuationPolydisc{S,T,N}}()
     K = base_field(p)
-    Int(Oscar.precision(K)) >= p.radius[branch_index] || return output
+    Int(Oscar.precision(K)) > p.radius[branch_index] || return output
     P = Int(prime(p))
     sizehint!(output, P)
     # a "unit shrink" along a radius is the same as increasing the valuation
@@ -607,7 +607,7 @@ function children_along_branch(
 ) where {P,Prec,PFE,T,N}
     output = Vector{ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}}()
     # Only produce children if precision >= radius
-    Prec >= p.radius[branch_index] || return output
+    Prec > p.radius[branch_index] || return output
     # P is compile-time constant, so this loop bound is known at compile time
     sizehint!(output, P)
     # a "unit shrink" along a radius is the same as increasing the valuation
