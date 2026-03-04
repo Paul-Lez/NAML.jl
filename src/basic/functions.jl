@@ -91,9 +91,16 @@ struct SMul{S} <: PolydiscFunction{S}
     right::PolydiscFunction{S}
 end
 
-# Composition of a polydisc function with a real function
+# DifferentiableFunction: a real-valued function paired with its derivative
+struct DifferentiableFunction
+    f::Function    # Float64 -> Float64
+    df::Function   # Float64 -> Float64 (derivative)
+end
+(d::DifferentiableFunction)(x) = d.f(x)
+
+# Composition of a polydisc function with a differentiable real function
 struct Comp{S} <: PolydiscFunction{S}
-    left::Function
+    left::DifferentiableFunction
     right::PolydiscFunction{S}
 end
 
@@ -103,7 +110,9 @@ end
 
 struct Lambda{S} <: PolydiscFunction{S}
     func::Function
+    derivative::Union{Function, Nothing}
 end
+Lambda{S}(func) where S = Lambda{S}(func, nothing)
 
 Base.:+(a::PolydiscFunction{S}, b::PolydiscFunction{S}) where S = Add(a, b)
 Base.:-(a::PolydiscFunction{S}, b::PolydiscFunction{S}) where S = Sub(a, b)
@@ -135,7 +144,7 @@ function Base.:^(a::PolydiscFunction{S}, b::Int) where S
     end
 end
 
-comp(f::Function, g::PolydiscFunction{S}) where S = Comp(f, g)
+comp(f::DifferentiableFunction, g::PolydiscFunction{S}) where S = Comp(f, g)
 # function smul(a::Number, b::PolydiscFunction{S})
 
 @doc raw"""
@@ -361,6 +370,18 @@ function directional_derivative(c::Constant{S}, v::ValuationTangent{S,T}) where 
     return 0.0
 end
 
+function directional_derivative(fun::Comp{S}, v::ValuationTangent{S,T}) where {S, T}
+    # Chain rule: (f ∘ g)' = f'(g(x)) * g'(x)
+    inner_val = evaluate(fun.right, v.point)
+    inner_deriv = directional_derivative(fun.right, v)
+    return fun.left.df(inner_val) * inner_deriv
+end
+
+function directional_derivative(l::Lambda{S}, v::ValuationTangent{S,T}) where {S, T}
+    l.derivative === nothing && error("Lambda function has no derivative. Provide a derivative function at construction time.")
+    return l.derivative(v)
+end
+
 @doc raw"""
     evaluate(f::LinearAbsolutePolynomialSum{S}, p::ValuationPolydisc{S,T,N}) where {S, T, N}
 
@@ -529,8 +550,8 @@ function (eval::SMulEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
     return eval.scalar * eval.right(p)
 end
 
-# --- Composition with Real Function Evaluator ---
-struct CompEvaluator{S,T,N,F<:Function,R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
+# --- Composition with Differentiable Real Function Evaluator ---
+struct CompEvaluator{S,T,N,F<:DifferentiableFunction,R<:PolydiscFunctionEvaluator{S,T,N}} <: PolydiscFunctionEvaluator{S,T,N}
     outer::F
     inner::R
 end
@@ -548,10 +569,12 @@ function (eval::SumEvaluator)(p::ValuationPolydisc{S,T,N}) where {S,T,N}
     return sum(e(p) for e in eval.evaluators)
 end
 
-# --- Lambda Evaluator (wraps arbitrary functions) ---
+# --- Lambda Evaluator (wraps arbitrary functions with optional derivative) ---
 struct LambdaEvaluator{S,T,N} <: PolydiscFunctionEvaluator{S,T,N}
     func::Function
+    derivative::Union{Function, Nothing}
 end
+LambdaEvaluator{S,T,N}(func) where {S,T,N} = LambdaEvaluator{S,T,N}(func, nothing)
 
 function (eval::LambdaEvaluator{S,T,N})(p::ValuationPolydisc{S,T,N}) where {S,T,N}
     return eval.func(p)
@@ -655,7 +678,7 @@ function batch_evaluate_init(f::Comp{S}, P::Type{ValuationPolydisc{S,T,N}}) wher
 end
 
 function batch_evaluate_init(l::Lambda{S}, ::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
-    return LambdaEvaluator{S,T,N}(l.func)
+    return LambdaEvaluator{S,T,N}(l.func, l.derivative)
 end
 
 function batch_evaluate_init(f::LinearAbsolutePolynomialSum{S}, P::Type{ValuationPolydisc{S,T,N}}) where {S,T,N}
@@ -940,11 +963,17 @@ end
 
 function batch_evaluate_init(poly::AbstractAlgebra.Generic.MPoly{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
     VFP = ValuedFieldPoint{P,Prec,S}
-    function wrapped_eval(p::ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N})
+    function wrapped_eval(p::ValuationPolydisc)
         unwrapped_polydisc = ValuationPolydisc{S,T,N}(p.center |> unwrap, p.radius)
         return evaluate(poly, unwrapped_polydisc)
     end
-    return LambdaEvaluator{VFP,T,N}(wrapped_eval)
+    function wrapped_deriv(v::ValuationTangent)
+        unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
+        unwrapped_direction = collect(unwrap(v.direction))
+        unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
+        return directional_derivative(poly, unwrapped_tangent)
+    end
+    return LambdaEvaluator{VFP,T,N}(wrapped_eval, wrapped_deriv)
 end
 
 function batch_evaluate_init(f::AbsolutePolynomialSum{S}, ::Type{ValuationPolydisc{ValuedFieldPoint{P,Prec,S},T,N}}) where {S,P,Prec,T,N}
@@ -1012,4 +1041,59 @@ function directional_derivative(poly::AbstractAlgebra.Generic.MPoly{S}, v::Valua
     unwrapped_direction = collect(unwrap(v.direction))
     unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
     return directional_derivative(poly, unwrapped_tangent)
+end
+
+#=============================================================================
+ Directional Derivatives for Typed Evaluators
+=============================================================================#
+
+function directional_derivative(eval::ConstantEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return 0.0
+end
+
+function directional_derivative(eval::AddEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return directional_derivative(eval.left, v) + directional_derivative(eval.right, v)
+end
+
+function directional_derivative(eval::SubEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return directional_derivative(eval.left, v) - directional_derivative(eval.right, v)
+end
+
+function directional_derivative(eval::MulEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    # Product rule: (f*g)' = f'*g(p) + f(p)*g'
+    return directional_derivative(eval.left, v) * eval.right(v.point) +
+           eval.left(v.point) * directional_derivative(eval.right, v)
+end
+
+function directional_derivative(eval::DivEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    # Quotient rule: (f/g)' = (f'g - fg') / g²
+    f_val = eval.top(v.point)
+    g_val = eval.bottom(v.point)
+    f_deriv = directional_derivative(eval.top, v)
+    g_deriv = directional_derivative(eval.bottom, v)
+    return (f_deriv * g_val - f_val * g_deriv) / (g_val^2)
+end
+
+function directional_derivative(eval::SMulEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return eval.scalar * directional_derivative(eval.right, v)
+end
+
+function directional_derivative(eval::SumEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return sum(directional_derivative(e, v) for e in eval.evaluators)
+end
+
+function directional_derivative(eval::MPolyEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    return directional_derivative(eval.poly, v)
+end
+
+function directional_derivative(eval::CompEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    # Chain rule: (f ∘ g)' = f'(g(x)) * g'(x)
+    inner_val = eval.inner(v.point)
+    inner_deriv = directional_derivative(eval.inner, v)
+    return eval.outer.df(inner_val) * inner_deriv
+end
+
+function directional_derivative(eval::LambdaEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    eval.derivative === nothing && error("LambdaEvaluator has no derivative. Provide a derivative function at construction time.")
+    return eval.derivative(v)
 end
