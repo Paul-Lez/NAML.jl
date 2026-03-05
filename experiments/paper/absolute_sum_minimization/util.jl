@@ -105,7 +105,8 @@ Create a loss function from a PolydiscFunction using typed evaluators (zero dyna
 function create_absolute_sum_loss(f::NAML.PolydiscFunction{S}, ::Type{VP}) where {S, VP<:NAML.ValuationPolydisc}
     batch_eval = NAML.batch_evaluate_init(f, VP)
     batch_fn = (params) -> map(batch_eval, params)
-    return NAML.Loss(batch_fn, x -> 0)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 # Legacy fallback for backward compatibility
@@ -113,7 +114,8 @@ function create_absolute_sum_loss(polys::Vector{<:NAML.PolydiscFunction{S}}) whe
     total_sum = sum(polys)
     batch_eval = NAML.batch_evaluate_init(total_sum)
     batch_fn = (params) -> map(batch_eval, params)
-    return NAML.Loss(batch_fn, x -> 0)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 

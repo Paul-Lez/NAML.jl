@@ -219,11 +219,18 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
+        "Gradient-Descent" => Dict(
+            "type" => "Gradient-Descent",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.gradient_descent_init(param, loss, 1, 1)
+            end
+        ),
     )
 end
 
 # Canonical ordering for display (shared across all experiments)
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Gradient-Descent"]
 
 # ============================================================================
 # Create target function loss
@@ -254,53 +261,9 @@ function create_function_learning_loss(K, degree, n_points, target_fn, threshold
 
     data = collect(zip(x_values, y_values))
 
-    # Simple polynomial evaluation function
-    # Evaluates a0 + a1*x + a2*x^2 + ... + an*x^n
-    function eval_polynomial(coeffs, x)
-        result = coeffs[1]  # a0
-        x_power = x
-        for i in 2:length(coeffs)
-            result += coeffs[i] * x_power
-            x_power *= x
-        end
-        return result
-    end
+    loss = polynomial_to_crossentropy_loss(data, degree, threshold, scale)
 
-    function eval_fn(param_vector::Vector{<:NAML.ValuationPolydisc})
-        return [begin
-            loss = 0.0
-            # Extract coefficient values from parameter polydisc
-            coeffs = [NAML.unwrap(c) for c in NAML.center(param)]
-
-            for (x, y) in data
-                # Evaluate polynomial at x
-                poly_val = eval_polynomial(coeffs, x)
-                val_float = Float64(abs(poly_val))
-
-                # Cross-entropy: -[y*log(p) + (1-y)*log(1-p)]
-                # where p = sigmoid((val - threshold)/scale)
-                z = (val_float - threshold) / scale
-                prob = 1.0 / (1.0 + exp(-z))
-
-                # Clip probabilities to avoid log(0)
-                prob = max(min(prob, 0.9999), 0.0001)
-
-                if y > 0.5  # y = 1
-                    loss += -log(prob)
-                else  # y = 0
-                    loss += -log(1 - prob)
-                end
-            end
-            loss
-        end for param in param_vector]
-    end
-
-    # Dummy gradient (not used by greedy descent)
-    function grad_fn(vs::Vector{<:NAML.ValuationTangent})
-        return [0.0 for _ in vs]
-    end
-
-    return NAML.Loss(eval_fn, grad_fn), data
+    return loss, data
 end
 
 # ============================================================================

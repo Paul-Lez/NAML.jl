@@ -117,11 +117,12 @@ function generate_config_table(experiments)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Polynomial learning experiment configurations. " *
                  "Each row describes one experimental setup.}")
     push!(lines, "\\label{tab:poly-learning-config}")
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{lcccccc}")
     push!(lines, "\\toprule")
     push!(lines, "Experiment & Prime (\$p\$) & Precision & Degree & \\#Points & \\#Samples \\\\")
@@ -138,10 +139,15 @@ function generate_config_table(experiments)
 
         row = "$name & $prime & $prec & $degree & $n_points & $num_samples \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -160,7 +166,7 @@ function generate_summary_table(experiments, optimizer_order)
     n_opts = length(optimizer_order)
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Polynomial learning: mean final loss across optimizers. " *
                  "Lower is better. Values are averaged over multiple random problem instances.}")
@@ -168,6 +174,7 @@ function generate_summary_table(experiments, optimizer_order)
 
     # Build column spec
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -185,9 +192,10 @@ function generate_summary_table(experiments, optimizer_order)
         config = exp["config"]
         agg = exp["aggregate"]
 
-        # Find best (minimum) mean final loss for bolding
+        # Find best (minimum) mean final loss for bolding (excluding Random)
         best_loss = Inf
         for opt_name in optimizer_order
+            opt_name == "Random" && continue
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 if loss < best_loss
@@ -213,10 +221,15 @@ function generate_summary_table(experiments, optimizer_order)
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -232,44 +245,64 @@ function generate_detailed_table(experiments, optimizer_order)
         return "% No valid experiments to tabulate\n"
     end
 
-    lines = String[]
-    push!(lines, "\\begin{table}[ht]")
-    push!(lines, "\\centering")
-    push!(lines, "\\caption{Detailed polynomial learning results: " *
-                 "mean final loss, improvement ratio (\\%), and wall-clock time (s).}")
-    push!(lines, "\\label{tab:poly-learning-detailed}")
-    push!(lines, "\\begin{tabular}{llrrr}")
-    push!(lines, "\\toprule")
-    push!(lines, "Experiment & Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
-    push!(lines, "\\midrule")
+    all_lines = String[]
 
-    for (ei, exp) in enumerate(valid)
+    for (idx, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
-        for (oi, opt_name) in enumerate(optimizer_order)
-            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
-                stats = agg[opt_name]
-                loss_str = @sprintf("\$%.2e\$", stats["mean_final_loss"])
-                improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
-                time_str = @sprintf("%.4f", stats["mean_time"])
+        lines = String[]
+        push!(lines, "\\begin{table}[H]")
+        push!(lines, "\\centering")
+        push!(lines, "\\caption{Detailed results for configuration: $(name). " *
+                     "Shows mean final loss, improvement ratio (\\%), and wall-clock time.}")
+        push!(lines, "\\label{tab:poly-learning-detail-$(idx)}")
+        push!(lines, "\\begin{tabular}{lrrr}")
+        push!(lines, "\\toprule")
+        push!(lines, "Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
+        push!(lines, "\\midrule")
 
-                exp_label = oi == 1 ? name : ""
-                push!(lines, "$exp_label & $opt_name & $loss_str & $improv_str & $time_str \\\\")
+        # Find best loss for bolding (excluding Random)
+        best_loss = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                loss = agg[opt_name]["mean_final_loss"]
+                if loss < best_loss
+                    best_loss = loss
+                end
             end
         end
 
-        if ei < length(valid)
-            push!(lines, "\\midrule")
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                stats = agg[opt_name]
+                loss = stats["mean_final_loss"]
+                loss_str = @sprintf("\$%.2e\$", loss)
+                if loss == best_loss
+                    loss_str = "\\textbf{$loss_str}"
+                end
+                improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
+                time_str = @sprintf("%.4f", stats["mean_time"])
+
+                push!(lines, "$opt_name & $loss_str & $improv_str & $time_str \\\\")
+                push!(lines, "\\hline")
+            end
         end
+
+        if !isempty(lines) && lines[end] == "\\hline"
+            pop!(lines)
+        end
+        push!(lines, "\\bottomrule")
+        push!(lines, "\\end{tabular}")
+        push!(lines, "\\end{table}")
+
+        push!(all_lines, join(lines, "\n"))
+        push!(all_lines, "")  # Blank line between tables
     end
 
-    push!(lines, "\\bottomrule")
-    push!(lines, "\\end{tabular}")
-    push!(lines, "\\end{table}")
-
-    return join(lines, "\n") * "\n"
+    return join(all_lines, "\n") * "\n"
 end
 
 # ============================================================================
@@ -300,7 +333,7 @@ function generate_degree_sweep_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Effect of polynomial degree on learning performance " *
                  "(mean final loss). Each row is a different degree.}")
@@ -308,6 +341,7 @@ function generate_degree_sweep_table(experiments, optimizer_order)
 
     n_opts = length(optimizer_order)
     col_spec = "cc" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -338,15 +372,16 @@ function generate_degree_sweep_table(experiments, optimizer_order)
             end
             row *= " \\\\"
             push!(lines, row)
-        end
-
-        if p != last(sort(sweep_primes))
-            push!(lines, "\\midrule")
+            push!(lines, "\\hline")
         end
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -383,7 +418,7 @@ function generate_prime_sweep_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Effect of base prime on learning performance " *
                  "(mean final loss). Each row is a different prime.}")
@@ -391,6 +426,7 @@ function generate_prime_sweep_table(experiments, optimizer_order)
 
     n_opts = length(optimizer_order)
     col_spec = "cc" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -427,15 +463,16 @@ function generate_prime_sweep_table(experiments, optimizer_order)
             end
             row *= " \\\\"
             push!(lines, row)
-        end
-
-        if d != last(sort(sweep_degrees))
-            push!(lines, "\\midrule")
+            push!(lines, "\\hline")
         end
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -452,13 +489,14 @@ function generate_timing_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Mean wall-clock time (seconds) per optimizer across experiments.}")
     push!(lines, "\\label{tab:poly-learning-timing}")
 
     n_opts = length(optimizer_order)
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -475,21 +513,43 @@ function generate_timing_table(experiments, optimizer_order)
         agg = exp["aggregate"]
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
+        # Find best (minimum) time for bolding (excluding Random)
+        best_time = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                t = agg[opt_name]["mean_time"]
+                if t < best_time
+                    best_time = t
+                end
+            end
+        end
+
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.4f", t)
+                t_str = @sprintf("%.4f", t)
+                if t == best_time
+                    row *= " & \\textbf{$t_str}"
+                else
+                    row *= " & $t_str"
+                end
             else
                 row *= " & ---"
             end
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"

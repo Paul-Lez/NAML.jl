@@ -111,10 +111,11 @@ function generate_config_table(experiments)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Polynomial solving experiment configurations.}")
     push!(lines, "\\label{tab:poly-solving-config}")
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{lccccc}")
     push!(lines, "\\toprule")
     push!(lines, "Experiment & Prime (\$p\$) & Precision & Variables & Degree & \\#Samples \\\\")
@@ -125,10 +126,15 @@ function generate_config_table(experiments)
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
         row = "$name & $(config["prime"]) & $(config["prec"]) & $(config["num_vars"]) & $(config["degree"]) & $(config["num_samples"]) \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -147,13 +153,14 @@ function generate_summary_table(experiments, optimizer_order)
     n_opts = length(optimizer_order)
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Polynomial solving: mean final loss across optimizers. " *
                  "Lower is better. The polynomial \\(f\\) has a known root in \\(\\mathbb{Z}_p^n\\).}")
     push!(lines, "\\label{tab:poly-solving-summary}")
 
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -169,8 +176,10 @@ function generate_summary_table(experiments, optimizer_order)
         config = exp["config"]
         agg = exp["aggregate"]
 
+        # Find best (minimum) mean final loss for bolding (excluding Random)
         best_loss = Inf
         for opt_name in optimizer_order
+            opt_name == "Random" && continue
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 if loss < best_loss
@@ -196,10 +205,15 @@ function generate_summary_table(experiments, optimizer_order)
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -216,11 +230,12 @@ function generate_detailed_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Detailed polynomial solving results: " *
                  "mean final loss, improvement ratio (\\%), and wall-clock time (s).}")
     push!(lines, "\\label{tab:poly-solving-detailed}")
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{llrrr}")
     push!(lines, "\\toprule")
     push!(lines, "Experiment & Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
@@ -240,16 +255,17 @@ function generate_detailed_table(experiments, optimizer_order)
 
                 exp_label = oi == 1 ? name : ""
                 push!(lines, "$exp_label & $opt_name & $loss_str & $improv_str & $time_str \\\\")
+                push!(lines, "\\hline")
             end
-        end
-
-        if ei < length(valid)
-            push!(lines, "\\midrule")
         end
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
@@ -284,7 +300,7 @@ function generate_grid_table(experiments, optimizer_order)
         end
 
         # Find best optimizer for each experiment
-        push!(lines, "\\begin{table}[ht]")
+        push!(lines, "\\begin{table}[H]")
         push!(lines, "\\centering")
         push!(lines, "\\caption{Polynomial solving over \\(\\mathbb{Q}_{$prime}\\): " *
                      "mean final loss by variables and degree. Best optimizer per row in bold.}")
@@ -292,6 +308,7 @@ function generate_grid_table(experiments, optimizer_order)
 
         n_opts = length(optimizer_order)
         col_spec = "cc" * "c"^n_opts
+        push!(lines, "\\adjustbox{max width=\\textwidth}{%")
         push!(lines, "\\begin{tabular}{$col_spec}")
         push!(lines, "\\toprule")
 
@@ -306,19 +323,14 @@ function generate_grid_table(experiments, optimizer_order)
         # Sort by (num_vars, degree)
         sort!(exps, by=e -> (e["config"]["num_vars"], e["config"]["degree"]))
 
-        prev_nvars = 0
         for exp in exps
             config = exp["config"]
             agg = exp["aggregate"]
 
-            # Add midrule between variable groups
-            if config["num_vars"] != prev_nvars && prev_nvars != 0
-                push!(lines, "\\midrule")
-            end
-            prev_nvars = config["num_vars"]
-
+            # Find best (minimum) mean final loss for bolding (excluding Random)
             best_loss = Inf
             for opt_name in optimizer_order
+                opt_name == "Random" && continue
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
                     if loss < best_loss
@@ -343,10 +355,15 @@ function generate_grid_table(experiments, optimizer_order)
             end
             row *= " \\\\"
             push!(lines, row)
+            push!(lines, "\\hline")
         end
 
+        if !isempty(lines) && lines[end] == "\\hline"
+            pop!(lines)
+        end
         push!(lines, "\\bottomrule")
         push!(lines, "\\end{tabular}")
+        push!(lines, "}% end adjustbox")
         push!(lines, "\\end{table}")
         push!(lines, "")
     end
@@ -365,13 +382,14 @@ function generate_timing_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Mean wall-clock time (seconds) per optimizer across polynomial solving experiments.}")
     push!(lines, "\\label{tab:poly-solving-timing}")
 
     n_opts = length(optimizer_order)
     col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
@@ -388,21 +406,43 @@ function generate_timing_table(experiments, optimizer_order)
         agg = exp["aggregate"]
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
+        # Find best (minimum) time for bolding (excluding Random)
+        best_time = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                t = agg[opt_name]["mean_time"]
+                if t < best_time
+                    best_time = t
+                end
+            end
+        end
+
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.4f", t)
+                t_str = @sprintf("%.4f", t)
+                if t == best_time
+                    row *= " & \\textbf{$t_str}"
+                else
+                    row *= " & $t_str"
+                end
             else
                 row *= " & ---"
             end
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
     push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"

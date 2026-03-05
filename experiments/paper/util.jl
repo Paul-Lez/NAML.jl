@@ -241,12 +241,13 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
         end
 
         total_loss = sum(loss_terms)
-        batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-            return map(batch_eval, params)
-        end
+        param_dim = degree + 1
+        VP = NAML.ValuationPolydisc{S, Int, param_dim}
+        batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+        batch_fn = (params) -> map(batch_eval, params)
+        grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-        return NAML.Loss(batch_fn, x -> 0)
+        return NAML.Loss(batch_fn, grad_fn)
     else
         # Case 2: real output - use cutoff composition
         # Create loss: Σᵢ |cutoff(|a₀ + a₁xᵢ + ... + aₙxᵢⁿ|) - yᵢ|²
@@ -264,12 +265,13 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
         end
 
         total_loss = sum(loss_terms)
-        batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-            map(batch_eval, params)
-        end
+        param_dim = degree + 1
+        VP = NAML.ValuationPolydisc{S, Int, param_dim}
+        batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+        batch_fn = (params) -> map(batch_eval, params)
+        grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-        return NAML.Loss(batch_fn, x -> 0)
+        return NAML.Loss(batch_fn, grad_fn)
     end
 end
 
@@ -356,13 +358,13 @@ function polynomial_to_crossentropy_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-    return NAML.Loss(batch_fn, x -> 0)
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 function polynomial_to_valuation_crossentropy_loss(
@@ -422,13 +424,13 @@ function polynomial_to_valuation_crossentropy_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-    return NAML.Loss(batch_fn, x -> 0)
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 
@@ -491,12 +493,13 @@ function polynomial_to_mse_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end 
-    return NAML.Loss(batch_fn, x -> 0)
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
+
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 

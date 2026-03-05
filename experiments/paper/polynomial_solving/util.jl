@@ -141,7 +141,8 @@ function generate_polynomial_solving_problem(p::Int, prec::Int, num_vars::Int, d
     # Create loss using typed evaluator
     batch_eval = NAML.batch_evaluate_init(func, VP)
     batch_fn = (params) -> map(batch_eval, params)
-    loss = NAML.Loss(batch_fn, x -> 0)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
+    loss = NAML.Loss(batch_fn, grad_fn)
 
     return loss, root
 end

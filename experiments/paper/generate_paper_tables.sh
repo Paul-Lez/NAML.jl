@@ -118,6 +118,31 @@ julia --project="$REPO_ROOT" \
 ok "Tables written to $POLYLEARN_DIR/polynomial_learning_tables.tex"
 
 # ----------------------------------------------------------------------------
+# Polynomial solving
+# ----------------------------------------------------------------------------
+
+POLYSOLVE_DIR="$SCRIPT_DIR/polynomial_solving"
+POLYSOLVE_RESULTS="$POLYSOLVE_DIR/polynomial_solving_results_paper.json"
+
+step "Running polynomial_solving experiments"
+julia --project="$REPO_ROOT" \
+    "$POLYSOLVE_DIR/run_experiments.jl" \
+    --paper --save \
+    --output polynomial_solving_results_paper.json \
+    $QUICK_FLAG $EPOCHS_FLAG
+ok "Experiments done"
+
+step "Generating polynomial_solving tables"
+if [ ! -f "$POLYSOLVE_RESULTS" ]; then
+    err "Expected results file not found: $POLYSOLVE_RESULTS"
+fi
+julia --project="$REPO_ROOT" \
+    "$POLYSOLVE_DIR/generate_tables.jl" \
+    "$POLYSOLVE_RESULTS" \
+    --output polynomial_solving_tables.tex
+ok "Tables written to $POLYSOLVE_DIR/polynomial_solving_tables.tex"
+
+# ----------------------------------------------------------------------------
 # Done
 # ----------------------------------------------------------------------------
 
@@ -127,4 +152,5 @@ echo "All paper experiments complete and tables regenerated."
 echo "  $ABSSUM_DIR/absolute_sum_tables.tex"
 echo "  $FUNCLEARN_DIR/function_learning_tables.tex"
 echo "  $POLYLEARN_DIR/polynomial_learning_tables.tex"
+echo "  $POLYSOLVE_DIR/polynomial_solving_tables.tex"
 echo "======================================================================"

@@ -220,11 +220,18 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
+        "Gradient-Descent" => Dict(
+            "type" => "Gradient-Descent",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.gradient_descent_init(param, loss, 1, 1)
+            end
+        ),
     )
 end
 
 # Canonical ordering for display (shared across all experiments)
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Gradient-Descent"]
 
 # ============================================================================
 # Run a single sample (one random problem instance)

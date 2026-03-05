@@ -149,7 +149,7 @@ function generate_config_table(experiments)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Function learning experiment configurations. " *
                  "Each row describes one experimental setup.}")
@@ -174,8 +174,12 @@ function generate_config_table(experiments)
 
         row = "$name & $prime & $prec & $degree & $n_points & $target_fn & $threshold & $scale & $num_samples \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "}% end adjustbox")
@@ -197,7 +201,7 @@ function generate_summary_table(experiments, optimizer_order)
     n_opts = length(optimizer_order)
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Function learning: mean final loss across optimizers. " *
                  "Lower is better. Values are averaged over multiple random problem instances.}")
@@ -223,9 +227,10 @@ function generate_summary_table(experiments, optimizer_order)
         config = exp["config"]
         agg = exp["aggregate"]
 
-        # Find best (minimum) mean final loss for bolding
+        # Find best (minimum) mean final loss for bolding (excluding Random)
         best_loss = Inf
         for opt_name in optimizer_order
+            opt_name == "Random" && continue
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 if loss < best_loss
@@ -251,8 +256,12 @@ function generate_summary_table(experiments, optimizer_order)
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "}% end adjustbox")
@@ -272,7 +281,7 @@ function generate_timing_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Mean wall-clock time (seconds) per optimizer for function learning.}")
     push!(lines, "\\label{tab:funclearn-timing}")
@@ -296,19 +305,40 @@ function generate_timing_table(experiments, optimizer_order)
         agg = exp["aggregate"]
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
+        # Find best (minimum) time for bolding (excluding Random)
+        best_time = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                t = agg[opt_name]["mean_time"]
+                if t < best_time
+                    best_time = t
+                end
+            end
+        end
+
         row = name
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
-                row *= " & " * @sprintf("%.4f", t)
+                t_str = @sprintf("%.4f", t)
+                if t == best_time
+                    row *= " & \\textbf{$t_str}"
+                else
+                    row *= " & $t_str"
+                end
             else
                 row *= " & ---"
             end
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "}% end adjustbox")
@@ -328,7 +358,7 @@ function generate_accuracy_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Mean classification accuracy (\\%) per optimizer for function learning. " *
                  "Higher is better. Accuracy improvement (delta) shows change from initial accuracy.}")
@@ -352,9 +382,10 @@ function generate_accuracy_table(experiments, optimizer_order)
         config = exp["config"]
         agg = exp["aggregate"]
 
-        # Find best (maximum) mean final accuracy for bolding
+        # Find best (maximum) mean final accuracy for bolding (excluding Random)
         best_accuracy = -Inf
         for opt_name in optimizer_order
+            opt_name == "Random" && continue
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 acc = agg[opt_name]["mean_final_accuracy"]
                 if acc > best_accuracy
@@ -384,8 +415,12 @@ function generate_accuracy_table(experiments, optimizer_order)
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "}% end adjustbox")
@@ -412,7 +447,7 @@ function generate_detailed_tables(experiments, optimizer_order)
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
 
         lines = String[]
-        push!(lines, "\\begin{table}[ht]")
+        push!(lines, "\\begin{table}[H]")
         push!(lines, "\\centering")
         push!(lines, "\\caption{Detailed results for configuration: $(name). " *
                      "Shows mean final loss, accuracy (\\%), improvement ratio (\\%), and wall-clock time.}")
@@ -422,9 +457,10 @@ function generate_detailed_tables(experiments, optimizer_order)
         push!(lines, "Optimizer & Final Loss & Accuracy (\\%) & Improv.~(\\%) & Time (s) \\\\")
         push!(lines, "\\midrule")
 
-        # Find best loss for bolding
+        # Find best loss for bolding (excluding Random)
         best_loss = Inf
         for opt_name in optimizer_order
+            opt_name == "Random" && continue
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 if loss < best_loss
@@ -446,9 +482,13 @@ function generate_detailed_tables(experiments, optimizer_order)
                 time_str = @sprintf("%.4f", stats["mean_time"])
 
                 push!(lines, "$opt_name & $loss_str & $acc_str & $improv_str & $time_str \\\\")
+                push!(lines, "\\hline")
             end
         end
 
+        if !isempty(lines) && lines[end] == "\\hline"
+            pop!(lines)
+        end
         push!(lines, "\\bottomrule")
         push!(lines, "\\end{tabular}")
         push!(lines, "\\end{table}")
@@ -497,7 +537,7 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order)
     _mean(x) = isempty(x) ? 0.0 : sum(x) / length(x)
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Overall optimizer comparison aggregated across all function learning configurations. " *
                  "Shows mean performance metrics.}")
@@ -507,9 +547,10 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order)
     push!(lines, "Optimizer & Mean Loss & Improv.~(\\%) & Mean Time (s) & Configs \\\\")
     push!(lines, "\\midrule")
 
-    # Find best mean loss for bolding
+    # Find best mean loss for bolding (excluding Random)
     best_mean_loss = Inf
     for opt_name in optimizer_order
+        opt_name == "Random" && continue
         if !isempty(optimizer_stats[opt_name]["final_loss"])
             mean_loss = _mean(optimizer_stats[opt_name]["final_loss"])
             if mean_loss < best_mean_loss
@@ -533,9 +574,13 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order)
             time_str = @sprintf("%.2f", mean_time)
 
             push!(lines, "$opt_name & $loss_str & $improv_str & $time_str & $n_configs \\\\")
+            push!(lines, "\\hline")
         end
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "\\end{table}")
@@ -570,7 +615,7 @@ function generate_function_type_table(experiments, optimizer_order)
     end
 
     lines = String[]
-    push!(lines, "\\begin{table}[ht]")
+    push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
     push!(lines, "\\caption{Performance comparison by target function type. " *
                  "Shows mean final loss aggregated over configurations for each function type.}")
@@ -613,8 +658,12 @@ function generate_function_type_table(experiments, optimizer_order)
         end
         row *= " \\\\"
         push!(lines, row)
+        push!(lines, "\\hline")
     end
 
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
     push!(lines, "\\bottomrule")
     push!(lines, "\\end{tabular}")
     push!(lines, "}% end adjustbox")
