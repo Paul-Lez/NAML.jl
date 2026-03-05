@@ -19,6 +19,49 @@ using Printf
 using Dates
 
 # ============================================================================
+# Display names, ordering, and landscape helper
+# ============================================================================
+
+const DISPLAY_NAMES = Dict(
+    "Random"           => "Random",
+    "Best-First"       => "Best First Value",
+    "Best-First-deg2"  => "Best First Value deg 2",
+    "Gradient-Descent" => "Best First Gradient",
+    "MCTS-50"          => "MCTS-50",
+    "MCTS-100"         => "MCTS-100",
+    "MCTS-200"         => "MCTS-200",
+    "DAG-MCTS-50"      => "DAG-MCTS-50",
+    "DAG-MCTS-100"     => "DAG-MCTS-100",
+    "DAG-MCTS-200"     => "DAG-MCTS-200",
+)
+display_name(n) = get(DISPLAY_NAMES, n, n)
+
+const DISPLAY_ORDER = ["Random", "Best-First", "Best-First-deg2", "Gradient-Descent",
+                       "MCTS-50", "MCTS-100", "MCTS-200",
+                       "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200"]
+
+# Wrap wide LaTeX tables in landscape environment with footnotesize font.
+# Requires \usepackage{lscape} (or pdflscape) in document preamble.
+function as_landscape(tex)
+    result = String[]
+    for line in split(tex, "\n")
+        if line == "\\begin{table}[H]"
+            push!(result, "\\begin{landscape}")
+            push!(result, line)
+        elseif line == "\\end{table}"
+            push!(result, line)
+            push!(result, "\\end{landscape}")
+        elseif line == "\\centering"
+            push!(result, line)
+            push!(result, "\\footnotesize")
+        else
+            push!(result, line)
+        end
+    end
+    return join(result, "\n")
+end
+
+# ============================================================================
 # Parse arguments
 # ============================================================================
 
@@ -50,6 +93,11 @@ data = JSON.parsefile(json_file)
 metadata = data["metadata"]
 experiments = data["experiments"]
 optimizer_order = metadata["optimizer_order"]
+# Reorder to preferred display order (extras appended at end)
+optimizer_order = vcat(
+    [n for n in DISPLAY_ORDER if n in optimizer_order],
+    [n for n in optimizer_order if !(n in DISPLAY_ORDER)]
+)
 
 println("Loaded $(length(experiments)) experiments from $json_file")
 println("Optimizers: $(join(optimizer_order, ", "))")
@@ -181,7 +229,7 @@ function generate_summary_table(experiments, optimizer_order)
     # Header row
     header = "Experiment"
     for opt_name in optimizer_order
-        header *= " & $opt_name"
+        header *= " & $(display_name(opt_name))"
     end
     header *= " \\\\"
     push!(lines, header)
@@ -286,7 +334,7 @@ function generate_detailed_table(experiments, optimizer_order)
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
                 time_str = @sprintf("%.4f", stats["mean_time"])
 
-                push!(lines, "$opt_name & $loss_str & $improv_str & $time_str \\\\")
+                push!(lines, "$(display_name(opt_name)) & $loss_str & $improv_str & $time_str \\\\")
                 push!(lines, "\\hline")
             end
         end
@@ -347,7 +395,7 @@ function generate_degree_sweep_table(experiments, optimizer_order)
 
     header = "\$p\$ & Degree"
     for opt_name in optimizer_order
-        header *= " & $opt_name"
+        header *= " & $(display_name(opt_name))"
     end
     header *= " \\\\"
     push!(lines, header)
@@ -432,7 +480,7 @@ function generate_prime_sweep_table(experiments, optimizer_order)
 
     header = "Degree & \$p\$"
     for opt_name in optimizer_order
-        header *= " & $opt_name"
+        header *= " & $(display_name(opt_name))"
     end
     header *= " \\\\"
     push!(lines, header)
@@ -502,7 +550,7 @@ function generate_timing_table(experiments, optimizer_order)
 
     header = "Experiment"
     for opt_name in optimizer_order
-        header *= " & $opt_name"
+        header *= " & $(display_name(opt_name))"
     end
     header *= " \\\\"
     push!(lines, header)
@@ -582,7 +630,7 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% Table: Summary (mean final loss)")
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
-    push!(lines, generate_summary_table(experiments, optimizer_order))
+    push!(lines, as_landscape(generate_summary_table(experiments, optimizer_order)))
 
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Detailed results")
@@ -594,19 +642,19 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% Table: Degree sweep")
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
-    push!(lines, generate_degree_sweep_table(experiments, optimizer_order))
+    push!(lines, as_landscape(generate_degree_sweep_table(experiments, optimizer_order)))
 
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Prime sweep")
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
-    push!(lines, generate_prime_sweep_table(experiments, optimizer_order))
+    push!(lines, as_landscape(generate_prime_sweep_table(experiments, optimizer_order)))
 
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Timing comparison")
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
-    push!(lines, generate_timing_table(experiments, optimizer_order))
+    push!(lines, as_landscape(generate_timing_table(experiments, optimizer_order)))
 
     return join(lines, "\n")
 end

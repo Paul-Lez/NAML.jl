@@ -106,7 +106,7 @@ doo_config = DOOConfig(
     degree    = 1
 )
 doo_optim = doo_descent_init(initial_param, loss, 1, doo_config)
-doo_loss, doo_param, doo_time = run_optimizer(doo_optim, n_steps)
+doo_loss, doo_param, doo_time = run_optimizer(doo_optim, 8 * n_steps)
 
 # ── Console summary ────────────────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ for (name, lss, prm, t) in [
         ("DOO",            doo_loss,    doo_param,    doo_time)]
     c = NAML.center(prm)[1]
     r = NAML.radius(prm)[1]
-    @printf("  %-16s  %-6d  %-10.3e  %-14.3f  %s\n", name, r, lss, t, padic_display(c))
+    @printf("  %-16s  %-6d  %-10.3e  %-14.3f  %s\n", name, r, lss, t, string(c))
 end
 println("="^70)
 println("\nTrue minimizers: x = 1 or x = -1,  f(±1) = 0")
