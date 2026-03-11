@@ -42,6 +42,8 @@ step() { echo; echo "==== $* ===="; }
 ok()   { echo "  OK: $*"; }
 err()  { echo "  ERROR: $*" >&2; exit 1; }
 
+START_TIME=$(date +%s)
+
 # ----------------------------------------------------------------------------
 # Absolute sum minimization
 # ----------------------------------------------------------------------------
@@ -146,6 +148,10 @@ ok "Tables written to $POLYSOLVE_DIR/polynomial_solving_tables.tex"
 # Done
 # ----------------------------------------------------------------------------
 
+ELAPSED=$(( $(date +%s) - START_TIME ))
+ELAPSED_MIN=$(( ELAPSED / 60 ))
+ELAPSED_SEC=$(( ELAPSED % 60 ))
+
 echo
 echo "======================================================================"
 echo "All paper experiments complete and tables regenerated."
@@ -153,4 +159,5 @@ echo "  $ABSSUM_DIR/absolute_sum_tables.tex"
 echo "  $FUNCLEARN_DIR/function_learning_tables.tex"
 echo "  $POLYLEARN_DIR/polynomial_learning_tables.tex"
 echo "  $POLYSOLVE_DIR/polynomial_solving_tables.tex"
+echo "Total time: ${ELAPSED_MIN}m ${ELAPSED_SEC}s"
 echo "======================================================================"

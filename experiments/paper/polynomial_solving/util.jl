@@ -92,7 +92,7 @@ function generate_multivariate_polynomial_with_root(K::PadicField, num_vars::Int
         # Ensure at least one coefficient is a unit (nonzero mod p) to get a nontrivial form
         # Replace first coeff with a unit if all are zero mod p
         p = Int(Oscar.prime(K))
-        if all(valuation(c) > 0 for c in coeffs)
+        if all(NAML.valuation(c) > 0 for c in coeffs)
             coeffs[1] = K(1 + rand(0:(p-1)))
         end
 

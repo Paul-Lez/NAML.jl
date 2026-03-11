@@ -325,6 +325,9 @@ function polynomial_to_crossentropy_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
 
     # Create LinearAbsolutePolynomialSum for each data point
     # and compose with sigmoid and cross-entropy
@@ -358,8 +361,10 @@ function polynomial_to_crossentropy_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
+    # Use ValuedFieldPoint-wrapped type to match ValuationPolydisc created from
+    # Vector{PadicFieldElem} inputs (which auto-wraps centers in ValuedFieldPoint).
     param_dim = degree + 1
-    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
     batch_eval = NAML.batch_evaluate_init(total_loss, VP)
     batch_fn = (params) -> map(batch_eval, params)
     grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
@@ -386,6 +391,9 @@ function polynomial_to_valuation_crossentropy_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
 
     # Create LinearAbsolutePolynomialSum for each data point
     # and compose with sigmoid and cross-entropy
@@ -425,7 +433,7 @@ function polynomial_to_valuation_crossentropy_loss(
     total_loss = sum(loss_terms)
 
     param_dim = degree + 1
-    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
     batch_eval = NAML.batch_evaluate_init(total_loss, VP)
     batch_fn = (params) -> map(batch_eval, params)
     grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
@@ -473,6 +481,9 @@ function polynomial_to_mse_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
     loss_terms = Vector{NAML.PolydiscFunction{S}}()
 
     for (x_powers, y) in transformed_data
@@ -494,7 +505,7 @@ function polynomial_to_mse_loss(
     total_loss = sum(loss_terms)
 
     param_dim = degree + 1
-    VP = NAML.ValuationPolydisc{S, Int, param_dim}
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
     batch_eval = NAML.batch_evaluate_init(total_loss, VP)
     batch_fn = (params) -> map(batch_eval, params)
     grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
