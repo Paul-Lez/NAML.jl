@@ -27,10 +27,10 @@ Each config should have:
 # SMALL EXPERIMENTS (fast, for testing)
 # ============================================================================
 small_experiments = [
-    Dict("name" => "zero_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_zero_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 4, "target_fn" => "zero",
          "num_samples" => 3, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_one_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 4, "target_fn" => "one",
          "num_samples" => 3, "threshold" => 0.5, "scale" => 1.0),
 ]
@@ -39,16 +39,16 @@ small_experiments = [
 # ZERO FUNCTION EXPERIMENTS (varying degree)
 # ============================================================================
 zero_function_sweep = [
-    Dict("name" => "zero_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg5_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg5", "prime" => 2, "prec" => 20,
          "degree" => 5, "n_points" => 7, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 ]
@@ -57,16 +57,16 @@ zero_function_sweep = [
 # ONE FUNCTION EXPERIMENTS (varying degree)
 # ============================================================================
 one_function_sweep = [
-    Dict("name" => "one_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg5_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg5", "prime" => 2, "prec" => 20,
          "degree" => 5, "n_points" => 7, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 ]
@@ -75,16 +75,16 @@ one_function_sweep = [
 # PRIME SWEEP (same function, different primes)
 # ============================================================================
 prime_sweep = [
-    Dict("name" => "zero_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_zero_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_zero_deg3", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_7adic", "prime" => 7, "prec" => 20,
+    Dict("name" => "p7_zero_deg3", "prime" => 7, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 ]
@@ -93,16 +93,16 @@ prime_sweep = [
 # RANDOM FUNCTION EXPERIMENTS (varying degree)
 # ============================================================================
 random_function_sweep = [
-    Dict("name" => "random_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg5_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg5", "prime" => 2, "prec" => 20,
          "degree" => 5, "n_points" => 7, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 ]
@@ -112,101 +112,101 @@ random_function_sweep = [
 # ============================================================================
 comprehensive = [
     # Zero function - 2-adic
-    Dict("name" => "zero_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_zero_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # One function - 2-adic
-    Dict("name" => "one_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_one_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # Random function - 2-adic
-    Dict("name" => "random_fn_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg4_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_random_deg4", "prime" => 2, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # Zero function - 3-adic
-    Dict("name" => "zero_fn_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_zero_deg2", "prime" => 3, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_zero_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg4_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_zero_deg4", "prime" => 3, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # One function - 3-adic
-    Dict("name" => "one_fn_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_one_deg2", "prime" => 3, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_one_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg4_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_one_deg4", "prime" => 3, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # Random function - 3-adic
-    Dict("name" => "random_fn_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_random_deg2", "prime" => 3, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_random_deg3", "prime" => 3, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg4_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_random_deg4", "prime" => 3, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # Zero function - 5-adic
-    Dict("name" => "zero_fn_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_zero_deg2", "prime" => 5, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_zero_deg3", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "zero_fn_deg4_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_zero_deg4", "prime" => 5, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "zero",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # One function - 5-adic
-    Dict("name" => "one_fn_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_one_deg2", "prime" => 5, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_one_deg3", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "one_fn_deg4_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_one_deg4", "prime" => 5, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "one",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 
     # Random function - 5-adic
-    Dict("name" => "random_fn_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_random_deg2", "prime" => 5, "prec" => 20,
          "degree" => 2, "n_points" => 4, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_random_deg3", "prime" => 5, "prec" => 20,
          "degree" => 3, "n_points" => 5, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
-    Dict("name" => "random_fn_deg4_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_random_deg4", "prime" => 5, "prec" => 20,
          "degree" => 4, "n_points" => 6, "target_fn" => "random",
          "num_samples" => 5, "threshold" => 0.5, "scale" => 1.0),
 ]

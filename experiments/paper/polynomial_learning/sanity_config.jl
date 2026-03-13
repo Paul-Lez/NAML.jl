@@ -11,15 +11,15 @@ For polynomial learning, dimension = degree + 1 (number of coefficients)
 
 sanity_experiments = [
     # 2-adic, degree 2 (dimension = 3 coefficients: a₀, a₁, a₂)
-    Dict("name" => "sanity_2adic_deg2", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_deg2", "prime" => 2, "prec" => 20,
          "degree" => 2, "n_points" => 3, "num_samples" => 5),
 
     # 2-adic, degree 3 (dimension = 4 coefficients)
-    Dict("name" => "sanity_2adic_deg3", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_deg3", "prime" => 2, "prec" => 20,
          "degree" => 3, "n_points" => 4, "num_samples" => 5),
 
     # 2-adic, degree 5 (dimension = 6 coefficients)
-    Dict("name" => "sanity_2adic_deg5", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_deg5", "prime" => 2, "prec" => 20,
          "degree" => 5, "n_points" => 6, "num_samples" => 5),
 ]
 

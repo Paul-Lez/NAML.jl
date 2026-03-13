@@ -25,8 +25,9 @@ using Dates
 const DISPLAY_NAMES = Dict(
     "Random"           => "Random",
     "Best-First"       => "Best First Value",
-    "Best-First-deg2"  => "Best First Value deg 2",
-    "Gradient-Descent" => "Best First Gradient",
+    "Best-First-branch2"  => "Best First Branch 2",
+    "Best-First-Gradient" => "Best First Gradient",
+    "DOO"              => "DOO",
     "MCTS-50"          => "MCTS-50",
     "MCTS-100"         => "MCTS-100",
     "MCTS-200"         => "MCTS-200",
@@ -36,7 +37,7 @@ const DISPLAY_NAMES = Dict(
 )
 display_name(n) = get(DISPLAY_NAMES, n, n)
 
-const DISPLAY_ORDER = ["Random", "Best-First", "Best-First-deg2", "Gradient-Descent",
+const DISPLAY_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient",
                        "MCTS-50", "MCTS-100", "MCTS-200",
                        "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200"]
 
@@ -268,7 +269,7 @@ function generate_summary_table(experiments, optimizer_order)
 end
 
 # ============================================================================
-# Table 2: Detailed table
+# Table 2: Detailed tables (one per experiment configuration)
 # ============================================================================
 
 function generate_detailed_table(experiments, optimizer_order)
@@ -277,46 +278,70 @@ function generate_detailed_table(experiments, optimizer_order)
         return "% No valid experiments to tabulate\n"
     end
 
-    lines = String[]
-    push!(lines, "\\begin{table}[H]")
-    push!(lines, "\\centering")
-    push!(lines, "\\caption{Detailed polynomial solving results: " *
-                 "mean final loss, improvement ratio (\\%), and wall-clock time (s).}")
-    push!(lines, "\\label{tab:poly-solving-detailed}")
-    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{llrrr}")
-    push!(lines, "\\toprule")
-    push!(lines, "Experiment & Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
-    push!(lines, "\\midrule")
+    all_tables = String[]
 
     for (ei, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
-        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        name = escape_latex(config["name"])
+        label_suffix = replace(name, r"[^a-zA-Z0-9]" => "-")
 
-        for (oi, opt_name) in enumerate(optimizer_order)
+        # Find best (minimum) mean final loss for bolding (excluding Random)
+        best_loss = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                loss = agg[opt_name]["mean_final_loss"]
+                if loss < best_loss
+                    best_loss = loss
+                end
+            end
+        end
+
+        lines = String[]
+        push!(lines, "\\begin{table}[H]")
+        push!(lines, "\\centering")
+        push!(lines, "\\caption{Polynomial solving results for \\texttt{$name} " *
+                     "(\$p=$(config["prime"])\$, " *
+                     "$(config["num_vars"])~var(s), degree~$(config["degree"])): " *
+                     "mean final loss, improvement (\\%), and wall-clock time (s).}")
+        push!(lines, "\\label{tab:poly-solving-detail-$label_suffix}")
+        push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+        push!(lines, "\\begin{tabular}{lrrr}")
+        push!(lines, "\\toprule")
+        push!(lines, "Optimizer & Final Loss & Improv.~(\\%) & Time (s) \\\\")
+        push!(lines, "\\midrule")
+
+        for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 stats = agg[opt_name]
-                loss_str = @sprintf("\$%.2e\$", stats["mean_final_loss"])
+                loss = stats["mean_final_loss"]
+                loss_str = @sprintf("\$%.2e\$", loss)
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
                 time_str = @sprintf("%.4f", stats["mean_time"])
 
-                exp_label = oi == 1 ? name : ""
-                push!(lines, "$exp_label & $(display_name(opt_name)) & $loss_str & $improv_str & $time_str \\\\")
+                opt_label = display_name(opt_name)
+                if loss == best_loss
+                    push!(lines, "\\textbf{$opt_label} & \\textbf{$loss_str} & $improv_str & $time_str \\\\")
+                else
+                    push!(lines, "$opt_label & $loss_str & $improv_str & $time_str \\\\")
+                end
                 push!(lines, "\\hline")
             end
         end
+
+        if !isempty(lines) && lines[end] == "\\hline"
+            pop!(lines)
+        end
+        push!(lines, "\\bottomrule")
+        push!(lines, "\\end{tabular}")
+        push!(lines, "}% end adjustbox")
+        push!(lines, "\\end{table}")
+
+        push!(all_tables, join(lines, "\n") * "\n")
     end
 
-    if !isempty(lines) && lines[end] == "\\hline"
-        pop!(lines)
-    end
-    push!(lines, "\\bottomrule")
-    push!(lines, "\\end{tabular}")
-    push!(lines, "}% end adjustbox")
-    push!(lines, "\\end{table}")
-
-    return join(lines, "\n") * "\n"
+    return join(all_tables, "\n")
 end
 
 # ============================================================================
@@ -497,6 +522,83 @@ function generate_timing_table(experiments, optimizer_order)
 end
 
 # ============================================================================
+# Table 5: Evaluation count comparison
+# ============================================================================
+
+function generate_eval_count_table(experiments, optimizer_order)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
+    if isempty(valid)
+        return "% No valid experiments for eval count table\n"
+    end
+
+    # Check if eval count data is available
+    has_evals = false
+    for exp in valid
+        agg = exp["aggregate"]
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                has_evals = true
+                break
+            end
+        end
+        has_evals && break
+    end
+    if !has_evals
+        return "% No evaluation count data available\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[H]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Mean number of function evaluations per optimizer for polynomial solving " *
+                 "(excluding monitoring calls). Lower is more efficient.}")
+    push!(lines, "\\label{tab:poly-solving-evals}")
+
+    n_opts = length(optimizer_order)
+    col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{$col_spec}")
+    push!(lines, "\\toprule")
+
+    header = "Experiment"
+    for opt_name in optimizer_order
+        header *= " & $(display_name(opt_name))"
+    end
+    header *= " \\\\"
+    push!(lines, header)
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        agg = exp["aggregate"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+
+        row = name
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                evals = agg[opt_name]["mean_total_evals"]
+                row *= " & $(Int(round(evals)))"
+            else
+                row *= " & ---"
+            end
+        end
+        row *= " \\\\"
+        push!(lines, row)
+        push!(lines, "\\hline")
+    end
+
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
 # Generate unified document
 # ============================================================================
 
@@ -540,6 +642,12 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
     push!(lines, as_landscape(generate_timing_table(experiments, optimizer_order)))
+
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Evaluation count comparison")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, as_landscape(generate_eval_count_table(experiments, optimizer_order)))
 
     return join(lines, "\n")
 end

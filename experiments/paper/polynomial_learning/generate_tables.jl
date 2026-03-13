@@ -25,8 +25,9 @@ using Dates
 const DISPLAY_NAMES = Dict(
     "Random"           => "Random",
     "Best-First"       => "Best First Value",
-    "Best-First-deg2"  => "Best First Value deg 2",
-    "Gradient-Descent" => "Best First Gradient",
+    "Best-First-branch2"  => "Best First Branch 2",
+    "Best-First-Gradient" => "Best First Gradient",
+    "DOO"              => "DOO",
     "MCTS-50"          => "MCTS-50",
     "MCTS-100"         => "MCTS-100",
     "MCTS-200"         => "MCTS-200",
@@ -36,7 +37,7 @@ const DISPLAY_NAMES = Dict(
 )
 display_name(n) = get(DISPLAY_NAMES, n, n)
 
-const DISPLAY_ORDER = ["Random", "Best-First", "Best-First-deg2", "Gradient-Descent",
+const DISPLAY_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient",
                        "MCTS-50", "MCTS-100", "MCTS-200",
                        "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200"]
 
@@ -604,6 +605,83 @@ function generate_timing_table(experiments, optimizer_order)
 end
 
 # ============================================================================
+# Table 6: Evaluation count comparison
+# ============================================================================
+
+function generate_eval_count_table(experiments, optimizer_order)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
+    if isempty(valid)
+        return "% No valid experiments for eval count table\n"
+    end
+
+    # Check if eval count data is available
+    has_evals = false
+    for exp in valid
+        agg = exp["aggregate"]
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                has_evals = true
+                break
+            end
+        end
+        has_evals && break
+    end
+    if !has_evals
+        return "% No evaluation count data available\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[H]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Mean number of function evaluations per optimizer (excluding monitoring calls). " *
+                 "Lower is more efficient.}")
+    push!(lines, "\\label{tab:poly-learning-evals}")
+
+    n_opts = length(optimizer_order)
+    col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{$col_spec}")
+    push!(lines, "\\toprule")
+
+    header = "Experiment"
+    for opt_name in optimizer_order
+        header *= " & $(display_name(opt_name))"
+    end
+    header *= " \\\\"
+    push!(lines, header)
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        agg = exp["aggregate"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+
+        row = name
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                evals = agg[opt_name]["mean_total_evals"]
+                row *= " & $(Int(round(evals)))"
+            else
+                row *= " & ---"
+            end
+        end
+        row *= " \\\\"
+        push!(lines, row)
+        push!(lines, "\\hline")
+    end
+
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
 # Generate unified document
 # ============================================================================
 
@@ -655,6 +733,12 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
     push!(lines, as_landscape(generate_timing_table(experiments, optimizer_order)))
+
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Evaluation count comparison")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, as_landscape(generate_eval_count_table(experiments, optimizer_order)))
 
     return join(lines, "\n")
 end

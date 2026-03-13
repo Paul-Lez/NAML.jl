@@ -18,27 +18,27 @@ paper_experiments = [
     # ========================================================================
 
     # 1 variable
-    Dict("name" => "1var_deg1_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_deg1", "prime" => 2, "prec" => 20,
          "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_deg2", "prime" => 2, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_deg3", "prime" => 2, "prec" => 20,
          "num_vars" => 1, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 2 variables
-    Dict("name" => "2var_deg1_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_deg1", "prime" => 2, "prec" => 20,
          "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_deg2", "prime" => 2, "prec" => 20,
          "num_vars" => 2, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_deg3", "prime" => 2, "prec" => 20,
          "num_vars" => 2, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 3 variables
-    Dict("name" => "3var_deg1_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_deg1", "prime" => 2, "prec" => 20,
          "num_vars" => 3, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg2_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_deg2", "prime" => 2, "prec" => 20,
          "num_vars" => 3, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg3_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_deg3", "prime" => 2, "prec" => 20,
          "num_vars" => 3, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # ========================================================================
@@ -46,27 +46,27 @@ paper_experiments = [
     # ========================================================================
 
     # 1 variable
-    Dict("name" => "1var_deg1_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_1var_deg1", "prime" => 3, "prec" => 20,
          "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_1var_deg2", "prime" => 3, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_1var_deg3", "prime" => 3, "prec" => 20,
          "num_vars" => 1, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 2 variables
-    Dict("name" => "2var_deg1_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_2var_deg1", "prime" => 3, "prec" => 20,
          "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_2var_deg2", "prime" => 3, "prec" => 20,
          "num_vars" => 2, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_2var_deg3", "prime" => 3, "prec" => 20,
          "num_vars" => 2, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 3 variables
-    Dict("name" => "3var_deg1_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_3var_deg1", "prime" => 3, "prec" => 20,
          "num_vars" => 3, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg2_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_3var_deg2", "prime" => 3, "prec" => 20,
          "num_vars" => 3, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg3_3adic", "prime" => 3, "prec" => 20,
+    Dict("name" => "p3_3var_deg3", "prime" => 3, "prec" => 20,
          "num_vars" => 3, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # ========================================================================
@@ -74,27 +74,27 @@ paper_experiments = [
     # ========================================================================
 
     # 1 variable
-    Dict("name" => "1var_deg1_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_1var_deg1", "prime" => 5, "prec" => 20,
          "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_1var_deg2", "prime" => 5, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "1var_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_1var_deg3", "prime" => 5, "prec" => 20,
          "num_vars" => 1, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 2 variables
-    Dict("name" => "2var_deg1_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_2var_deg1", "prime" => 5, "prec" => 20,
          "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_2var_deg2", "prime" => 5, "prec" => 20,
          "num_vars" => 2, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2var_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_2var_deg3", "prime" => 5, "prec" => 20,
          "num_vars" => 2, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 
     # 3 variables
-    Dict("name" => "3var_deg1_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_3var_deg1", "prime" => 5, "prec" => 20,
          "num_vars" => 3, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg2_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_3var_deg2", "prime" => 5, "prec" => 20,
          "num_vars" => 3, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3var_deg3_5adic", "prime" => 5, "prec" => 20,
+    Dict("name" => "p5_3var_deg3", "prime" => 5, "prec" => 20,
          "num_vars" => 3, "degree" => 3, "num_samples" => 5, "opt_degree" => 1),
 ]
 

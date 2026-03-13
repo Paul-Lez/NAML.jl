@@ -646,6 +646,47 @@ function generate_random_binary_function(n::Int)::Vector{Float64}
 end
 
 
+# ============================================================================
+# Evaluation counting
+# ============================================================================
+
+"""
+    EvalCounter
+
+Mutable counter for tracking function evaluations during optimization.
+Tracks both loss evaluations and gradient evaluations separately.
+"""
+mutable struct EvalCounter
+    eval_count::Int
+    grad_count::Int
+end
+EvalCounter() = EvalCounter(0, 0)
+
+"""
+    wrap_loss_with_counting(loss::NAML.Loss) -> (NAML.Loss, EvalCounter)
+
+Wrap a Loss's eval and grad closures with counting wrappers.
+Each call to eval increments by length(params) (number of points evaluated).
+Each call to grad increments by length(tangents).
+Returns the wrapped Loss and the shared counter.
+"""
+function wrap_loss_with_counting(loss::NAML.Loss)
+    counter = EvalCounter()
+
+    wrapped_eval = function(params)
+        counter.eval_count += length(params)
+        return loss.eval(params)
+    end
+
+    wrapped_grad = function(tangents)
+        counter.grad_count += length(tangents)
+        return loss.grad(tangents)
+    end
+
+    return NAML.Loss(wrapped_eval, wrapped_grad), counter
+end
+
+
 """
     generate_polynomial_learning_data(p::Int, prec::Int, n_points::Int,
                                      min_exp::Int = 0, num_terms::Int = 10)

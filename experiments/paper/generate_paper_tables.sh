@@ -5,11 +5,12 @@
 # Runs all paper experiments and regenerates the corresponding LaTeX tables.
 #
 # Usage:
-#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N]
+#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N] [--samples N]
 #
 # Flags:
 #   --quick      Use reduced epochs/simulations for a fast smoke-test run
 #   --epochs N   Override number of epochs (default: 20)
+#   --samples N  Override number of samples per config (default: 30)
 #
 # The script must be run from the repository root, e.g.:
 #   bash experiments/paper/generate_paper_tables.sh
@@ -22,12 +23,15 @@ set -euo pipefail
 # ----------------------------------------------------------------------------
 QUICK_FLAG=""
 EPOCHS_FLAG=""
+SAMPLES_FLAG="--samples 30"
 
 for arg in "$@"; do
     case "$arg" in
-        --quick)   QUICK_FLAG="--quick" ;;
-        --epochs)  shift; EPOCHS_FLAG="--epochs $1" ;;
-        --epochs=*) EPOCHS_FLAG="--epochs ${arg#*=}" ;;
+        --quick)     QUICK_FLAG="--quick" ;;
+        --epochs)    shift; EPOCHS_FLAG="--epochs $1" ;;
+        --epochs=*)  EPOCHS_FLAG="--epochs ${arg#*=}" ;;
+        --samples)   shift; SAMPLES_FLAG="--samples $1" ;;
+        --samples=*) SAMPLES_FLAG="--samples ${arg#*=}" ;;
     esac
 done
 
@@ -56,7 +60,7 @@ julia --project="$REPO_ROOT" \
     "$ABSSUM_DIR/run_experiments.jl" \
     --paper --save \
     --output absolute_sum_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG
 ok "Experiments done"
 
 step "Generating absolute_sum_minimization tables"
@@ -81,7 +85,7 @@ julia --project="$REPO_ROOT" \
     "$FUNCLEARN_DIR/run_experiments.jl" \
     --paper --save \
     --output function_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG
 ok "Experiments done"
 
 step "Generating function_learning tables"
@@ -106,7 +110,7 @@ julia --project="$REPO_ROOT" \
     "$POLYLEARN_DIR/run_experiments.jl" \
     --paper --save \
     --output poly_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG
 ok "Experiments done"
 
 step "Generating polynomial_learning tables"
@@ -131,7 +135,7 @@ julia --project="$REPO_ROOT" \
     "$POLYSOLVE_DIR/run_experiments.jl" \
     --paper --save \
     --output polynomial_solving_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG
 ok "Experiments done"
 
 step "Generating polynomial_solving tables"

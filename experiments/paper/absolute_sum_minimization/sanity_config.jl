@@ -11,15 +11,15 @@ For absolute sum minimization, dimension = num_vars
 
 sanity_experiments = [
     # 1D problem (dimension = 1)
-    Dict("name" => "sanity_1D_2poly", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_1var_2poly", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
 
     # 2D problem (dimension = 2)
-    Dict("name" => "sanity_2D_3poly", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_2var_3poly", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
 
     # 5D problem (dimension = 5)
-    Dict("name" => "sanity_5D_3poly", "prime" => 2, "prec" => 20,
+    Dict("name" => "sanity_p2_5var_3poly", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 5, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
 ]
 

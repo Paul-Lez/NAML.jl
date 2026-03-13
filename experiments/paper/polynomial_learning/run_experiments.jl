@@ -8,12 +8,13 @@ Usage:
     julia --project=. experiments/paper/polynomial_learning/run_experiments.jl [flags]
 
 Flags:
-    --quick     Reduced epochs (5) and simulations (10) for quick testing
-    --save      Save results to JSON file (default filename with timestamp)
-    --config    Load experiment configurations from config.jl
-    --paper     Use paper-ready configurations from paper_config.jl
-    --epochs N  Set number of epochs (default: 20)
-    --output F  Specify output JSON filename
+    --quick      Reduced epochs (5) and simulations (10) for quick testing
+    --save       Save results to JSON file (default filename with timestamp)
+    --config     Load experiment configurations from config.jl
+    --paper      Use paper-ready configurations from paper_config.jl
+    --epochs N   Set number of epochs (default: 20)
+    --samples N  Override number of samples per config
+    --output F   Specify output JSON filename
 
 Examples:
     julia --project=. experiments/paper/polynomial_learning/run_experiments.jl --quick --save
@@ -56,6 +57,14 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+# Parse --samples N
+global n_samples_override = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--samples" && i < length(ARGS)
+        global n_samples_override = parse(Int, ARGS[i+1])
+    end
+end
+
 # ============================================================================
 # Experiment Configuration
 # ============================================================================
@@ -71,13 +80,21 @@ elseif use_config_file
 else
     # Default configurations
     configs = [
-        Dict("name" => "2adic_deg2_3pts", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_deg2_3pts", "prime" => 2, "prec" => 20,
              "degree" => 2, "n_points" => 3, "num_samples" => 3),
-        Dict("name" => "2adic_deg3_4pts", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_deg3_4pts", "prime" => 2, "prec" => 20,
              "degree" => 3, "n_points" => 4, "num_samples" => 3),
-        Dict("name" => "3adic_deg3_4pts", "prime" => 3, "prec" => 15,
+        Dict("name" => "p3_deg3_4pts", "prime" => 3, "prec" => 15,
              "degree" => 3, "n_points" => 4, "num_samples" => 3),
     ]
+end
+
+# Apply samples override if specified
+if !isnothing(n_samples_override)
+    for config in configs
+        config["num_samples"] = n_samples_override
+    end
+    println("Overriding num_samples to $n_samples_override for all configs")
 end
 
 # ============================================================================
@@ -106,7 +123,7 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.greedy_descent_init(param, loss, 1, (false, 1))
             end
         ),
-        "Best-First-deg2" => Dict(
+        "Best-First-branch2" => Dict(
             "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 2),
             "init" => (param, loss) -> begin
@@ -220,8 +237,8 @@ function get_optimizer_configs(; quick::Bool=false)
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
-        "Gradient-Descent" => Dict(
-            "type" => "Gradient-Descent",
+        "Best-First-Gradient" => Dict(
+            "type" => "Best-First-Gradient",
             "params" => Dict("degree" => 1),
             "init" => (param, loss) -> begin
                 NAML.gradient_descent_init(param, loss, 1, 1)
@@ -231,7 +248,7 @@ function get_optimizer_configs(; quick::Bool=false)
 end
 
 # Canonical ordering for display (shared across all experiments)
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Gradient-Descent"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Best-First-Gradient"]
 
 # ============================================================================
 # Run a single sample (one random problem instance)
@@ -291,7 +308,10 @@ function run_single_sample(config::Dict, sample_num::Int)
     for opt_name in OPTIMIZER_ORDER
         opt_setup = opt_configs[opt_name]
         try
-            optim = opt_setup["init"](initial_param, loss)
+            # Wrap loss with evaluation counting
+            counted_loss, eval_counter = wrap_loss_with_counting(loss)
+
+            optim = opt_setup["init"](initial_param, counted_loss)
 
             losses = Float64[]
             t_start = time()
@@ -308,6 +328,10 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
+            # Subtract monitoring eval_loss calls: n_epochs in-loop + 1 final, each length 1
+            monitoring_evals = n_epochs + 1
+            total_optimizer_evals = eval_counter.eval_count - monitoring_evals + eval_counter.grad_count
+
             sample_results["optimizers"][opt_name] = Dict(
                 "time" => elapsed,
                 "final_loss" => final_loss,
@@ -316,6 +340,7 @@ function run_single_sample(config::Dict, sample_num::Int)
                 "improvement_ratio" => (initial_loss > 0) ?
                     (initial_loss - final_loss) / initial_loss : 0.0,
                 "hyperparameters" => opt_setup["params"],
+                "total_evals" => total_optimizer_evals,
             )
 
         catch e
@@ -410,7 +435,7 @@ function compute_aggregate_stats!(results::Dict)
 
         if !isempty(opt_data)
             final_losses = [d["final_loss"] for d in opt_data]
-            results["aggregate"][opt_name] = Dict(
+            agg = Dict(
                 "mean_final_loss" => _mean(final_losses),
                 "std_final_loss" => length(opt_data) > 1 ? _std(final_losses) : 0.0,
                 "min_final_loss" => minimum(final_losses),
@@ -421,6 +446,10 @@ function compute_aggregate_stats!(results::Dict)
                 "n_valid" => length(opt_data),
                 "hyperparameters" => opt_data[1]["hyperparameters"],
             )
+            if haskey(opt_data[1], "total_evals")
+                agg["mean_total_evals"] = _mean([d["total_evals"] for d in opt_data])
+            end
+            results["aggregate"][opt_name] = agg
         end
     end
 end

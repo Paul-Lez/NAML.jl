@@ -21,7 +21,7 @@ Each config should have:
 # ============================================================================
 small_experiments = [
     Dict(
-        "name" => "2poly_1var_linear_2adic",
+        "name" => "p2_1var_2poly_lin_opt2",
         "prime" => 2,
         "prec" => 20,
         "num_polys" => 2,
@@ -31,7 +31,7 @@ small_experiments = [
         "opt_degree" => 2
     ),
     Dict(
-        "name" => "2poly_1var_quadratic_2adic",
+        "name" => "p2_1var_2poly_quad_opt2",
         "prime" => 2,
         "prec" => 20,
         "num_polys" => 2,
@@ -41,7 +41,7 @@ small_experiments = [
         "opt_degree" => 2
     ),
     Dict(
-        "name" => "3poly_2var_linear_2adic",
+        "name" => "p2_2var_3poly_lin_opt2",
         "prime" => 2,
         "prec" => 20,
         "num_polys" => 3,
@@ -51,7 +51,7 @@ small_experiments = [
         "opt_degree" => 2
     ),
     Dict(
-        "name" => "5poly_5var_linear_2adic",
+        "name" => "p2_5var_5poly_lin_opt2",
         "prime" => 2,
         "prec" => 20,
         "num_polys" => 5,
@@ -67,31 +67,31 @@ small_experiments = [
 # ============================================================================
 comprehensive_experiments = [
     # 2 polynomials, varying variables and degrees
-    Dict("name" => "2poly_1var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_1var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_2poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_2var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_2var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_2poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 2, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_3var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 3, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_3var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_2poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 3, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
 
     # 3 polynomials, varying variables and degrees
-    Dict("name" => "3poly_1var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_3poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3poly_1var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_3poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3poly_2var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_3poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3poly_2var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_3poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 2, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3poly_3var_linear", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_3poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 3, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "3poly_3var_quadratic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_3var_3poly_quad_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 3, "num_vars" => 3, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
 ]
 
@@ -99,11 +99,11 @@ comprehensive_experiments = [
 # PRIME COMPARISON (same problem, different primes)
 # ============================================================================
 prime_comparison = [
-    Dict("name" => "2poly_1var_linear_2adic", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_1var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_1var_linear_3adic", "prime" => 3, "prec" => 15,
+    Dict("name" => "p3_1var_2poly_lin_opt1", "prime" => 3, "prec" => 15,
          "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_1var_linear_5adic", "prime" => 5, "prec" => 12,
+    Dict("name" => "p5_1var_2poly_lin_opt1", "prime" => 5, "prec" => 12,
          "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
 ]
 
@@ -111,11 +111,11 @@ prime_comparison = [
 # DEGREE PARAMETER SWEEP (test different optimization degrees)
 # ============================================================================
 opt_degree_sweep = [
-    Dict("name" => "2poly_2var_linear_deg1", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "2poly_2var_linear_deg2", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_2poly_lin_opt2", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 2),
-    Dict("name" => "2poly_2var_linear_deg3", "prime" => 2, "prec" => 20,
+    Dict("name" => "p2_2var_2poly_lin_opt3", "prime" => 2, "prec" => 20,
          "num_polys" => 2, "num_vars" => 2, "degree" => 1, "num_samples" => 5, "opt_degree" => 3),
 ]
 

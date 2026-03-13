@@ -21,6 +21,7 @@ Flags:
     --config: Use experiment configurations from config.jl
     --paper: Use comprehensive paper-ready configurations from paper_config.jl
     --epochs N: Override number of epochs
+    --samples N: Override number of samples per config
     --output FILE: Specify output JSON filename
 
 Examples:
@@ -60,6 +61,14 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+# Parse --samples N
+global n_samples_override = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--samples" && i < length(ARGS)
+        global n_samples_override = parse(Int, ARGS[i+1])
+    end
+end
+
 # ============================================================================
 # Experiment Configuration
 # ============================================================================
@@ -77,9 +86,9 @@ elseif use_config_file
 else
     # Default configurations (small, fast experiments)
     configs = [
-        Dict("name" => "1var_deg1", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_1var_deg1", "prime" => 2, "prec" => 20,
              "num_vars" => 1, "degree" => 1, "num_samples" => 2, "opt_degree" => 1),
-        Dict("name" => "1var_deg2", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_1var_deg2", "prime" => 2, "prec" => 20,
              "num_vars" => 1, "degree" => 2, "num_samples" => 2, "opt_degree" => 1),
     ]
 end
@@ -93,6 +102,14 @@ if quick_mode
     println("="^70)
     println("QUICK MODE: Running with only $n_epochs epochs per optimizer")
     println("="^70)
+end
+
+# Apply samples override if specified
+if !isnothing(n_samples_override)
+    for config in configs
+        config["num_samples"] = n_samples_override
+    end
+    println("Overriding num_samples to $n_samples_override for all configs")
 end
 
 # ============================================================================
@@ -184,7 +201,7 @@ function get_optimizer_configs(K, opt_degree)
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
-        "Best-First-deg2" => Dict(
+        "Best-First-branch2" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
                 config = (false, 2)
@@ -204,7 +221,7 @@ function get_optimizer_configs(K, opt_degree)
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
-        "Gradient-Descent" => Dict(
+        "Best-First-Gradient" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
                 NAML.gradient_descent_init(param, loss, state, opt_degree)
@@ -214,7 +231,7 @@ function get_optimizer_configs(K, opt_degree)
 end
 
 # Canonical ordering for display
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-deg2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Gradient-Descent"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Best-First-Gradient"]
 
 # ============================================================================
 # Run single sample (one random problem instance)
@@ -250,7 +267,10 @@ function run_single_sample(config::Dict, sample_num::Int)
     # Run each optimizer
     for (opt_name, opt_setup) in opt_configs
         try
-            optim = opt_setup["init"](initial_param, loss)
+            # Wrap loss with evaluation counting
+            counted_loss, eval_counter = wrap_loss_with_counting(loss)
+
+            optim = opt_setup["init"](initial_param, counted_loss)
 
             losses = Float64[]
             t_start = time()
@@ -267,12 +287,17 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
+            # Subtract monitoring eval_loss calls: n_epochs in-loop + 1 final, each length 1
+            monitoring_evals = n_epochs + 1
+            total_optimizer_evals = eval_counter.eval_count - monitoring_evals + eval_counter.grad_count
+
             sample_results["optimizers"][opt_name] = Dict(
                 "time" => elapsed,
                 "final_loss" => final_loss,
                 "losses" => losses,
                 "improvement" => initial_loss - final_loss,
-                "improvement_ratio" => (initial_loss > 0) ? (initial_loss - final_loss) / initial_loss : 0.0
+                "improvement_ratio" => (initial_loss > 0) ? (initial_loss - final_loss) / initial_loss : 0.0,
+                "total_evals" => total_optimizer_evals,
             )
 
         catch e
@@ -364,7 +389,7 @@ function compute_aggregate_stats!(results::Dict)
         end
 
         if !isempty(opt_data)
-            results["aggregate"][opt_name] = Dict(
+            agg = Dict(
                 "mean_final_loss" => mean([d["final_loss"] for d in opt_data]),
                 "mean_improvement" => mean([d["improvement"] for d in opt_data]),
                 "mean_improvement_ratio" => mean([d["improvement_ratio"] for d in opt_data]),
@@ -373,6 +398,10 @@ function compute_aggregate_stats!(results::Dict)
                 "min_final_loss" => minimum([d["final_loss"] for d in opt_data]),
                 "max_final_loss" => maximum([d["final_loss"] for d in opt_data]),
             )
+            if haskey(opt_data[1], "total_evals")
+                agg["mean_total_evals"] = mean([d["total_evals"] for d in opt_data])
+            end
+            results["aggregate"][opt_name] = agg
         end
     end
 end
