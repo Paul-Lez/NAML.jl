@@ -223,8 +223,7 @@ function get_optimizer_configs(K, opt_degree)
         ),
         "Best-First-Gradient" => Dict(
             "init" => (param, loss) -> begin
-                state = 1
-                NAML.gradient_descent_init(param, loss, state, opt_degree)
+                NAML.gradient_descent_init(param, loss, 1, (false, opt_degree))
             end
         ),
     )

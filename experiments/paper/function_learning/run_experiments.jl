@@ -240,7 +240,7 @@ function get_optimizer_configs(; quick::Bool=false)
             "type" => "Best-First-Gradient",
             "params" => Dict("degree" => 1),
             "init" => (param, loss) -> begin
-                NAML.gradient_descent_init(param, loss, 1, 1)
+                NAML.gradient_descent_init(param, loss, 1, (false, 1))
             end
         ),
     )

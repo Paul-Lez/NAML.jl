@@ -1,0 +1,1332 @@
+% ============================================================================
+% LaTeX Tables for Function Learning Experiment
+% Generated: 2026-03-16 11:32:10
+%
+% This file contains all tables for the function learning experiments.
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% Table: Configuration Summary
+% ----------------------------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\caption{Function learning experiment configurations. Each row describes one experimental setup.}
+\label{tab:funclearn-config}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lcccccccc}
+\toprule
+Experiment & Prime ($p$) & Precision & Degree & \#Points & Target & Threshold & Scale & \#Samples \\
+\midrule
+\texttt{p2\_zero\_deg2} & 2 & 20 & 2 & 4 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_zero\_deg3} & 2 & 20 & 3 & 5 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_zero\_deg4} & 2 & 20 & 4 & 6 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_one\_deg2} & 2 & 20 & 2 & 4 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_one\_deg3} & 2 & 20 & 3 & 5 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_one\_deg4} & 2 & 20 & 4 & 6 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_random\_deg2} & 2 & 20 & 2 & 4 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_random\_deg3} & 2 & 20 & 3 & 5 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p2\_random\_deg4} & 2 & 20 & 4 & 6 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_zero\_deg2} & 3 & 20 & 2 & 4 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_zero\_deg3} & 3 & 20 & 3 & 5 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_zero\_deg4} & 3 & 20 & 4 & 6 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_one\_deg2} & 3 & 20 & 2 & 4 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_one\_deg3} & 3 & 20 & 3 & 5 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_one\_deg4} & 3 & 20 & 4 & 6 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_random\_deg2} & 3 & 20 & 2 & 4 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_random\_deg3} & 3 & 20 & 3 & 5 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p3\_random\_deg4} & 3 & 20 & 4 & 6 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_zero\_deg2} & 5 & 20 & 2 & 4 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_zero\_deg3} & 5 & 20 & 3 & 5 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_zero\_deg4} & 5 & 20 & 4 & 6 & zero & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_one\_deg2} & 5 & 20 & 2 & 4 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_one\_deg3} & 5 & 20 & 3 & 5 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_one\_deg4} & 5 & 20 & 4 & 6 & one & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_random\_deg2} & 5 & 20 & 2 & 4 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_random\_deg3} & 5 & 20 & 3 & 5 & random & 0.5 & 1.0 & 1 \\
+\hline
+\texttt{p5\_random\_deg4} & 5 & 20 & 4 & 6 & random & 0.5 & 1.0 & 1 \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Summary (mean final loss)
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Function learning: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
+\label{tab:funclearn-summary}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Configuration & Random & Best First Value & Best First Branch 2 & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO & Best First Gradient \\
+\midrule
+\texttt{p2\_zero\_deg2} & $2.2$ & $1.9$ & \textbf{$1.9$} & $1.9$ & $1.9$ & $1.9$ & $1.9$ & $2.1$ & $1.9$ & $1.9$ & $3.9$ \\
+\hline
+\texttt{p2\_zero\_deg3} & $4.9$ & $2.5$ & $2.7$ & $2.6$ & \textbf{$2.4$} & $2.6$ & $2.7$ & $2.8$ & $2.5$ & $2.8$ & $4.9$ \\
+\hline
+\texttt{p2\_zero\_deg4} & $4.2$ & $3.3$ & \textbf{$3.0$} & $3.0$ & $3.2$ & $3.0$ & $3.6$ & $3.0$ & $3.1$ & $3.9$ & $5.8$ \\
+\hline
+\texttt{p2\_one\_deg2} & $3.1$ & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} \\
+\hline
+\texttt{p2\_one\_deg3} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} \\
+\hline
+\texttt{p2\_one\_deg4} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} \\
+\hline
+\texttt{p2\_random\_deg2} & $2.4$ & $2.1$ & \textbf{$1.9$} & $2.2$ & $2.2$ & $2.2$ & $2.3$ & $2.1$ & $2.1$ & $2.6$ & $3.6$ \\
+\hline
+\texttt{p2\_random\_deg3} & $4.2$ & $2.8$ & \textbf{$2.8$} & $2.8$ & $2.8$ & $2.8$ & $2.8$ & $2.8$ & $2.8$ & $2.9$ & $3.4$ \\
+\hline
+\texttt{p2\_random\_deg4} & $3.5$ & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} \\
+\hline
+\texttt{p3\_zero\_deg2} & $2.2$ & $2.0$ & $2.2$ & $2.0$ & $2.5$ & $2.1$ & \textbf{$1.9$} & $2.2$ & $2.2$ & $2.5$ & $3.9$ \\
+\hline
+\texttt{p3\_zero\_deg3} & $4.1$ & $2.7$ & $3.1$ & $3.0$ & $3.1$ & $2.6$ & $2.6$ & $2.7$ & \textbf{$2.6$} & $2.8$ & $4.9$ \\
+\hline
+\texttt{p3\_zero\_deg4} & $4.2$ & $3.2$ & $3.9$ & $4.0$ & $3.2$ & \textbf{$3.0$} & $3.3$ & $3.2$ & $3.2$ & $4.9$ & $5.8$ \\
+\hline
+\texttt{p3\_one\_deg2} & $2.2$ & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} \\
+\hline
+\texttt{p3\_one\_deg3} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} \\
+\hline
+\texttt{p3\_one\_deg4} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} \\
+\hline
+\texttt{p3\_random\_deg2} & $2.7$ & \textbf{$2.2$} & $2.3$ & $2.4$ & \textbf{$2.2$} & $2.2$ & $2.3$ & $2.2$ & $2.2$ & $2.2$ & $3.4$ \\
+\hline
+\texttt{p3\_random\_deg3} & $3.1$ & $3.0$ & $3.0$ & $3.1$ & \textbf{$2.9$} & $3.0$ & $3.0$ & $3.0$ & $3.0$ & $3.9$ & $3.9$ \\
+\hline
+\texttt{p3\_random\_deg4} & $4.6$ & $3.8$ & \textbf{$3.8$} & $4.3$ & $4.3$ & $4.3$ & $3.8$ & $3.8$ & $3.8$ & $4.3$ & $4.3$ \\
+\hline
+\texttt{p5\_zero\_deg2} & $3.9$ & $2.1$ & $2.9$ & $2.9$ & $2.9$ & $2.1$ & $3.0$ & $2.9$ & $3.4$ & \textbf{$1.9$} & $3.9$ \\
+\hline
+\texttt{p5\_zero\_deg3} & $4.9$ & $3.5$ & $3.0$ & $3.5$ & $3.4$ & \textbf{$2.5$} & $3.5$ & $3.5$ & $3.0$ & $2.7$ & $4.9$ \\
+\hline
+\texttt{p5\_zero\_deg4} & $5.4$ & $3.6$ & $3.1$ & \textbf{$3.0$} & $3.2$ & $3.4$ & $3.7$ & $3.5$ & $3.6$ & $5.4$ & $5.8$ \\
+\hline
+\texttt{p5\_one\_deg2} & $2.3$ & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} & \textbf{$1.9$} \\
+\hline
+\texttt{p5\_one\_deg3} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} & \textbf{$2.4$} \\
+\hline
+\texttt{p5\_one\_deg4} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} & \textbf{$2.8$} \\
+\hline
+\texttt{p5\_random\_deg2} & $3.8$ & $2.0$ & $2.0$ & $2.1$ & $2.0$ & $1.9$ & \textbf{$1.9$} & $1.9$ & $2.0$ & $2.9$ & $3.7$ \\
+\hline
+\texttt{p5\_random\_deg3} & $3.9$ & $2.8$ & \textbf{$2.8$} & $2.8$ & $2.8$ & $2.8$ & $2.8$ & $2.8$ & $2.9$ & $3.3$ & $3.9$ \\
+\hline
+\texttt{p5\_random\_deg4} & $3.8$ & $3.8$ & \textbf{$3.6$} & $3.8$ & $3.8$ & $3.8$ & $3.8$ & $3.8$ & $3.8$ & $3.8$ & $3.8$ \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Timing comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean wall-clock time (seconds) per optimizer for function learning.}
+\label{tab:funclearn-timing}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Configuration & Random & Best First Value & Best First Branch 2 & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO & Best First Gradient \\
+\midrule
+\texttt{p2\_zero\_deg2} & 0.4456 & 0.1128 & 0.0660 & 0.2578 & \textbf{0.0257} & 0.0502 & 0.4409 & 0.0471 & 0.2167 & 0.1598 & 0.2154 \\
+\hline
+\texttt{p2\_zero\_deg3} & 0.2700 & \textbf{0.0408} & 0.0603 & 0.2703 & 0.1546 & 0.0653 & 0.4086 & 0.0657 & 0.3885 & 0.1476 & 0.1986 \\
+\hline
+\texttt{p2\_zero\_deg4} & 0.3045 & \textbf{0.0520} & 0.0780 & 0.2559 & 0.0625 & 0.0957 & 0.6558 & 0.0785 & 0.1920 & 0.1750 & 0.2017 \\
+\hline
+\texttt{p2\_one\_deg2} & 0.0002 & 0.0005 & 0.0008 & 0.0127 & 0.0246 & 0.0502 & 0.0262 & 0.3288 & 0.1191 & 0.0008 & \textbf{0.0005} \\
+\hline
+\texttt{p2\_one\_deg3} & 0.0003 & \textbf{0.0008} & 0.0017 & 0.0159 & 0.0322 & 0.0631 & 0.0331 & 0.0648 & 0.5005 & 0.0012 & 0.0008 \\
+\hline
+\texttt{p2\_one\_deg4} & 0.0003 & \textbf{0.0011} & 0.0041 & 0.0228 & 0.0426 & 0.0808 & 0.0414 & 0.1131 & 0.6361 & 0.0018 & 0.0014 \\
+\hline
+\texttt{p2\_random\_deg2} & 0.0002 & \textbf{0.0005} & 0.0007 & 0.0148 & 0.0289 & 0.0574 & 0.0289 & 0.0543 & 0.2097 & 0.0011 & 0.0007 \\
+\hline
+\texttt{p2\_random\_deg3} & 0.0004 & 0.0009 & 0.0018 & 0.0189 & 0.0325 & 0.0737 & 0.0486 & 0.0710 & 0.6377 & 0.0012 & \textbf{0.0009} \\
+\hline
+\texttt{p2\_random\_deg4} & 0.0004 & \textbf{0.0010} & 0.0038 & 0.0200 & 0.0402 & 0.0792 & 0.0452 & 0.1180 & 0.2036 & 0.0018 & 0.0014 \\
+\hline
+\texttt{p3\_zero\_deg2} & 0.7170 & 0.0345 & 0.0540 & 0.2158 & \textbf{0.0323} & 0.0628 & 0.4482 & 0.0845 & 0.1544 & 0.1439 & 0.1741 \\
+\hline
+\texttt{p3\_zero\_deg3} & 0.2780 & \textbf{0.0558} & 0.0729 & 0.2816 & 0.3768 & 0.0868 & 0.4765 & 0.1110 & 0.2074 & 0.1556 & 0.1876 \\
+\hline
+\texttt{p3\_zero\_deg4} & 0.6689 & \textbf{0.0486} & 0.0841 & 0.2781 & 0.0501 & 0.1061 & 0.4728 & 0.1632 & 0.6350 & 0.2103 & 0.2001 \\
+\hline
+\texttt{p3\_one\_deg2} & 0.0003 & \textbf{0.0006} & 0.0014 & 0.0158 & 0.0301 & 0.0603 & 0.0375 & 0.1046 & 0.6789 & 0.0012 & 0.0006 \\
+\hline
+\texttt{p3\_one\_deg3} & 0.0003 & \textbf{0.0009} & 0.0043 & 0.0208 & 0.0428 & 0.1217 & 0.0580 & 0.1181 & 0.2643 & 0.0018 & 0.0013 \\
+\hline
+\texttt{p3\_one\_deg4} & 0.0004 & \textbf{0.0016} & 0.0088 & 0.0277 & 0.0557 & 0.5974 & 0.0677 & 0.1332 & 0.2963 & 0.0026 & 0.0019 \\
+\hline
+\texttt{p3\_random\_deg2} & 0.0003 & 0.0008 & 0.0016 & 0.0170 & 0.0329 & 0.0691 & 0.6676 & 0.0874 & 0.1665 & 0.0015 & \textbf{0.0007} \\
+\hline
+\texttt{p3\_random\_deg3} & 0.0003 & \textbf{0.0010} & 0.0046 & 0.0223 & 0.0413 & 0.0797 & 0.0501 & 0.1122 & 1.1000 & 0.0017 & 0.0013 \\
+\hline
+\texttt{p3\_random\_deg4} & 0.0008 & 0.0022 & 0.0106 & 0.0292 & 0.0569 & 0.1089 & 0.0686 & 0.1434 & 0.3044 & 0.0026 & \textbf{0.0019} \\
+\hline
+\texttt{p5\_zero\_deg2} & 0.2581 & \textbf{0.0346} & 0.0593 & 0.2296 & 0.0451 & 0.7011 & 0.4540 & 0.1235 & 0.2153 & 0.1643 & 0.1826 \\
+\hline
+\texttt{p5\_zero\_deg3} & 0.2764 & \textbf{0.0440} & 0.0981 & 0.2590 & 0.0602 & 0.5980 & 0.5093 & 0.1522 & 0.8730 & 0.1595 & 0.1888 \\
+\hline
+\texttt{p5\_zero\_deg4} & 0.3460 & \textbf{0.0538} & 0.1165 & 0.5084 & 0.0741 & 0.1501 & 0.4971 & 0.6246 & 0.9821 & 0.1513 & 0.1852 \\
+\hline
+\texttt{p5\_one\_deg2} & 0.0003 & \textbf{0.0009} & 0.0038 & 0.0214 & 0.0430 & 0.1050 & 0.0608 & 0.1051 & 0.2141 & 0.0020 & 0.0011 \\
+\hline
+\texttt{p5\_one\_deg3} & 0.0005 & \textbf{0.0014} & 0.0096 & 0.0298 & 0.5074 & 0.1105 & 0.0740 & 0.1365 & 0.3355 & 0.0027 & 0.0019 \\
+\hline
+\texttt{p5\_one\_deg4} & 0.0006 & \textbf{0.0023} & 0.0214 & 0.0373 & 0.5802 & 0.1461 & 0.1059 & 0.2116 & 0.9550 & 0.0038 & 0.0030 \\
+\hline
+\texttt{p5\_random\_deg2} & 0.0004 & \textbf{0.0009} & 0.0040 & 0.0222 & 0.0451 & 0.0865 & 0.0633 & 0.1136 & 0.7117 & 0.0018 & 0.0011 \\
+\hline
+\texttt{p5\_random\_deg3} & 0.0004 & \textbf{0.0016} & 0.0100 & 0.0295 & 0.0588 & 0.1165 & 0.0871 & 0.1605 & 0.8469 & 0.0027 & 0.0018 \\
+\hline
+\texttt{p5\_random\_deg4} & 0.0006 & \textbf{0.0021} & 0.0208 & 0.0363 & 0.0704 & 0.1571 & 0.6093 & 0.1946 & 0.7489 & 0.0041 & 0.0029 \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Accuracy comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean classification accuracy (\%) per optimizer for function learning. Higher is better. Accuracy improvement (delta) shows change from initial accuracy.}
+\label{tab:funclearn-accuracy}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Configuration & Random & Best First Value & Best First Branch 2 & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO & Best First Gradient \\
+\midrule
+\texttt{p2\_zero\_deg2} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p2\_zero\_deg3} & 0.0\% (-100.0) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p2\_zero\_deg4} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p2\_one\_deg2} & 0.0\% (+0.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) & 0.0\% (+0.0) \\
+\hline
+\texttt{p2\_one\_deg3} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 60.0\% (+60.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 40.0\% (+40.0) & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) & 0.0\% (+0.0) \\
+\hline
+\texttt{p2\_one\_deg4} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 66.7\% (+66.7) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 66.7\% (+66.7) & 0.0\% (+0.0) \\
+\hline
+\texttt{p2\_random\_deg2} & \textbf{100.0\% (+25.0)} & \textbf{100.0\% (+25.0)} & \textbf{100.0\% (+25.0)} & 75.0\% (+0.0) & \textbf{100.0\% (+25.0)} & \textbf{100.0\% (+25.0)} & 75.0\% (+0.0) & \textbf{100.0\% (+25.0)} & \textbf{100.0\% (+25.0)} & \textbf{100.0\% (+25.0)} & 75.0\% (+0.0) \\
+\hline
+\texttt{p2\_random\_deg3} & 20.0\% (-20.0) & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & 40.0\% (+0.0) & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} & \textbf{80.0\% (+40.0)} \\
+\hline
+\texttt{p2\_random\_deg4} & 50.0\% (+50.0) & 50.0\% (+50.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 50.0\% (+50.0) & 0.0\% (+0.0) \\
+\hline
+\texttt{p3\_zero\_deg2} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p3\_zero\_deg3} & 40.0\% (-60.0) & \textbf{100.0\% (+0.0)} & 80.0\% (-20.0) & 80.0\% (-20.0) & 80.0\% (-20.0) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p3\_zero\_deg4} & 66.7\% (-33.3) & \textbf{100.0\% (+0.0)} & 66.7\% (-33.3) & 66.7\% (-33.3) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p3\_one\_deg2} & 75.0\% (+75.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) \\
+\hline
+\texttt{p3\_one\_deg3} & \textbf{100.0\% (+100.0)} & 40.0\% (+40.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) \\
+\hline
+\texttt{p3\_one\_deg4} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 66.7\% (+66.7) & \textbf{100.0\% (+100.0)} & 66.7\% (+66.7) & 0.0\% (+0.0) \\
+\hline
+\texttt{p3\_random\_deg2} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} & \textbf{75.0\% (+0.0)} \\
+\hline
+\texttt{p3\_random\_deg3} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & 60.0\% (+0.0) & 60.0\% (+0.0) \\
+\hline
+\texttt{p3\_random\_deg4} & 33.3\% (-16.7) & \textbf{66.7\% (+16.7)} & \textbf{66.7\% (+16.7)} & 50.0\% (+0.0) & 50.0\% (+0.0) & 50.0\% (+0.0) & \textbf{66.7\% (+16.7)} & \textbf{66.7\% (+16.7)} & \textbf{66.7\% (+16.7)} & 50.0\% (+0.0) & 50.0\% (+0.0) \\
+\hline
+\texttt{p5\_zero\_deg2} & 0.0\% (-100.0) & \textbf{100.0\% (+0.0)} & 50.0\% (-50.0) & 50.0\% (-50.0) & 50.0\% (-50.0) & \textbf{100.0\% (+0.0)} & 50.0\% (-50.0) & 50.0\% (-50.0) & 25.0\% (-75.0) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p5\_zero\_deg3} & 0.0\% (-100.0) & 60.0\% (-40.0) & 80.0\% (-20.0) & 60.0\% (-40.0) & 60.0\% (-40.0) & \textbf{100.0\% (+0.0)} & 60.0\% (-40.0) & 60.0\% (-40.0) & 80.0\% (-20.0) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p5\_zero\_deg4} & 16.7\% (-83.3) & 83.3\% (-16.7) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} & 83.3\% (-16.7) & 83.3\% (-16.7) & 83.3\% (-16.7) & 83.3\% (-16.7) & \textbf{100.0\% (+0.0)} & \textbf{100.0\% (+0.0)} \\
+\hline
+\texttt{p5\_one\_deg2} & 75.0\% (+75.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) \\
+\hline
+\texttt{p5\_one\_deg3} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) & 0.0\% (+0.0) & 0.0\% (+0.0) & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 0.0\% (+0.0) \\
+\hline
+\texttt{p5\_one\_deg4} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & \textbf{100.0\% (+100.0)} & 50.0\% (+50.0) & 83.3\% (+83.3) & \textbf{100.0\% (+100.0)} & 83.3\% (+83.3) & 0.0\% (+0.0) \\
+\hline
+\texttt{p5\_random\_deg2} & 0.0\% (-50.0) & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & \textbf{100.0\% (+50.0)} & 50.0\% (+0.0) & 50.0\% (+0.0) \\
+\hline
+\texttt{p5\_random\_deg3} & 40.0\% (-20.0) & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & \textbf{80.0\% (+20.0)} & 60.0\% (+0.0) & 60.0\% (+0.0) \\
+\hline
+\texttt{p5\_random\_deg4} & \textbf{66.7\% (+33.3)} & \textbf{66.7\% (+33.3)} & \textbf{66.7\% (+33.3)} & 33.3\% (+0.0) & 33.3\% (+0.0) & 33.3\% (+0.0) & \textbf{66.7\% (+33.3)} & 33.3\% (+0.0) & \textbf{66.7\% (+33.3)} & \textbf{66.7\% (+33.3)} & 33.3\% (+0.0) \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Overall optimizer comparison
+% ----------------------------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\caption{Overall optimizer comparison aggregated across all function learning configurations. Shows mean performance metrics.}
+\label{tab:funclearn-optimizer-aggregate}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Mean Loss & Improv.~(\%) & Mean Time (s) & Configs \\
+\midrule
+Random & $3.38e+00$ & 1.9 & 0.13 & 27 \\
+\hline
+Best First Value & $2.65e+00$ & 21.5 & 0.02 & 27 \\
+\hline
+Best First Branch 2 & $2.66e+00$ & 21.0 & 0.03 & 27 \\
+\hline
+MCTS-50 & $2.72e+00$ & 19.6 & 0.11 & 27 \\
+\hline
+MCTS-100 & $2.70e+00$ & 19.9 & 0.10 & 27 \\
+\hline
+MCTS-200 & \textbf{$2.61e+00$} & 22.1 & 0.15 & 27 \\
+\hline
+DAG-MCTS-50 & $2.71e+00$ & 20.1 & 0.24 & 27 \\
+\hline
+DAG-MCTS-100 & $2.68e+00$ & 20.6 & 0.14 & 27 \\
+\hline
+DAG-MCTS-200 & $2.67e+00$ & 20.6 & 0.47 & 27 \\
+\hline
+DOO & $2.92e+00$ & 15.3 & 0.06 & 27 \\
+\hline
+Best First Gradient & $3.63e+00$ & -1.2 & 0.07 & 27 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Function type comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Performance comparison by target function type. Shows mean final loss aggregated over configurations for each function type.}
+\label{tab:funclearn-function-type}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Function Type & Random & Best First Value & Best First Branch 2 & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO & Best First Gradient \\
+\midrule
+\texttt{one} & $2.6$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ & $2.4$ \\
+\hline
+\texttt{random} & $3.5$ & $2.8$ & $2.8$ & $2.9$ & $2.9$ & $2.9$ & $2.9$ & $2.8$ & $2.8$ & $3.2$ & $3.6$ \\
+\hline
+\texttt{zero} & $4.0$ & $2.7$ & $2.8$ & $2.9$ & $2.9$ & $2.6$ & $2.9$ & $2.9$ & $2.8$ & $3.2$ & $4.9$ \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Evaluation count comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean number of function evaluations per optimizer for function learning (excluding monitoring calls). Lower is more efficient.}
+\label{tab:funclearn-evals}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Configuration & Random & Best First Value & Best First Branch 2 & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO & Best First Gradient \\
+\midrule
+\texttt{p2\_zero\_deg2} & 0 & 120 & 240 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 91 & 120 \\
+\hline
+\texttt{p2\_zero\_deg3} & 0 & 160 & 480 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 121 & 160 \\
+\hline
+\texttt{p2\_zero\_deg4} & 0 & 200 & 800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 171 & 200 \\
+\hline
+\texttt{p2\_one\_deg2} & 0 & 120 & 240 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 121 & 120 \\
+\hline
+\texttt{p2\_one\_deg3} & 0 & 160 & 480 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 161 & 160 \\
+\hline
+\texttt{p2\_one\_deg4} & 0 & 200 & 800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 201 & 200 \\
+\hline
+\texttt{p2\_random\_deg2} & 0 & 120 & 240 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 121 & 120 \\
+\hline
+\texttt{p2\_random\_deg3} & 0 & 160 & 480 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 161 & 160 \\
+\hline
+\texttt{p2\_random\_deg4} & 0 & 200 & 800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 201 & 200 \\
+\hline
+\texttt{p3\_zero\_deg2} & 0 & 180 & 540 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 181 & 180 \\
+\hline
+\texttt{p3\_zero\_deg3} & 0 & 240 & 1080 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 241 & 240 \\
+\hline
+\texttt{p3\_zero\_deg4} & 0 & 300 & 1800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 & 300 \\
+\hline
+\texttt{p3\_one\_deg2} & 0 & 180 & 540 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 181 & 180 \\
+\hline
+\texttt{p3\_one\_deg3} & 0 & 240 & 1080 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 241 & 240 \\
+\hline
+\texttt{p3\_one\_deg4} & 0 & 300 & 1800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 & 300 \\
+\hline
+\texttt{p3\_random\_deg2} & 0 & 180 & 540 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 181 & 180 \\
+\hline
+\texttt{p3\_random\_deg3} & 0 & 240 & 1080 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 241 & 240 \\
+\hline
+\texttt{p3\_random\_deg4} & 0 & 300 & 1800 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 & 300 \\
+\hline
+\texttt{p5\_zero\_deg2} & 0 & 300 & 1500 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 256 & 300 \\
+\hline
+\texttt{p5\_zero\_deg3} & 0 & 400 & 3000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 401 & 400 \\
+\hline
+\texttt{p5\_zero\_deg4} & 0 & 500 & 5000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 501 & 500 \\
+\hline
+\texttt{p5\_one\_deg2} & 0 & 300 & 1500 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 & 300 \\
+\hline
+\texttt{p5\_one\_deg3} & 0 & 400 & 3000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 401 & 400 \\
+\hline
+\texttt{p5\_one\_deg4} & 0 & 500 & 5000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 501 & 500 \\
+\hline
+\texttt{p5\_random\_deg2} & 0 & 300 & 1500 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 & 300 \\
+\hline
+\texttt{p5\_random\_deg3} & 0 & 400 & 3000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 401 & 400 \\
+\hline
+\texttt{p5\_random\_deg4} & 0 & 500 & 5000 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 501 & 500 \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Tables: Detailed results per configuration
+% ----------------------------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_zero\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-1}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.24e+00$ & 100.0 & 42.6 & 0.4456 \\
+\hline
+Best First Value & $1.91e+00$ & 100.0 & 51.1 & 0.1128 \\
+\hline
+Best First Branch 2 & \textbf{$1.90e+00$} & 100.0 & 51.2 & 0.0660 \\
+\hline
+MCTS-50 & $1.91e+00$ & 100.0 & 50.9 & 0.2578 \\
+\hline
+MCTS-100 & $1.94e+00$ & 100.0 & 50.1 & 0.0257 \\
+\hline
+MCTS-200 & $1.91e+00$ & 100.0 & 51.1 & 0.0502 \\
+\hline
+DAG-MCTS-50 & $1.91e+00$ & 100.0 & 51.0 & 0.4409 \\
+\hline
+DAG-MCTS-100 & $2.06e+00$ & 100.0 & 47.2 & 0.0471 \\
+\hline
+DAG-MCTS-200 & $1.91e+00$ & 100.0 & 51.1 & 0.2167 \\
+\hline
+DOO & $1.94e+00$ & 100.0 & 50.3 & 0.1598 \\
+\hline
+Best First Gradient & $3.90e+00$ & 100.0 & 0.0 & 0.2154 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_zero\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-2}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.87e+00$ & 0.0 & 0.0 & 0.2700 \\
+\hline
+Best First Value & $2.47e+00$ & 100.0 & 49.2 & 0.0408 \\
+\hline
+Best First Branch 2 & $2.65e+00$ & 100.0 & 45.6 & 0.0603 \\
+\hline
+MCTS-50 & $2.63e+00$ & 100.0 & 46.1 & 0.2703 \\
+\hline
+MCTS-100 & \textbf{$2.43e+00$} & 100.0 & 50.2 & 0.1546 \\
+\hline
+MCTS-200 & $2.64e+00$ & 100.0 & 45.9 & 0.0653 \\
+\hline
+DAG-MCTS-50 & $2.65e+00$ & 100.0 & 45.5 & 0.4086 \\
+\hline
+DAG-MCTS-100 & $2.77e+00$ & 100.0 & 43.2 & 0.0657 \\
+\hline
+DAG-MCTS-200 & $2.51e+00$ & 100.0 & 48.6 & 0.3885 \\
+\hline
+DOO & $2.82e+00$ & 100.0 & 42.1 & 0.1476 \\
+\hline
+Best First Gradient & $4.87e+00$ & 100.0 & 0.0 & 0.1986 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_zero\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-3}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.16e+00$ & 100.0 & 28.8 & 0.3045 \\
+\hline
+Best First Value & $3.33e+00$ & 100.0 & 43.0 & 0.0520 \\
+\hline
+Best First Branch 2 & \textbf{$2.97e+00$} & 100.0 & 49.2 & 0.0780 \\
+\hline
+MCTS-50 & $3.01e+00$ & 100.0 & 48.4 & 0.2559 \\
+\hline
+MCTS-100 & $3.18e+00$ & 100.0 & 45.6 & 0.0625 \\
+\hline
+MCTS-200 & $3.05e+00$ & 100.0 & 47.8 & 0.0957 \\
+\hline
+DAG-MCTS-50 & $3.59e+00$ & 100.0 & 38.6 & 0.6558 \\
+\hline
+DAG-MCTS-100 & $3.01e+00$ & 100.0 & 48.5 & 0.0785 \\
+\hline
+DAG-MCTS-200 & $3.06e+00$ & 100.0 & 47.7 & 0.1920 \\
+\hline
+DOO & $3.95e+00$ & 100.0 & 32.4 & 0.1750 \\
+\hline
+Best First Gradient & $5.84e+00$ & 100.0 & 0.0 & 0.2017 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_one\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-4}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.15e+00$ & 0.0 & -66.0 & 0.0002 \\
+\hline
+Best First Value & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0005 \\
+\hline
+Best First Branch 2 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0008 \\
+\hline
+MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0127 \\
+\hline
+MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0246 \\
+\hline
+MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0502 \\
+\hline
+DAG-MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0262 \\
+\hline
+DAG-MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.3288 \\
+\hline
+DAG-MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.1191 \\
+\hline
+DOO & \textbf{$1.90e+00$} & 0.0 & 0.0 & 0.0008 \\
+\hline
+Best First Gradient & \textbf{$1.90e+00$} & 0.0 & 0.0 & 0.0005 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_one\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-5}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0003 \\
+\hline
+Best First Value & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0008 \\
+\hline
+Best First Branch 2 & \textbf{$2.37e+00$} & 60.0 & 0.0 & 0.0017 \\
+\hline
+MCTS-50 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0159 \\
+\hline
+MCTS-100 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0322 \\
+\hline
+MCTS-200 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0631 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0331 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.37e+00$} & 40.0 & 0.0 & 0.0648 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.5005 \\
+\hline
+DOO & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.0012 \\
+\hline
+Best First Gradient & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.0008 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_one\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-6}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0003 \\
+\hline
+Best First Value & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0011 \\
+\hline
+Best First Branch 2 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0041 \\
+\hline
+MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0228 \\
+\hline
+MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0426 \\
+\hline
+MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0808 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.84e+00$} & 66.7 & 0.0 & 0.0414 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.1131 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.6361 \\
+\hline
+DOO & \textbf{$2.84e+00$} & 66.7 & 0.0 & 0.0018 \\
+\hline
+Best First Gradient & \textbf{$2.84e+00$} & 0.0 & 0.0 & 0.0014 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_random\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-7}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.36e+00$ & 100.0 & 30.6 & 0.0002 \\
+\hline
+Best First Value & $2.13e+00$ & 100.0 & 37.4 & 0.0005 \\
+\hline
+Best First Branch 2 & \textbf{$1.92e+00$} & 100.0 & 43.4 & 0.0007 \\
+\hline
+MCTS-50 & $2.15e+00$ & 75.0 & 36.7 & 0.0148 \\
+\hline
+MCTS-100 & $2.21e+00$ & 100.0 & 34.8 & 0.0289 \\
+\hline
+MCTS-200 & $2.16e+00$ & 100.0 & 36.3 & 0.0574 \\
+\hline
+DAG-MCTS-50 & $2.35e+00$ & 75.0 & 30.9 & 0.0289 \\
+\hline
+DAG-MCTS-100 & $2.13e+00$ & 100.0 & 37.4 & 0.0543 \\
+\hline
+DAG-MCTS-200 & $2.13e+00$ & 100.0 & 37.4 & 0.2097 \\
+\hline
+DOO & $2.55e+00$ & 100.0 & 24.8 & 0.0011 \\
+\hline
+Best First Gradient & $3.62e+00$ & 75.0 & -6.5 & 0.0007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_random\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-8}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.22e+00$ & 20.0 & -25.2 & 0.0004 \\
+\hline
+Best First Value & $2.83e+00$ & 80.0 & 16.0 & 0.0009 \\
+\hline
+Best First Branch 2 & \textbf{$2.81e+00$} & 80.0 & 16.7 & 0.0018 \\
+\hline
+MCTS-50 & $2.82e+00$ & 40.0 & 16.3 & 0.0189 \\
+\hline
+MCTS-100 & $2.83e+00$ & 80.0 & 16.0 & 0.0325 \\
+\hline
+MCTS-200 & $2.81e+00$ & 80.0 & 16.5 & 0.0737 \\
+\hline
+DAG-MCTS-50 & $2.81e+00$ & 80.0 & 16.6 & 0.0486 \\
+\hline
+DAG-MCTS-100 & $2.81e+00$ & 80.0 & 16.6 & 0.0710 \\
+\hline
+DAG-MCTS-200 & $2.81e+00$ & 80.0 & 16.6 & 0.6377 \\
+\hline
+DOO & $2.91e+00$ & 80.0 & 13.6 & 0.0012 \\
+\hline
+Best First Gradient & $3.37e+00$ & 80.0 & 0.0 & 0.0009 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_random\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-9}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.50e+00$ & 50.0 & -23.1 & 0.0004 \\
+\hline
+Best First Value & \textbf{$2.84e+00$} & 50.0 & 0.0 & 0.0010 \\
+\hline
+Best First Branch 2 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0038 \\
+\hline
+MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0200 \\
+\hline
+MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0402 \\
+\hline
+MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0792 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0452 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.1180 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.2036 \\
+\hline
+DOO & \textbf{$2.84e+00$} & 50.0 & 0.0 & 0.0018 \\
+\hline
+Best First Gradient & \textbf{$2.84e+00$} & 0.0 & 0.0 & 0.0014 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_zero\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-10}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.20e+00$ & 100.0 & 43.5 & 0.7170 \\
+\hline
+Best First Value & $1.99e+00$ & 100.0 & 49.0 & 0.0345 \\
+\hline
+Best First Branch 2 & $2.18e+00$ & 100.0 & 44.1 & 0.0540 \\
+\hline
+MCTS-50 & $1.99e+00$ & 100.0 & 48.9 & 0.2158 \\
+\hline
+MCTS-100 & $2.45e+00$ & 100.0 & 37.0 & 0.0323 \\
+\hline
+MCTS-200 & $2.07e+00$ & 100.0 & 46.9 & 0.0628 \\
+\hline
+DAG-MCTS-50 & \textbf{$1.93e+00$} & 100.0 & 50.6 & 0.4482 \\
+\hline
+DAG-MCTS-100 & $2.19e+00$ & 100.0 & 43.8 & 0.0845 \\
+\hline
+DAG-MCTS-200 & $2.18e+00$ & 100.0 & 44.1 & 0.1544 \\
+\hline
+DOO & $2.45e+00$ & 100.0 & 37.0 & 0.1439 \\
+\hline
+Best First Gradient & $3.90e+00$ & 100.0 & 0.0 & 0.1741 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_zero\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-11}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.15e+00$ & 40.0 & 14.8 & 0.2780 \\
+\hline
+Best First Value & $2.70e+00$ & 100.0 & 44.6 & 0.0558 \\
+\hline
+Best First Branch 2 & $3.05e+00$ & 80.0 & 37.3 & 0.0729 \\
+\hline
+MCTS-50 & $2.97e+00$ & 80.0 & 39.0 & 0.2816 \\
+\hline
+MCTS-100 & $3.07e+00$ & 80.0 & 37.0 & 0.3768 \\
+\hline
+MCTS-200 & $2.64e+00$ & 100.0 & 45.8 & 0.0868 \\
+\hline
+DAG-MCTS-50 & $2.57e+00$ & 100.0 & 47.2 & 0.4765 \\
+\hline
+DAG-MCTS-100 & $2.70e+00$ & 100.0 & 44.7 & 0.1110 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.56e+00$} & 100.0 & 47.4 & 0.2074 \\
+\hline
+DOO & $2.82e+00$ & 100.0 & 42.2 & 0.1556 \\
+\hline
+Best First Gradient & $4.87e+00$ & 100.0 & 0.0 & 0.1876 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_zero\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-12}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.18e+00$ & 66.7 & 28.5 & 0.6689 \\
+\hline
+Best First Value & $3.23e+00$ & 100.0 & 44.8 & 0.0486 \\
+\hline
+Best First Branch 2 & $3.87e+00$ & 66.7 & 33.7 & 0.0841 \\
+\hline
+MCTS-50 & $4.00e+00$ & 66.7 & 31.5 & 0.2781 \\
+\hline
+MCTS-100 & $3.21e+00$ & 100.0 & 45.0 & 0.0501 \\
+\hline
+MCTS-200 & \textbf{$3.03e+00$} & 100.0 & 48.1 & 0.1061 \\
+\hline
+DAG-MCTS-50 & $3.32e+00$ & 100.0 & 43.2 & 0.4728 \\
+\hline
+DAG-MCTS-100 & $3.20e+00$ & 100.0 & 45.3 & 0.1632 \\
+\hline
+DAG-MCTS-200 & $3.18e+00$ & 100.0 & 45.6 & 0.6350 \\
+\hline
+DOO & $4.93e+00$ & 100.0 & 15.6 & 0.2103 \\
+\hline
+Best First Gradient & $5.84e+00$ & 100.0 & 0.0 & 0.2001 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_one\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-13}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.20e+00$ & 75.0 & -16.1 & 0.0003 \\
+\hline
+Best First Value & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0006 \\
+\hline
+Best First Branch 2 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0014 \\
+\hline
+MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0158 \\
+\hline
+MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0301 \\
+\hline
+MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0603 \\
+\hline
+DAG-MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0375 \\
+\hline
+DAG-MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.1046 \\
+\hline
+DAG-MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.6789 \\
+\hline
+DOO & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0012 \\
+\hline
+Best First Gradient & \textbf{$1.90e+00$} & 0.0 & 0.0 & 0.0006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_one\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-14}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0003 \\
+\hline
+Best First Value & \textbf{$2.37e+00$} & 40.0 & 0.0 & 0.0009 \\
+\hline
+Best First Branch 2 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0043 \\
+\hline
+MCTS-50 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0208 \\
+\hline
+MCTS-100 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0428 \\
+\hline
+MCTS-200 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.1217 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0580 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.1181 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.2643 \\
+\hline
+DOO & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0018 \\
+\hline
+Best First Gradient & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.0013 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_one\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-15}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0004 \\
+\hline
+Best First Value & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0016 \\
+\hline
+Best First Branch 2 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0088 \\
+\hline
+MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0277 \\
+\hline
+MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0557 \\
+\hline
+MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.5974 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0677 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.84e+00$} & 66.7 & 0.0 & 0.1332 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.2963 \\
+\hline
+DOO & \textbf{$2.84e+00$} & 66.7 & 0.0 & 0.0026 \\
+\hline
+Best First Gradient & \textbf{$2.84e+00$} & 0.0 & 0.0 & 0.0019 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_random\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-16}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.67e+00$ & 75.0 & 21.2 & 0.0003 \\
+\hline
+Best First Value & \textbf{$2.22e+00$} & 75.0 & 34.7 & 0.0008 \\
+\hline
+Best First Branch 2 & $2.35e+00$ & 75.0 & 30.9 & 0.0016 \\
+\hline
+MCTS-50 & $2.40e+00$ & 75.0 & 29.4 & 0.0170 \\
+\hline
+MCTS-100 & \textbf{$2.22e+00$} & 75.0 & 34.7 & 0.0329 \\
+\hline
+MCTS-200 & $2.22e+00$ & 75.0 & 34.6 & 0.0691 \\
+\hline
+DAG-MCTS-50 & $2.35e+00$ & 75.0 & 30.9 & 0.6676 \\
+\hline
+DAG-MCTS-100 & $2.22e+00$ & 75.0 & 34.7 & 0.0874 \\
+\hline
+DAG-MCTS-200 & $2.22e+00$ & 75.0 & 34.7 & 0.1665 \\
+\hline
+DOO & $2.24e+00$ & 75.0 & 34.2 & 0.0015 \\
+\hline
+Best First Gradient & $3.40e+00$ & 75.0 & 0.0 & 0.0007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_random\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-17}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.09e+00$ & 80.0 & 20.1 & 0.0003 \\
+\hline
+Best First Value & $2.96e+00$ & 80.0 & 23.5 & 0.0010 \\
+\hline
+Best First Branch 2 & $2.95e+00$ & 80.0 & 23.7 & 0.0046 \\
+\hline
+MCTS-50 & $3.09e+00$ & 80.0 & 20.1 & 0.0223 \\
+\hline
+MCTS-100 & \textbf{$2.93e+00$} & 80.0 & 24.2 & 0.0413 \\
+\hline
+MCTS-200 & $3.00e+00$ & 80.0 & 22.5 & 0.0797 \\
+\hline
+DAG-MCTS-50 & $2.96e+00$ & 80.0 & 23.5 & 0.0501 \\
+\hline
+DAG-MCTS-100 & $2.96e+00$ & 80.0 & 23.5 & 0.1122 \\
+\hline
+DAG-MCTS-200 & $2.96e+00$ & 80.0 & 23.5 & 1.1000 \\
+\hline
+DOO & $3.87e+00$ & 60.0 & 0.0 & 0.0017 \\
+\hline
+Best First Gradient & $3.87e+00$ & 60.0 & 0.0 & 0.0013 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_random\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-18}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.60e+00$ & 33.3 & -5.8 & 0.0008 \\
+\hline
+Best First Value & $3.80e+00$ & 66.7 & 12.4 & 0.0022 \\
+\hline
+Best First Branch 2 & \textbf{$3.79e+00$} & 66.7 & 12.8 & 0.0106 \\
+\hline
+MCTS-50 & $4.29e+00$ & 50.0 & 1.3 & 0.0292 \\
+\hline
+MCTS-100 & $4.29e+00$ & 50.0 & 1.3 & 0.0569 \\
+\hline
+MCTS-200 & $4.29e+00$ & 50.0 & 1.3 & 0.1089 \\
+\hline
+DAG-MCTS-50 & $3.83e+00$ & 66.7 & 11.8 & 0.0686 \\
+\hline
+DAG-MCTS-100 & $3.80e+00$ & 66.7 & 12.4 & 0.1434 \\
+\hline
+DAG-MCTS-200 & $3.80e+00$ & 66.7 & 12.4 & 0.3044 \\
+\hline
+DOO & $4.29e+00$ & 50.0 & 1.3 & 0.0026 \\
+\hline
+Best First Gradient & $4.34e+00$ & 50.0 & 0.0 & 0.0019 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_zero\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-19}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.90e+00$ & 0.0 & 0.0 & 0.2581 \\
+\hline
+Best First Value & $2.06e+00$ & 100.0 & 47.2 & 0.0346 \\
+\hline
+Best First Branch 2 & $2.90e+00$ & 50.0 & 25.7 & 0.0593 \\
+\hline
+MCTS-50 & $2.90e+00$ & 50.0 & 25.6 & 0.2296 \\
+\hline
+MCTS-100 & $2.90e+00$ & 50.0 & 25.7 & 0.0451 \\
+\hline
+MCTS-200 & $2.06e+00$ & 100.0 & 47.2 & 0.7011 \\
+\hline
+DAG-MCTS-50 & $2.98e+00$ & 50.0 & 23.6 & 0.4540 \\
+\hline
+DAG-MCTS-100 & $2.90e+00$ & 50.0 & 25.6 & 0.1235 \\
+\hline
+DAG-MCTS-200 & $3.40e+00$ & 25.0 & 12.8 & 0.2153 \\
+\hline
+DOO & \textbf{$1.90e+00$} & 100.0 & 51.3 & 0.1643 \\
+\hline
+Best First Gradient & $3.90e+00$ & 100.0 & 0.0 & 0.1826 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_zero\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-20}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.87e+00$ & 0.0 & 0.0 & 0.2764 \\
+\hline
+Best First Value & $3.45e+00$ & 60.0 & 29.1 & 0.0440 \\
+\hline
+Best First Branch 2 & $2.95e+00$ & 80.0 & 39.4 & 0.0981 \\
+\hline
+MCTS-50 & $3.45e+00$ & 60.0 & 29.1 & 0.2590 \\
+\hline
+MCTS-100 & $3.40e+00$ & 60.0 & 30.2 & 0.0602 \\
+\hline
+MCTS-200 & \textbf{$2.47e+00$} & 100.0 & 49.3 & 0.5980 \\
+\hline
+DAG-MCTS-50 & $3.47e+00$ & 60.0 & 28.8 & 0.5093 \\
+\hline
+DAG-MCTS-100 & $3.45e+00$ & 60.0 & 29.1 & 0.1522 \\
+\hline
+DAG-MCTS-200 & $3.03e+00$ & 80.0 & 37.7 & 0.8730 \\
+\hline
+DOO & $2.69e+00$ & 100.0 & 44.7 & 0.1595 \\
+\hline
+Best First Gradient & $4.87e+00$ & 100.0 & 0.0 & 0.1888 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_zero\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-21}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $5.42e+00$ & 16.7 & 7.2 & 0.3460 \\
+\hline
+Best First Value & $3.59e+00$ & 83.3 & 38.6 & 0.0538 \\
+\hline
+Best First Branch 2 & $3.09e+00$ & 100.0 & 47.2 & 0.1165 \\
+\hline
+MCTS-50 & \textbf{$2.99e+00$} & 100.0 & 48.9 & 0.5084 \\
+\hline
+MCTS-100 & $3.18e+00$ & 100.0 & 45.6 & 0.0741 \\
+\hline
+MCTS-200 & $3.41e+00$ & 83.3 & 41.7 & 0.1501 \\
+\hline
+DAG-MCTS-50 & $3.67e+00$ & 83.3 & 37.2 & 0.4971 \\
+\hline
+DAG-MCTS-100 & $3.46e+00$ & 83.3 & 40.8 & 0.6246 \\
+\hline
+DAG-MCTS-200 & $3.59e+00$ & 83.3 & 38.6 & 0.9821 \\
+\hline
+DOO & $5.36e+00$ & 100.0 & 8.3 & 0.1513 \\
+\hline
+Best First Gradient & $5.84e+00$ & 100.0 & 0.0 & 0.1852 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_one\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-22}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.28e+00$ & 75.0 & -20.1 & 0.0003 \\
+\hline
+Best First Value & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0009 \\
+\hline
+Best First Branch 2 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0038 \\
+\hline
+MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0214 \\
+\hline
+MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0430 \\
+\hline
+MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.1050 \\
+\hline
+DAG-MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0608 \\
+\hline
+DAG-MCTS-100 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.1051 \\
+\hline
+DAG-MCTS-200 & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.2141 \\
+\hline
+DOO & \textbf{$1.90e+00$} & 100.0 & 0.0 & 0.0020 \\
+\hline
+Best First Gradient & \textbf{$1.90e+00$} & 0.0 & 0.0 & 0.0011 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_one\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-23}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0005 \\
+\hline
+Best First Value & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0014 \\
+\hline
+Best First Branch 2 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0096 \\
+\hline
+MCTS-50 & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.0298 \\
+\hline
+MCTS-100 & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.5074 \\
+\hline
+MCTS-200 & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.1105 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0740 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.1365 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.3355 \\
+\hline
+DOO & \textbf{$2.37e+00$} & 100.0 & 0.0 & 0.0027 \\
+\hline
+Best First Gradient & \textbf{$2.37e+00$} & 0.0 & 0.0 & 0.0019 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_one\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-24}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0006 \\
+\hline
+Best First Value & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0023 \\
+\hline
+Best First Branch 2 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0214 \\
+\hline
+MCTS-50 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.0373 \\
+\hline
+MCTS-100 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.5802 \\
+\hline
+MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.1461 \\
+\hline
+DAG-MCTS-50 & \textbf{$2.84e+00$} & 50.0 & 0.0 & 0.1059 \\
+\hline
+DAG-MCTS-100 & \textbf{$2.84e+00$} & 83.3 & 0.0 & 0.2116 \\
+\hline
+DAG-MCTS-200 & \textbf{$2.84e+00$} & 100.0 & 0.0 & 0.9550 \\
+\hline
+DOO & \textbf{$2.84e+00$} & 83.3 & 0.0 & 0.0038 \\
+\hline
+Best First Gradient & \textbf{$2.84e+00$} & 0.0 & 0.0 & 0.0030 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_random\_deg2}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-25}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.75e+00$ & 0.0 & -29.5 & 0.0004 \\
+\hline
+Best First Value & $1.98e+00$ & 100.0 & 31.8 & 0.0009 \\
+\hline
+Best First Branch 2 & $1.98e+00$ & 100.0 & 31.8 & 0.0040 \\
+\hline
+MCTS-50 & $2.06e+00$ & 100.0 & 29.0 & 0.0222 \\
+\hline
+MCTS-100 & $1.98e+00$ & 100.0 & 31.8 & 0.0451 \\
+\hline
+MCTS-200 & $1.93e+00$ & 100.0 & 33.5 & 0.0865 \\
+\hline
+DAG-MCTS-50 & \textbf{$1.90e+00$} & 100.0 & 34.4 & 0.0633 \\
+\hline
+DAG-MCTS-100 & $1.91e+00$ & 100.0 & 34.0 & 0.1136 \\
+\hline
+DAG-MCTS-200 & $1.98e+00$ & 100.0 & 31.8 & 0.7117 \\
+\hline
+DOO & $2.90e+00$ & 50.0 & 0.0 & 0.0018 \\
+\hline
+Best First Gradient & $3.66e+00$ & 50.0 & -26.3 & 0.0011 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_random\_deg3}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-26}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.87e+00$ & 40.0 & 0.0 & 0.0004 \\
+\hline
+Best First Value & $2.77e+00$ & 80.0 & 28.5 & 0.0016 \\
+\hline
+Best First Branch 2 & \textbf{$2.77e+00$} & 80.0 & 28.5 & 0.0100 \\
+\hline
+MCTS-50 & $2.77e+00$ & 80.0 & 28.5 & 0.0295 \\
+\hline
+MCTS-100 & $2.78e+00$ & 80.0 & 28.1 & 0.0588 \\
+\hline
+MCTS-200 & $2.77e+00$ & 80.0 & 28.5 & 0.1165 \\
+\hline
+DAG-MCTS-50 & $2.85e+00$ & 80.0 & 26.4 & 0.0871 \\
+\hline
+DAG-MCTS-100 & $2.77e+00$ & 80.0 & 28.4 & 0.1605 \\
+\hline
+DAG-MCTS-200 & $2.87e+00$ & 80.0 & 25.9 & 0.8469 \\
+\hline
+DOO & $3.29e+00$ & 60.0 & 14.9 & 0.0027 \\
+\hline
+Best First Gradient & $3.87e+00$ & 60.0 & 0.0 & 0.0018 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_random\_deg4}. Shows mean final loss, accuracy (\%), improvement ratio (\%), and wall-clock time.}
+\label{tab:funclearn-detail-27}
+\begin{tabular}{lrrrr}
+\toprule
+Optimizer & Final Loss & Accuracy (\%) & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.84e+00$ & 66.7 & 0.0 & 0.0006 \\
+\hline
+Best First Value & $3.84e+00$ & 66.7 & 0.0 & 0.0021 \\
+\hline
+Best First Branch 2 & \textbf{$3.62e+00$} & 66.7 & 5.8 & 0.0208 \\
+\hline
+MCTS-50 & $3.84e+00$ & 33.3 & 0.0 & 0.0363 \\
+\hline
+MCTS-100 & $3.84e+00$ & 33.3 & 0.0 & 0.0704 \\
+\hline
+MCTS-200 & $3.84e+00$ & 33.3 & 0.0 & 0.1571 \\
+\hline
+DAG-MCTS-50 & $3.77e+00$ & 66.7 & 2.1 & 0.6093 \\
+\hline
+DAG-MCTS-100 & $3.84e+00$ & 33.3 & 0.0 & 0.1946 \\
+\hline
+DAG-MCTS-200 & $3.84e+00$ & 66.7 & 0.0 & 0.7489 \\
+\hline
+DOO & $3.84e+00$ & 66.7 & 0.0 & 0.0041 \\
+\hline
+Best First Gradient & $3.84e+00$ & 33.3 & 0.0 & 0.0029 \\
+\bottomrule
+\end{tabular}
+\end{table}
+

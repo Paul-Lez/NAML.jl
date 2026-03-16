@@ -1,0 +1,668 @@
+% ============================================================================
+% LaTeX Tables for Polynomial Learning Experiment
+% Generated: 2026-03-16 11:33:00
+%
+% This file contains all tables for the polynomial learning experiments.
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+% Table: Configuration Summary
+% ----------------------------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\caption{Polynomial learning experiment configurations. Each row describes one experimental setup.}
+\label{tab:poly-learning-config}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lcccccc}
+\toprule
+Experiment & Prime ($p$) & Precision & Degree & \#Points & \#Samples \\
+\midrule
+\texttt{p2\_deg2\_3pts} & 2 & 20 & 2 & 3 & 1 \\
+\hline
+\texttt{p2\_deg3\_4pts} & 2 & 20 & 3 & 4 & 1 \\
+\hline
+\texttt{p2\_deg4\_5pts} & 2 & 20 & 4 & 5 & 1 \\
+\hline
+\texttt{p2\_deg5\_6pts} & 2 & 20 & 5 & 6 & 1 \\
+\hline
+\texttt{p3\_deg2\_3pts} & 3 & 20 & 2 & 3 & 1 \\
+\hline
+\texttt{p3\_deg3\_4pts} & 3 & 20 & 3 & 4 & 1 \\
+\hline
+\texttt{p3\_deg4\_5pts} & 3 & 20 & 4 & 5 & 1 \\
+\hline
+\texttt{p3\_deg5\_6pts} & 3 & 20 & 5 & 6 & 1 \\
+\hline
+\texttt{p5\_deg2\_3pts} & 5 & 20 & 2 & 3 & 1 \\
+\hline
+\texttt{p5\_deg3\_4pts} & 5 & 20 & 3 & 4 & 1 \\
+\hline
+\texttt{p5\_deg4\_5pts} & 5 & 20 & 4 & 5 & 1 \\
+\hline
+\texttt{p5\_deg5\_6pts} & 5 & 20 & 5 & 6 & 1 \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+
+% ----------------------------------------------------------------------------
+% Table: Summary (mean final loss)
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Polynomial learning: mean final loss across optimizers. Lower is better. Values are averaged over multiple random problem instances.}
+\label{tab:poly-learning-summary}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Experiment & Random & Best First Value & Best First Branch 2 & Best First Gradient & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO \\
+\midrule
+\texttt{p2\_deg2\_3pts} & $5.2{\scriptstyle\times 10^{-1}}$ & \textbf{$2.7{\scriptstyle\times 10^{-4}}$} & $1.6{\scriptstyle\times 10^{-2}}$ & $3.0$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $4.4{\scriptstyle\times 10^{-3}}$ \\
+\hline
+\texttt{p2\_deg3\_4pts} & $2.1$ & \textbf{$3.1{\scriptstyle\times 10^{-2}}$} & $3.1{\scriptstyle\times 10^{-1}}$ & $2.1$ & $5.3{\scriptstyle\times 10^{-1}}$ & $2.7{\scriptstyle\times 10^{-1}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $6.7{\scriptstyle\times 10^{-2}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $8.0{\scriptstyle\times 10^{-2}}$ & $2.0$ \\
+\hline
+\texttt{p2\_deg4\_5pts} & $3.5$ & $2.3$ & \textbf{$2.3$} & $5.0$ & $2.3$ & $2.3$ & $2.5$ & $2.3$ & $2.3$ & $2.3$ & $3.5$ \\
+\hline
+\texttt{p2\_deg5\_6pts} & $3.0$ & $2.3$ & \textbf{$2.1$} & $6.0$ & $3.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $3.1$ \\
+\hline
+\texttt{p3\_deg2\_3pts} & $3.0$ & $1.0$ & \textbf{$1.0$} & $3.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ \\
+\hline
+\texttt{p3\_deg3\_4pts} & $1.3$ & $1.0$ & $2.0$ & $4.0$ & $1.1$ & \textbf{$1.0$} & $1.2$ & $1.0$ & $1.1$ & $1.1$ & $3.0$ \\
+\hline
+\texttt{p3\_deg4\_5pts} & $4.1$ & $2.1$ & \textbf{$2.1$} & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.2$ & $2.2$ & $5.0$ \\
+\hline
+\texttt{p3\_deg5\_6pts} & $3.1$ & $3.1$ & \textbf{$3.1$} & $6.0$ & $4.1$ & $4.1$ & $3.2$ & $3.1$ & $3.2$ & $3.1$ & $4.0$ \\
+\hline
+\texttt{p5\_deg2\_3pts} & $2.0$ & $1.0$ & \textbf{$1.6{\scriptstyle\times 10^{-3}}$} & $3.0$ & $1.0$ & $1.0$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-3}}$ & $1.0$ \\
+\hline
+\texttt{p5\_deg3\_4pts} & $3.0$ & $3.0$ & \textbf{$2.0$} & $4.0$ & $4.0$ & $4.0$ & $2.1$ & $2.0$ & $2.0$ & $2.0$ & $4.0$ \\
+\hline
+\texttt{p5\_deg4\_5pts} & $4.0$ & $3.0$ & \textbf{$2.0$} & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.0$ & $5.0$ & $5.0$ & $5.0$ \\
+\hline
+\texttt{p5\_deg5\_6pts} & $4.1$ & $4.0$ & $4.0$ & $6.0$ & $6.0$ & $6.0$ & $6.0$ & \textbf{$3.1$} & $6.0$ & $6.0$ & $6.0$ \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Detailed results
+% ----------------------------------------------------------------------------
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_deg2\_3pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-1}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $5.16e-01$ & 82.8 & 0.4281 \\
+\hline
+Best First Value & \textbf{$2.75e-04$} & 100.0 & 0.0956 \\
+\hline
+Best First Branch 2 & $1.56e-02$ & 99.5 & 0.0565 \\
+\hline
+Best First Gradient & $3.00e+00$ & 0.0 & 0.1994 \\
+\hline
+MCTS-50 & $6.28e-02$ & 97.9 & 0.2146 \\
+\hline
+MCTS-100 & $6.28e-02$ & 97.9 & 0.0188 \\
+\hline
+MCTS-200 & $6.35e-02$ & 97.9 & 0.0363 \\
+\hline
+DAG-MCTS-50 & $1.59e-02$ & 99.5 & 0.3852 \\
+\hline
+DAG-MCTS-100 & $6.28e-02$ & 97.9 & 0.1524 \\
+\hline
+DAG-MCTS-200 & $1.59e-02$ & 99.5 & 0.1033 \\
+\hline
+DOO & $4.39e-03$ & 99.9 & 0.1337 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_deg3\_4pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-2}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.07e+00$ & 48.3 & 0.2664 \\
+\hline
+Best First Value & \textbf{$3.13e-02$} & 99.2 & 0.0242 \\
+\hline
+Best First Branch 2 & $3.13e-01$ & 92.2 & 0.0592 \\
+\hline
+Best First Gradient & $2.12e+00$ & 46.9 & 0.1633 \\
+\hline
+MCTS-50 & $5.31e-01$ & 86.7 & 0.1920 \\
+\hline
+MCTS-100 & $2.66e-01$ & 93.3 & 0.0263 \\
+\hline
+MCTS-200 & $3.16e-01$ & 92.1 & 0.0523 \\
+\hline
+DAG-MCTS-50 & $6.69e-02$ & 98.3 & 0.3864 \\
+\hline
+DAG-MCTS-100 & $3.17e-01$ & 92.1 & 0.0571 \\
+\hline
+DAG-MCTS-200 & $8.01e-02$ & 98.0 & 0.3376 \\
+\hline
+DOO & $2.03e+00$ & 49.2 & 0.1282 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_deg4\_5pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-3}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.50e+00$ & 30.0 & 0.2774 \\
+\hline
+Best First Value & $2.27e+00$ & 54.7 & 0.0255 \\
+\hline
+Best First Branch 2 & \textbf{$2.25e+00$} & 55.0 & 0.0725 \\
+\hline
+Best First Gradient & $5.00e+00$ & 0.0 & 0.1814 \\
+\hline
+MCTS-50 & $2.32e+00$ & 53.7 & 0.2062 \\
+\hline
+MCTS-100 & $2.31e+00$ & 53.7 & 0.0374 \\
+\hline
+MCTS-200 & $2.50e+00$ & 50.0 & 0.2693 \\
+\hline
+DAG-MCTS-50 & $2.27e+00$ & 54.7 & 0.4044 \\
+\hline
+DAG-MCTS-100 & $2.27e+00$ & 54.7 & 0.0976 \\
+\hline
+DAG-MCTS-200 & $2.32e+00$ & 53.7 & 0.4462 \\
+\hline
+DOO & $3.50e+00$ & 30.0 & 0.1314 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p2\_deg5\_6pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-4}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.00e+00$ & 50.0 & 0.2969 \\
+\hline
+Best First Value & $2.31e+00$ & 61.4 & 0.0280 \\
+\hline
+Best First Branch 2 & \textbf{$2.06e+00$} & 65.6 & 0.0857 \\
+\hline
+Best First Gradient & $6.00e+00$ & 0.0 & 0.1958 \\
+\hline
+MCTS-50 & $3.08e+00$ & 48.6 & 0.2182 \\
+\hline
+MCTS-100 & $2.13e+00$ & 64.5 & 0.0459 \\
+\hline
+MCTS-200 & $2.13e+00$ & 64.5 & 0.0930 \\
+\hline
+DAG-MCTS-50 & $2.10e+00$ & 65.0 & 0.6592 \\
+\hline
+DAG-MCTS-100 & $2.14e+00$ & 64.3 & 0.1154 \\
+\hline
+DAG-MCTS-200 & $2.13e+00$ & 64.5 & 0.4855 \\
+\hline
+DOO & $3.08e+00$ & 48.7 & 0.1376 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_deg2\_3pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-5}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.00e+00$ & 0.0 & 0.0003 \\
+\hline
+Best First Value & $1.00e+00$ & 66.7 & 0.0007 \\
+\hline
+Best First Branch 2 & \textbf{$1.00e+00$} & 66.7 & 0.0018 \\
+\hline
+Best First Gradient & $3.00e+00$ & 0.0 & 0.0007 \\
+\hline
+MCTS-50 & $1.00e+00$ & 66.7 & 0.0133 \\
+\hline
+MCTS-100 & $1.00e+00$ & 66.7 & 0.0265 \\
+\hline
+MCTS-200 & $1.00e+00$ & 66.7 & 0.0512 \\
+\hline
+DAG-MCTS-50 & $1.00e+00$ & 66.7 & 0.0322 \\
+\hline
+DAG-MCTS-100 & $1.00e+00$ & 66.7 & 0.0733 \\
+\hline
+DAG-MCTS-200 & $1.00e+00$ & 66.7 & 0.3786 \\
+\hline
+DOO & $1.00e+00$ & 66.7 & 0.0006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_deg3\_4pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-6}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $1.33e+00$ & 66.7 & 0.0003 \\
+\hline
+Best First Value & $1.01e+00$ & 74.7 & 0.0010 \\
+\hline
+Best First Branch 2 & $2.00e+00$ & 50.0 & 0.0053 \\
+\hline
+Best First Gradient & $4.00e+00$ & 0.0 & 0.0016 \\
+\hline
+MCTS-50 & $1.11e+00$ & 72.2 & 0.0180 \\
+\hline
+MCTS-100 & \textbf{$1.00e+00$} & 74.9 & 0.0355 \\
+\hline
+MCTS-200 & $1.23e+00$ & 69.1 & 0.0688 \\
+\hline
+DAG-MCTS-50 & $1.01e+00$ & 74.7 & 0.0483 \\
+\hline
+DAG-MCTS-100 & $1.11e+00$ & 72.2 & 0.1114 \\
+\hline
+DAG-MCTS-200 & $1.11e+00$ & 72.2 & 0.5139 \\
+\hline
+DOO & $3.00e+00$ & 25.0 & 0.0012 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_deg4\_5pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-7}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.11e+00$ & 17.8 & 0.0004 \\
+\hline
+Best First Value & $2.12e+00$ & 57.5 & 0.0015 \\
+\hline
+Best First Branch 2 & \textbf{$2.12e+00$} & 57.5 & 0.0095 \\
+\hline
+Best First Gradient & $5.00e+00$ & 0.0 & 0.0028 \\
+\hline
+MCTS-50 & $5.00e+00$ & 0.0 & 0.0227 \\
+\hline
+MCTS-100 & $5.00e+00$ & 0.0 & 0.0425 \\
+\hline
+MCTS-200 & $5.00e+00$ & 0.0 & 0.0913 \\
+\hline
+DAG-MCTS-50 & $5.00e+00$ & 0.0 & 0.0534 \\
+\hline
+DAG-MCTS-100 & $2.22e+00$ & 55.5 & 0.4972 \\
+\hline
+DAG-MCTS-200 & $2.22e+00$ & 55.5 & 0.2646 \\
+\hline
+DOO & $5.00e+00$ & 0.0 & 0.0017 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p3\_deg5\_6pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-8}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.14e+00$ & 47.7 & 0.0005 \\
+\hline
+Best First Value & $3.12e+00$ & 47.9 & 0.0026 \\
+\hline
+Best First Branch 2 & \textbf{$3.11e+00$} & 48.1 & 0.0205 \\
+\hline
+Best First Gradient & $6.00e+00$ & 0.0 & 0.0040 \\
+\hline
+MCTS-50 & $4.11e+00$ & 31.5 & 0.0306 \\
+\hline
+MCTS-100 & $4.11e+00$ & 31.5 & 0.0629 \\
+\hline
+MCTS-200 & $3.22e+00$ & 46.3 & 0.5757 \\
+\hline
+DAG-MCTS-50 & $3.12e+00$ & 47.9 & 0.0968 \\
+\hline
+DAG-MCTS-100 & $3.23e+00$ & 46.1 & 0.1771 \\
+\hline
+DAG-MCTS-200 & $3.12e+00$ & 47.9 & 0.7431 \\
+\hline
+DOO & $4.00e+00$ & 33.3 & 0.0030 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_deg2\_3pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-9}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $2.00e+00$ & 33.3 & 0.0003 \\
+\hline
+Best First Value & $1.00e+00$ & 66.7 & 0.0008 \\
+\hline
+Best First Branch 2 & \textbf{$1.60e-03$} & 99.9 & 0.0044 \\
+\hline
+Best First Gradient & $3.00e+00$ & 0.0 & 0.0011 \\
+\hline
+MCTS-50 & $1.00e+00$ & 66.7 & 0.0187 \\
+\hline
+MCTS-100 & $1.00e+00$ & 66.7 & 0.0358 \\
+\hline
+MCTS-200 & $4.00e-02$ & 98.7 & 0.0736 \\
+\hline
+DAG-MCTS-50 & $4.00e-02$ & 98.7 & 0.0666 \\
+\hline
+DAG-MCTS-100 & $4.00e-02$ & 98.7 & 0.1113 \\
+\hline
+DAG-MCTS-200 & $1.60e-03$ & 99.9 & 0.6421 \\
+\hline
+DOO & $1.00e+00$ & 66.7 & 0.0009 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_deg3\_4pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-10}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $3.04e+00$ & 24.0 & 0.0004 \\
+\hline
+Best First Value & $3.00e+00$ & 25.0 & 0.0014 \\
+\hline
+Best First Branch 2 & \textbf{$2.00e+00$} & 50.0 & 0.0108 \\
+\hline
+Best First Gradient & $4.00e+00$ & 0.0 & 0.0024 \\
+\hline
+MCTS-50 & $4.00e+00$ & 0.0 & 0.0254 \\
+\hline
+MCTS-100 & $4.00e+00$ & 0.0 & 0.0497 \\
+\hline
+MCTS-200 & $2.08e+00$ & 48.0 & 0.1052 \\
+\hline
+DAG-MCTS-50 & $2.00e+00$ & 50.0 & 0.0903 \\
+\hline
+DAG-MCTS-100 & $2.00e+00$ & 50.0 & 0.6008 \\
+\hline
+DAG-MCTS-200 & $2.00e+00$ & 50.0 & 0.3691 \\
+\hline
+DOO & $4.00e+00$ & 0.0 & 0.0017 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_deg4\_5pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-11}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.04e+00$ & 19.2 & 0.0005 \\
+\hline
+Best First Value & $3.04e+00$ & 39.2 & 0.0026 \\
+\hline
+Best First Branch 2 & \textbf{$2.04e+00$} & 59.2 & 0.0241 \\
+\hline
+Best First Gradient & $5.00e+00$ & 0.0 & 0.0045 \\
+\hline
+MCTS-50 & $5.00e+00$ & 0.0 & 0.0313 \\
+\hline
+MCTS-100 & $5.00e+00$ & 0.0 & 0.0672 \\
+\hline
+MCTS-200 & $5.00e+00$ & 0.0 & 0.6547 \\
+\hline
+DAG-MCTS-50 & $2.04e+00$ & 59.1 & 0.1170 \\
+\hline
+DAG-MCTS-100 & $5.00e+00$ & 0.0 & 0.1744 \\
+\hline
+DAG-MCTS-200 & $5.00e+00$ & 0.0 & 0.8893 \\
+\hline
+DOO & $5.00e+00$ & 0.0 & 0.0028 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Detailed results for configuration: \texttt{p5\_deg5\_6pts}. Shows mean final loss, improvement ratio (\%), and wall-clock time.}
+\label{tab:poly-learning-detail-12}
+\begin{tabular}{lrrr}
+\toprule
+Optimizer & Final Loss & Improv.~(\%) & Time (s) \\
+\midrule
+Random & $4.08e+00$ & 32.0 & 0.0007 \\
+\hline
+Best First Value & $4.04e+00$ & 32.6 & 0.0056 \\
+\hline
+Best First Branch 2 & $4.04e+00$ & 32.7 & 0.0526 \\
+\hline
+Best First Gradient & $6.00e+00$ & 0.0 & 0.0068 \\
+\hline
+MCTS-50 & $6.00e+00$ & 0.0 & 0.0444 \\
+\hline
+MCTS-100 & $6.00e+00$ & 0.0 & 0.0864 \\
+\hline
+MCTS-200 & $6.00e+00$ & 0.0 & 0.6254 \\
+\hline
+DAG-MCTS-50 & \textbf{$3.12e+00$} & 48.0 & 0.1331 \\
+\hline
+DAG-MCTS-100 & $6.00e+00$ & 0.0 & 0.2155 \\
+\hline
+DAG-MCTS-200 & $6.00e+00$ & 0.0 & 0.8808 \\
+\hline
+DOO & $6.00e+00$ & 0.0 & 0.0041 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% ----------------------------------------------------------------------------
+% Table: Degree sweep
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Effect of polynomial degree on learning performance (mean final loss). Each row is a different degree.}
+\label{tab:poly-learning-degree}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{ccccccccccccc}
+\toprule
+$p$ & Degree & Random & Best First Value & Best First Branch 2 & Best First Gradient & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO \\
+\midrule
+2 & 2 & $5.2{\scriptstyle\times 10^{-1}}$ & $2.7{\scriptstyle\times 10^{-4}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $3.0$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $4.4{\scriptstyle\times 10^{-3}}$ \\
+\hline
+ & 3 & $2.1$ & $3.1{\scriptstyle\times 10^{-2}}$ & $3.1{\scriptstyle\times 10^{-1}}$ & $2.1$ & $5.3{\scriptstyle\times 10^{-1}}$ & $2.7{\scriptstyle\times 10^{-1}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $6.7{\scriptstyle\times 10^{-2}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $8.0{\scriptstyle\times 10^{-2}}$ & $2.0$ \\
+\hline
+ & 4 & $3.5$ & $2.3$ & $2.3$ & $5.0$ & $2.3$ & $2.3$ & $2.5$ & $2.3$ & $2.3$ & $2.3$ & $3.5$ \\
+\hline
+ & 5 & $3.0$ & $2.3$ & $2.1$ & $6.0$ & $3.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $3.1$ \\
+\hline
+3 & 2 & $3.0$ & $1.0$ & $1.0$ & $3.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ \\
+\hline
+ & 3 & $1.3$ & $1.0$ & $2.0$ & $4.0$ & $1.1$ & $1.0$ & $1.2$ & $1.0$ & $1.1$ & $1.1$ & $3.0$ \\
+\hline
+ & 4 & $4.1$ & $2.1$ & $2.1$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.2$ & $2.2$ & $5.0$ \\
+\hline
+ & 5 & $3.1$ & $3.1$ & $3.1$ & $6.0$ & $4.1$ & $4.1$ & $3.2$ & $3.1$ & $3.2$ & $3.1$ & $4.0$ \\
+\hline
+5 & 2 & $2.0$ & $1.0$ & $1.6{\scriptstyle\times 10^{-3}}$ & $3.0$ & $1.0$ & $1.0$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-3}}$ & $1.0$ \\
+\hline
+ & 3 & $3.0$ & $3.0$ & $2.0$ & $4.0$ & $4.0$ & $4.0$ & $2.1$ & $2.0$ & $2.0$ & $2.0$ & $4.0$ \\
+\hline
+ & 4 & $4.0$ & $3.0$ & $2.0$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.0$ & $5.0$ & $5.0$ & $5.0$ \\
+\hline
+ & 5 & $4.1$ & $4.0$ & $4.0$ & $6.0$ & $6.0$ & $6.0$ & $6.0$ & $3.1$ & $6.0$ & $6.0$ & $6.0$ \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Prime sweep
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Effect of base prime on learning performance (mean final loss). Each row is a different prime.}
+\label{tab:poly-learning-prime}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{ccccccccccccc}
+\toprule
+Degree & $p$ & Random & Best First Value & Best First Branch 2 & Best First Gradient & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO \\
+\midrule
+2 & 2 & $5.2{\scriptstyle\times 10^{-1}}$ & $2.7{\scriptstyle\times 10^{-4}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $3.0$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $6.3{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-2}}$ & $4.4{\scriptstyle\times 10^{-3}}$ \\
+\hline
+ & 3 & $3.0$ & $1.0$ & $1.0$ & $3.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ & $1.0$ \\
+\hline
+ & 5 & $2.0$ & $1.0$ & $1.6{\scriptstyle\times 10^{-3}}$ & $3.0$ & $1.0$ & $1.0$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $4.0{\scriptstyle\times 10^{-2}}$ & $1.6{\scriptstyle\times 10^{-3}}$ & $1.0$ \\
+\hline
+3 & 2 & $2.1$ & $3.1{\scriptstyle\times 10^{-2}}$ & $3.1{\scriptstyle\times 10^{-1}}$ & $2.1$ & $5.3{\scriptstyle\times 10^{-1}}$ & $2.7{\scriptstyle\times 10^{-1}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $6.7{\scriptstyle\times 10^{-2}}$ & $3.2{\scriptstyle\times 10^{-1}}$ & $8.0{\scriptstyle\times 10^{-2}}$ & $2.0$ \\
+\hline
+ & 3 & $1.3$ & $1.0$ & $2.0$ & $4.0$ & $1.1$ & $1.0$ & $1.2$ & $1.0$ & $1.1$ & $1.1$ & $3.0$ \\
+\hline
+ & 5 & $3.0$ & $3.0$ & $2.0$ & $4.0$ & $4.0$ & $4.0$ & $2.1$ & $2.0$ & $2.0$ & $2.0$ & $4.0$ \\
+\hline
+4 & 2 & $3.5$ & $2.3$ & $2.3$ & $5.0$ & $2.3$ & $2.3$ & $2.5$ & $2.3$ & $2.3$ & $2.3$ & $3.5$ \\
+\hline
+ & 3 & $4.1$ & $2.1$ & $2.1$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.2$ & $2.2$ & $5.0$ \\
+\hline
+ & 5 & $4.0$ & $3.0$ & $2.0$ & $5.0$ & $5.0$ & $5.0$ & $5.0$ & $2.0$ & $5.0$ & $5.0$ & $5.0$ \\
+\hline
+5 & 2 & $3.0$ & $2.3$ & $2.1$ & $6.0$ & $3.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $2.1$ & $3.1$ \\
+\hline
+ & 3 & $3.1$ & $3.1$ & $3.1$ & $6.0$ & $4.1$ & $4.1$ & $3.2$ & $3.1$ & $3.2$ & $3.1$ & $4.0$ \\
+\hline
+ & 5 & $4.1$ & $4.0$ & $4.0$ & $6.0$ & $6.0$ & $6.0$ & $6.0$ & $3.1$ & $6.0$ & $6.0$ & $6.0$ \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Timing comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean wall-clock time (seconds) per optimizer across experiments.}
+\label{tab:poly-learning-timing}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Experiment & Random & Best First Value & Best First Branch 2 & Best First Gradient & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO \\
+\midrule
+\texttt{p2\_deg2\_3pts} & 0.4281 & 0.0956 & 0.0565 & 0.1994 & 0.2146 & \textbf{0.0188} & 0.0363 & 0.3852 & 0.1524 & 0.1033 & 0.1337 \\
+\hline
+\texttt{p2\_deg3\_4pts} & 0.2664 & \textbf{0.0242} & 0.0592 & 0.1633 & 0.1920 & 0.0263 & 0.0523 & 0.3864 & 0.0571 & 0.3376 & 0.1282 \\
+\hline
+\texttt{p2\_deg4\_5pts} & 0.2774 & \textbf{0.0255} & 0.0725 & 0.1814 & 0.2062 & 0.0374 & 0.2693 & 0.4044 & 0.0976 & 0.4462 & 0.1314 \\
+\hline
+\texttt{p2\_deg5\_6pts} & 0.2969 & \textbf{0.0280} & 0.0857 & 0.1958 & 0.2182 & 0.0459 & 0.0930 & 0.6592 & 0.1154 & 0.4855 & 0.1376 \\
+\hline
+\texttt{p3\_deg2\_3pts} & 0.0003 & 0.0007 & 0.0018 & 0.0007 & 0.0133 & 0.0265 & 0.0512 & 0.0322 & 0.0733 & 0.3786 & \textbf{0.0006} \\
+\hline
+\texttt{p3\_deg3\_4pts} & 0.0003 & \textbf{0.0010} & 0.0053 & 0.0016 & 0.0180 & 0.0355 & 0.0688 & 0.0483 & 0.1114 & 0.5139 & 0.0012 \\
+\hline
+\texttt{p3\_deg4\_5pts} & 0.0004 & \textbf{0.0015} & 0.0095 & 0.0028 & 0.0227 & 0.0425 & 0.0913 & 0.0534 & 0.4972 & 0.2646 & 0.0017 \\
+\hline
+\texttt{p3\_deg5\_6pts} & 0.0005 & \textbf{0.0026} & 0.0205 & 0.0040 & 0.0306 & 0.0629 & 0.5757 & 0.0968 & 0.1771 & 0.7431 & 0.0030 \\
+\hline
+\texttt{p5\_deg2\_3pts} & 0.0003 & \textbf{0.0008} & 0.0044 & 0.0011 & 0.0187 & 0.0358 & 0.0736 & 0.0666 & 0.1113 & 0.6421 & 0.0009 \\
+\hline
+\texttt{p5\_deg3\_4pts} & 0.0004 & \textbf{0.0014} & 0.0108 & 0.0024 & 0.0254 & 0.0497 & 0.1052 & 0.0903 & 0.6008 & 0.3691 & 0.0017 \\
+\hline
+\texttt{p5\_deg4\_5pts} & 0.0005 & \textbf{0.0026} & 0.0241 & 0.0045 & 0.0313 & 0.0672 & 0.6547 & 0.1170 & 0.1744 & 0.8893 & 0.0028 \\
+\hline
+\texttt{p5\_deg5\_6pts} & 0.0007 & 0.0056 & 0.0526 & 0.0068 & 0.0444 & 0.0864 & 0.6254 & 0.1331 & 0.2155 & 0.8808 & \textbf{0.0041} \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
+
+% ----------------------------------------------------------------------------
+% Table: Evaluation count comparison
+% ----------------------------------------------------------------------------
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Mean number of function evaluations per optimizer (excluding monitoring calls). Lower is more efficient.}
+\label{tab:poly-learning-evals}
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+Experiment & Random & Best First Value & Best First Branch 2 & Best First Gradient & MCTS-50 & MCTS-100 & MCTS-200 & DAG-MCTS-50 & DAG-MCTS-100 & DAG-MCTS-200 & DOO \\
+\midrule
+\texttt{p2\_deg2\_3pts} & 0 & 120 & 240 & 120 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 91 \\
+\hline
+\texttt{p2\_deg3\_4pts} & 0 & 160 & 480 & 160 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 161 \\
+\hline
+\texttt{p2\_deg4\_5pts} & 0 & 200 & 800 & 200 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 201 \\
+\hline
+\texttt{p2\_deg5\_6pts} & 0 & 240 & 1200 & 240 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 241 \\
+\hline
+\texttt{p3\_deg2\_3pts} & 0 & 180 & 540 & 180 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 163 \\
+\hline
+\texttt{p3\_deg3\_4pts} & 0 & 240 & 1080 & 240 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 241 \\
+\hline
+\texttt{p3\_deg4\_5pts} & 0 & 300 & 1800 & 300 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 301 \\
+\hline
+\texttt{p3\_deg5\_6pts} & 0 & 360 & 2700 & 360 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 361 \\
+\hline
+\texttt{p5\_deg2\_3pts} & 0 & 300 & 1500 & 300 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 271 \\
+\hline
+\texttt{p5\_deg3\_4pts} & 0 & 400 & 3000 & 400 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 401 \\
+\hline
+\texttt{p5\_deg4\_5pts} & 0 & 500 & 5000 & 500 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 501 \\
+\hline
+\texttt{p5\_deg5\_6pts} & 0 & 600 & 7500 & 600 & 1000 & 2000 & 4000 & 1000 & 2000 & 4000 & 601 \\
+\bottomrule
+\end{tabular}
+}% end adjustbox
+\end{table}
+\end{landscape}
