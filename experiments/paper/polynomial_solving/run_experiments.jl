@@ -534,6 +534,7 @@ if save_results
         end
 
         println("\n✓ Results saved to: $filepath")
+        save_to_logs(filepath)
     catch e
         if e isa ArgumentError && occursin("Package JSON not found", string(e))
             println("\n⚠ Warning: JSON package not installed. Cannot save results.")
