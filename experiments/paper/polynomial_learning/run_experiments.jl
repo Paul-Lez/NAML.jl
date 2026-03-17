@@ -320,6 +320,7 @@ function run_single_sample(config::Dict, sample_num::Int)
                 current_loss = NAML.eval_loss(optim)
                 push!(losses, current_loss)
                 NAML.step!(optim)
+                NAML.has_converged(optim) && break
             end
 
             t_end = time()
@@ -328,8 +329,8 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
-            # Subtract monitoring eval_loss calls: n_epochs in-loop + 1 final, each length 1
-            monitoring_evals = n_epochs + 1
+            # Subtract monitoring eval_loss calls: length(losses) in-loop + 1 final
+            monitoring_evals = length(losses)
             total_optimizer_evals = eval_counter.eval_count - monitoring_evals + eval_counter.grad_count
 
             sample_results["optimizers"][opt_name] = Dict(

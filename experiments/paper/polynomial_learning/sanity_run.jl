@@ -163,6 +163,7 @@ function run_single_sample(config::Dict, sample_num::Int, opt_configs::Dict)
                 current_loss = NAML.eval_loss(optim)
                 push!(losses, current_loss)
                 NAML.step!(optim)
+                NAML.has_converged(optim) && break
             end
 
             t_end = time()

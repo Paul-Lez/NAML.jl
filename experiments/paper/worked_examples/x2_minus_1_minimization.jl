@@ -72,6 +72,7 @@ function run_optimizer(optim, n_steps)
             best_loss  = l
             best_param = optim.param
         end
+        has_converged(optim) && break
     end
     return best_loss, best_param, time() - t_start
 end

@@ -43,11 +43,10 @@ for num_vars in [1, 2, 3]
         # Run Best-First for 10 steps
         config = (false, 1)
         optim = NAML.greedy_descent_init(initial_param, loss, 1, config)
-        for _ in 1:10
-            NAML.step!(optim)
-        end
+        steps = NAML.optimize!(optim, 10)
         bf_loss = NAML.eval_loss(optim)
-        @printf("  Best-First (10 steps): %.6e\n", bf_loss)
+        converged_str = NAML.has_converged(optim) ? " [converged at step $steps]" : ""
+        @printf("  Best-First (10 steps): %.6e%s\n", bf_loss, converged_str)
 
         # Run DAG-MCTS for 5 steps
         dag_config = NAML.DAGMCTSConfig(
@@ -58,11 +57,10 @@ for num_vars in [1, 2, 3]
             selection_mode=NAML.BestValue
         )
         optim2 = NAML.dag_mcts_descent_init(initial_param, loss, dag_config)
-        for _ in 1:5
-            NAML.step!(optim2)
-        end
+        steps2 = NAML.optimize!(optim2, 5)
         dag_loss = NAML.eval_loss(optim2)
-        @printf("  DAG-MCTS-20 (5 steps): %.6e\n", dag_loss)
+        converged_str2 = NAML.has_converged(optim2) ? " [converged at step $steps2]" : ""
+        @printf("  DAG-MCTS-20 (5 steps): %.6e%s\n", dag_loss, converged_str2)
 
         # Verify loss decreased
         if bf_loss <= initial_loss && dag_loss <= initial_loss
