@@ -30,7 +30,7 @@ using NAML
     @testset "Transposition Table - Basic Operations" begin
         # Test get_or_create_node!
         # Note: Polydisc equality uses STRICT inequality: v(center_diff) > radius
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
 
         p1 = ValuationPolydisc([K(1)], [2])
 
@@ -60,7 +60,7 @@ using NAML
 
     @testset "Transposition Table - Parent Linking (track_parents=true)" begin
         # Use 2D to create truly different parent nodes via different refinement paths
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
 
         # Start with a root polydisc
         root = ValuationPolydisc([K(0), K(0)], [0, 0])
@@ -94,7 +94,7 @@ using NAML
     end
 
     @testset "Transposition Table - No Parent Tracking (track_parents=false)" begin
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
 
         root = ValuationPolydisc([K(0), K(0)], [0, 0])
         root_node = NAML.get_or_create_node!(table, root)
@@ -136,7 +136,7 @@ using NAML
     end
 
     @testset "Node Expansion with Transposition Detection" begin
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
         config = DAGMCTSConfig(num_simulations=10, degree=1)
 
         # Create 2D polydisc to test transpositions
@@ -168,7 +168,7 @@ using NAML
         node3 = DAGMCTSNode(p3)
 
         # Create a dummy state for backpropagation best-node tracking
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}}()
         dummy_state = DAGMCTSState{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 1}(node1, table, 0, nothing, -Inf, nothing, 0)
 
         path = [node1, node2, node3]
@@ -277,7 +277,7 @@ using NAML
         # We manually create the "same" polydisc to ensure transposition detection works
         # by using the hash-based lookup
 
-        table = Dict{HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
+        table = Dict{NAML.HashedPolydisc{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}, DAGMCTSNode{ValuedFieldPoint{2, 20, PadicFieldElem}, Int64, 2}}()
 
         # Start point
         start = ValuationPolydisc([K(0), K(0)], [0, 0])

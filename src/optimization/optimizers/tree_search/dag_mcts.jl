@@ -606,19 +606,8 @@ function select_best_child_dag(
             return root_child
         end
 
-        # Last resort: select best direct child by average value
-        best_child = nothing
-        best_val = -Inf
-        for child in root.children
-            if child.visits > 0 && average_value(child) > best_val
-                best_val = average_value(child)
-                best_child = child
-            end
-        end
-        if !isnothing(best_child)
-            return best_child
-        end
-        return first(root.children)
+        error("BestValue selection failed: best_node exists but is not reachable from root. " *
+              "best_root_child=$(state.best_root_child), best_node visits=$(best_node.visits)")
     else
         error("Unknown selection mode: $(config.selection_mode)")
     end
