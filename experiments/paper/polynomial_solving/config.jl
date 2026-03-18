@@ -71,9 +71,9 @@ comprehensive_experiments = [
 prime_comparison = [
     Dict("name" => "p2_1var_deg2", "prime" => 2, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "p3_1var_deg2", "prime" => 3, "prec" => 15,
+    Dict("name" => "p3_1var_deg2", "prime" => 3, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
-    Dict("name" => "p5_1var_deg2", "prime" => 5, "prec" => 12,
+    Dict("name" => "p5_1var_deg2", "prime" => 5, "prec" => 20,
          "num_vars" => 1, "degree" => 2, "num_samples" => 5, "opt_degree" => 1),
 ]
 

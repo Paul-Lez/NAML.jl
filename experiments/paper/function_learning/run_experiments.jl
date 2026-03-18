@@ -247,7 +247,7 @@ function get_optimizer_configs(; quick::Bool=false)
 end
 
 # Canonical ordering for display (shared across all experiments)
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Best-First-Gradient"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
 
 # ============================================================================
 # Create target function loss

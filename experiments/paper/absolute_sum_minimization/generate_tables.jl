@@ -191,9 +191,9 @@ function generate_config_table(experiments)
                  "Each row describes one experimental setup.}")
     push!(lines, "\\label{tab:abssum-config}")
     push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{lcccccccc}")
+    push!(lines, "\\begin{tabular}{lccccccc}")
     push!(lines, "\\toprule")
-    push!(lines, "Experiment & Prime (\$p\$) & Precision & \\#Polys & \\#Vars & Poly Deg. & Opt Deg. & \\#Samples \\\\")
+    push!(lines, "Experiment & Prime (\$p\$) & Precision & \\#Polys & \\#Vars & Poly Deg. & \\#Samples \\\\")
     push!(lines, "\\midrule")
 
     for exp in valid
@@ -204,10 +204,9 @@ function generate_config_table(experiments)
         num_polys = config["num_polys"]
         num_vars = config["num_vars"]
         degree = config["degree"]
-        opt_degree = config["opt_degree"]
         num_samples = config["num_samples"]
 
-        row = "$name & $prime & $prec & $num_polys & $num_vars & $degree & $opt_degree & $num_samples \\\\"
+        row = "$name & $prime & $prec & $num_polys & $num_vars & $degree & $num_samples \\\\"
         push!(lines, row)
         push!(lines, "\\hline")
     end

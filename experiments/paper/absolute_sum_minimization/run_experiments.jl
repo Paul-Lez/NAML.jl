@@ -84,10 +84,10 @@ elseif use_config_file
 else
     # Default configurations (small, fast experiments)
     configs = [
-        Dict("name" => "p2_1var_2poly_lin_opt1", "prime" => 2, "prec" => 20,
-             "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 2, "opt_degree" => 1),
-        Dict("name" => "p2_1var_2poly_quad_opt1", "prime" => 2, "prec" => 20,
-             "num_polys" => 2, "num_vars" => 1, "degree" => 2, "num_samples" => 2, "opt_degree" => 1),
+        Dict("name" => "p2_1var_2poly_lin", "prime" => 2, "prec" => 20,
+             "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 2),
+        Dict("name" => "p2_1var_2poly_quad", "prime" => 2, "prec" => 20,
+             "num_polys" => 2, "num_vars" => 1, "degree" => 2, "num_samples" => 2),
     ]
 end
 
@@ -114,19 +114,19 @@ end
 # Optimizer configurations
 # ============================================================================
 
-function get_optimizer_configs(K, opt_degree)
+function get_optimizer_configs(K)
     return Dict(
         "Random" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
-                config = (false, opt_degree)
+                config = (false, 1)
                 NAML.random_descent_init(param, loss, state, config)
             end
         ),
         "Best-First" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
-                config = (false, opt_degree)
+                config = (false, 1)
                 NAML.greedy_descent_init(param, loss, state, config)
             end
         ),
@@ -136,7 +136,7 @@ function get_optimizer_configs(K, opt_degree)
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
                     selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -147,7 +147,7 @@ function get_optimizer_configs(K, opt_degree)
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
                     selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -157,7 +157,7 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=1,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -169,7 +169,7 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=1,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -181,7 +181,7 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=1,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -194,7 +194,7 @@ function get_optimizer_configs(K, opt_degree)
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
                     selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -215,7 +215,7 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.DOOConfig(
                     delta=delta,
                     max_depth=quick_mode ? 10 : 15,
-                    degree=opt_degree,
+                    degree=1,
                     strict=false
                 )
                 NAML.doo_descent_init(param, loss, 1, config)
@@ -223,14 +223,14 @@ function get_optimizer_configs(K, opt_degree)
         ),
         "Best-First-Gradient" => Dict(
             "init" => (param, loss) -> begin
-                NAML.gradient_descent_init(param, loss, 1, (false, opt_degree))
+                NAML.gradient_descent_init(param, loss, 1, (false, 1))
             end
         ),
     )
 end
 
 # Canonical ordering for display (shared across all experiments)
-const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Best-First-Gradient"]
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
 
 # ============================================================================
 # Run single sample (one random problem instance)
@@ -242,7 +242,6 @@ function run_single_sample(config::Dict, sample_num::Int)
     num_polys = config["num_polys"]
     num_vars = config["num_vars"]
     degree = config["degree"]
-    opt_degree = config["opt_degree"]
 
     K = PadicField(p, prec)
 
@@ -254,7 +253,7 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_loss = loss.eval([initial_param])[1]
 
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(K, opt_degree)
+    opt_configs = get_optimizer_configs(K)
 
     # Results storage for this sample
     sample_results = Dict{String, Any}()
@@ -318,7 +317,7 @@ function run_single_experiment(config::Dict)
     println("="^70)
     println("Prime: $(config["prime"]), Polynomials: $(config["num_polys"]), " *
             "Variables: $(config["num_vars"]), Degree: $(config["degree"])")
-    println("Samples: $(config["num_samples"]), Optimization degree: $(config["opt_degree"])")
+    println("Samples: $(config["num_samples"])")
     println("-"^70)
 
     results = Dict{String, Any}()
