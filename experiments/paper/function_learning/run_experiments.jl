@@ -8,19 +8,21 @@ Usage:
     julia --project=. experiments/paper/function_learning/run_experiments.jl [flags]
 
 Flags:
-    --quick      Reduced epochs (5) and simulations (10) for quick testing
-    --save       Save results to JSON file (default filename with timestamp)
-    --config     Load experiment configurations from config.jl
-    --paper      Use paper-ready configurations from paper_config.jl
-    --epochs N   Set number of epochs (default: 20)
-    --samples N  Override number of samples per config
-    --output F   Specify output JSON filename
+    --quick              Reduced epochs (5) and simulations (10) for quick testing
+    --save               Save results to JSON file (default filename with timestamp)
+    --config             Load experiment configurations from config.jl
+    --paper              Use paper-ready configurations from paper_config.jl
+    --epochs N           Set number of epochs (default: 20)
+    --samples N          Override number of samples per config
+    --output F           Specify output JSON filename
+    --selection-mode M   MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
 
 Examples:
     julia --project=. experiments/paper/function_learning/run_experiments.jl --quick --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --config --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --paper --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --epochs 50 --save --output results.json
+    julia --project=. experiments/paper/function_learning/run_experiments.jl --paper --save --selection-mode VisitCount
 """
 
 include("../../../src/NAML.jl")
@@ -65,6 +67,23 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+# Parse --selection-mode M (BestValue, VisitCount, BestLoss)
+global selection_mode = NAML.BestValue
+for (i, arg) in enumerate(ARGS)
+    if arg == "--selection-mode" && i < length(ARGS)
+        mode_str = ARGS[i+1]
+        if mode_str == "BestValue"
+            global selection_mode = NAML.BestValue
+        elseif mode_str == "VisitCount"
+            global selection_mode = NAML.VisitCount
+        elseif mode_str == "BestLoss"
+            global selection_mode = NAML.BestLoss
+        else
+            error("Invalid selection mode: $mode_str. Must be BestValue, VisitCount, or BestLoss")
+        end
+    end
+end
+
 # ============================================================================
 # Experiment Configuration
 # ============================================================================
@@ -106,7 +125,7 @@ Return a dict of optimizer name => initializer function.
 
 Each initializer takes (param, loss) and returns an OptimSetup.
 """
-function get_optimizer_configs(; quick::Bool=false)
+function get_optimizer_configs(; quick::Bool=false, selection_mode=NAML.BestValue)
     return Dict(
         "Random" => Dict(
             "type" => "Random",
@@ -137,7 +156,7 @@ function get_optimizer_configs(; quick::Bool=false)
                 config = NAML.MCTSConfig(
                     num_simulations=quick ? 10 : 50,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -151,7 +170,7 @@ function get_optimizer_configs(; quick::Bool=false)
                 config = NAML.MCTSConfig(
                     num_simulations=quick ? 20 : 100,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -165,7 +184,7 @@ function get_optimizer_configs(; quick::Bool=false)
                 config = NAML.MCTSConfig(
                     num_simulations=quick ? 40 : 200,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -358,7 +377,7 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_accuracy = compute_accuracy(initial_coeffs, data, threshold, scale)
 
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(quick=quick_mode)
+    opt_configs = get_optimizer_configs(quick=quick_mode, selection_mode=selection_mode)
 
     # Results for this sample
     sample_results = Dict{String, Any}()

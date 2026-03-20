@@ -19,12 +19,14 @@ Flags:
     --config: Use experiment configurations from config.jl
     --paper: Use comprehensive paper-ready configurations from paper_config.jl
     --samples N: Override number of samples per config
+    --selection-mode M: MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
 
 Examples:
     julia --project=. run_experiments.jl --quick
     julia --project=. run_experiments.jl --config --save
     julia --project=. run_experiments.jl --paper --save
     julia --project=. run_experiments.jl --paper --quick --save
+    julia --project=. run_experiments.jl --paper --save --selection-mode VisitCount
 """
 
 include("../../../src/NAML.jl")
@@ -63,6 +65,23 @@ global n_samples_override = nothing
 for (i, arg) in enumerate(ARGS)
     if arg == "--samples" && i < length(ARGS)
         global n_samples_override = parse(Int, ARGS[i+1])
+    end
+end
+
+# Parse --selection-mode M (BestValue, VisitCount, BestLoss)
+global selection_mode = NAML.BestValue
+for (i, arg) in enumerate(ARGS)
+    if arg == "--selection-mode" && i < length(ARGS)
+        mode_str = ARGS[i+1]
+        if mode_str == "BestValue"
+            global selection_mode = NAML.BestValue
+        elseif mode_str == "VisitCount"
+            global selection_mode = NAML.VisitCount
+        elseif mode_str == "BestLoss"
+            global selection_mode = NAML.BestLoss
+        else
+            error("Invalid selection mode: $mode_str. Must be BestValue, VisitCount, or BestLoss")
+        end
     end
 end
 
@@ -114,7 +133,7 @@ end
 # Optimizer configurations
 # ============================================================================
 
-function get_optimizer_configs(K)
+function get_optimizer_configs(K; selection_mode=NAML.BestValue)
     return Dict(
         "Random" => Dict(
             "init" => (param, loss) -> begin
@@ -135,7 +154,7 @@ function get_optimizer_configs(K)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -146,7 +165,7 @@ function get_optimizer_configs(K)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -193,7 +212,7 @@ function get_optimizer_configs(K)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
+                    selection_mode=selection_mode,
                     degree=1
                 )
                 NAML.mcts_descent_init(param, loss, config)
@@ -253,7 +272,7 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_loss = loss.eval([initial_param])[1]
 
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(K)
+    opt_configs = get_optimizer_configs(K; selection_mode=selection_mode)
 
     # Results storage for this sample
     sample_results = Dict{String, Any}()

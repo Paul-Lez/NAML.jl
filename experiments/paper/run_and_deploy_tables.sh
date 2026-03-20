@@ -6,12 +6,13 @@
 # the arXiv draft directory.
 #
 # Usage (from repo root):
-#   bash experiments/paper/run_and_deploy_tables.sh [--quick] [--epochs N] [--samples N]
+#   bash experiments/paper/run_and_deploy_tables.sh [--quick] [--epochs N] [--samples N] [--selection-mode M]
 #
 # Flags are forwarded to generate_paper_tables.sh:
-#   --quick      Use reduced epochs/simulations for a fast smoke-test run
-#   --epochs N   Override number of epochs (default: 20)
-#   --samples N  Override number of samples per config (default: 30)
+#   --quick           Use reduced epochs/simulations for a fast smoke-test run
+#   --epochs N        Override number of epochs (default: 20)
+#   --samples N       Override number of samples per config (default: 30)
+#   --selection-mode  MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
 # ==============================================================================
 
 set -euo pipefail
