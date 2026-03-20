@@ -259,7 +259,7 @@ function generate_summary_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 formatted = "\$$(latex_sci_compact(loss))\$"
-                if loss == best_loss
+                if latex_sci_compact(loss) == latex_sci_compact(best_loss)
                     row *= " & \\textbf{$formatted}"
                 else
                     row *= " & $formatted"
@@ -329,7 +329,7 @@ function generate_detailed_table(experiments, optimizer_order)
                 stats = agg[opt_name]
                 loss = stats["mean_final_loss"]
                 loss_str = @sprintf("\$%.2e\$", loss)
-                if loss == best_loss
+                if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
                     loss_str = "\\textbf{$loss_str}"
                 end
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
@@ -408,13 +408,27 @@ function generate_degree_sweep_table(experiments, optimizer_order)
             config = exp["config"]
             agg = exp["aggregate"]
 
+            best_loss = Inf
+            for opt_name in optimizer_order
+                opt_name == "Random" && continue
+                if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                    loss = agg[opt_name]["mean_final_loss"]
+                    if loss < best_loss; best_loss = loss; end
+                end
+            end
+
             prime_label = i == 1 ? string(p) : ""
             row = "$prime_label & $(config["degree"])"
 
             for opt_name in optimizer_order
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
-                    row *= " & \$$(latex_sci_compact(loss))\$"
+                    formatted = "\$$(latex_sci_compact(loss))\$"
+                    if latex_sci_compact(loss) == latex_sci_compact(best_loss)
+                        row *= " & \\textbf{$formatted}"
+                    else
+                        row *= " & $formatted"
+                    end
                 else
                     row *= " & ---"
                 end
@@ -499,13 +513,27 @@ function generate_prime_sweep_table(experiments, optimizer_order)
             push!(seen_primes, config["prime"])
             agg = exp["aggregate"]
 
+            best_loss = Inf
+            for opt_name in optimizer_order
+                opt_name == "Random" && continue
+                if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
+                    loss = agg[opt_name]["mean_final_loss"]
+                    if loss < best_loss; best_loss = loss; end
+                end
+            end
+
             deg_label = i == 1 ? string(d) : ""
             row = "$deg_label & $(config["prime"])"
 
             for opt_name in optimizer_order
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
-                    row *= " & \$$(latex_sci_compact(loss))\$"
+                    formatted = "\$$(latex_sci_compact(loss))\$"
+                    if latex_sci_compact(loss) == latex_sci_compact(best_loss)
+                        row *= " & \\textbf{$formatted}"
+                    else
+                        row *= " & $formatted"
+                    end
                 else
                     row *= " & ---"
                 end
@@ -579,7 +607,7 @@ function generate_timing_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
                 t_str = @sprintf("%.4f", t)
-                if t == best_time
+                if @sprintf("%.4f", t) == @sprintf("%.4f", best_time)
                     row *= " & \\textbf{$t_str}"
                 else
                     row *= " & $t_str"

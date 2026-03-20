@@ -5,13 +5,14 @@
 # Runs all paper experiments and regenerates the corresponding LaTeX tables.
 #
 # Usage:
-#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N] [--samples N] [--selection-mode M]
+#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N] [--samples N] [--selection-mode M] [--degree D]
 #
 # Flags:
 #   --quick           Use reduced epochs/simulations for a fast smoke-test run
 #   --epochs N        Override number of epochs (default: 20)
 #   --samples N       Override number of samples per config (default: 30)
 #   --selection-mode  MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
+#   --degree D        Set tree branching degree for MCTS/DAG-MCTS/DOO optimizers (default: 1)
 #
 # The script must be run from the repository root, e.g.:
 #   bash experiments/paper/generate_paper_tables.sh
@@ -26,6 +27,7 @@ QUICK_FLAG=""
 EPOCHS_FLAG=""
 SAMPLES_FLAG="--samples 30"
 SELECTION_MODE_FLAG=""
+DEGREE_FLAG=""
 
 i=1
 while [ $i -le $# ]; do
@@ -62,6 +64,15 @@ while [ $i -le $# ]; do
             SELECTION_MODE_FLAG="--selection-mode ${arg#*=}"
             i=$((i+1))
             ;;
+        --degree)
+            i=$((i+1))
+            DEGREE_FLAG="--degree ${!i}"
+            i=$((i+1))
+            ;;
+        --degree=*)
+            DEGREE_FLAG="--degree ${arg#*=}"
+            i=$((i+1))
+            ;;
         *)
             i=$((i+1))
             ;;
@@ -93,7 +104,7 @@ julia --project="$REPO_ROOT" \
     "$ABSSUM_DIR/run_experiments.jl" \
     --paper --save \
     --output absolute_sum_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
 ok "Experiments done"
 
 step "Generating absolute_sum_minimization tables"
@@ -118,7 +129,7 @@ julia --project="$REPO_ROOT" \
     "$FUNCLEARN_DIR/run_experiments.jl" \
     --paper --save \
     --output function_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
 ok "Experiments done"
 
 step "Generating function_learning tables"
@@ -143,7 +154,7 @@ julia --project="$REPO_ROOT" \
     "$POLYLEARN_DIR/run_experiments.jl" \
     --paper --save \
     --output poly_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
 ok "Experiments done"
 
 step "Generating polynomial_learning tables"
@@ -168,7 +179,7 @@ julia --project="$REPO_ROOT" \
     "$POLYSOLVE_DIR/run_experiments.jl" \
     --paper --save \
     --output polynomial_solving_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG
+    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
 ok "Experiments done"
 
 step "Generating polynomial_solving tables"

@@ -24,6 +24,7 @@ Flags:
     --samples N: Override number of samples per config
     --output FILE: Specify output JSON filename
     --selection-mode M: MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
+    --degree D: Set tree branching degree for MCTS/DAG-MCTS/DOO optimizers (default: per-config opt_degree)
 
 Examples:
     julia --project=. run_experiments.jl --quick
@@ -88,6 +89,16 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+# Parse --degree D (or --degree=D)
+global mcts_degree_override = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--degree" && i < length(ARGS)
+        global mcts_degree_override = parse(Int, ARGS[i+1])
+    elseif startswith(arg, "--degree=")
+        global mcts_degree_override = parse(Int, arg[10:end])
+    end
+end
+
 # ============================================================================
 # Experiment Configuration
 # ============================================================================
@@ -135,7 +146,7 @@ end
 # Optimizer configurations
 # ============================================================================
 
-function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
+function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue, mcts_degree::Int=opt_degree)
     return Dict(
         "Random" => Dict(
             "init" => (param, loss) -> begin
@@ -157,7 +168,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
                     selection_mode=selection_mode,
-                    degree=opt_degree
+                    degree=mcts_degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -168,7 +179,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
                     selection_mode=selection_mode,
-                    degree=opt_degree
+                    degree=mcts_degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -178,7 +189,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=mcts_degree,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -190,7 +201,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=mcts_degree,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -202,7 +213,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                 config = NAML.DAGMCTSConfig(
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
-                    degree=opt_degree,
+                    degree=mcts_degree,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
@@ -215,7 +226,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
                     selection_mode=selection_mode,
-                    degree=opt_degree
+                    degree=mcts_degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -234,7 +245,7 @@ function get_optimizer_configs(K, opt_degree; selection_mode=NAML.BestValue)
                 config = NAML.DOOConfig(
                     delta=delta,
                     max_depth=quick_mode ? 10 : 15,
-                    degree=opt_degree,
+                    degree=mcts_degree,
                     strict=false
                 )
                 NAML.doo_descent_init(param, loss, 1, config)
@@ -272,7 +283,8 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_loss = loss.eval([initial_param])[1]
 
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(K, opt_degree; selection_mode=selection_mode)
+    effective_mcts_degree = isnothing(mcts_degree_override) ? opt_degree : mcts_degree_override
+    opt_configs = get_optimizer_configs(K, opt_degree; selection_mode=selection_mode, mcts_degree=effective_mcts_degree)
 
     # Results storage for this sample
     sample_results = Dict{String, Any}()
@@ -445,6 +457,9 @@ println("="^70)
 println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
+if !isnothing(mcts_degree_override)
+    println("MCTS/DAG-MCTS/DOO degree override: $mcts_degree_override")
+end
 println("Random seed: 42 (for reproducibility)")
 println("="^70)
 

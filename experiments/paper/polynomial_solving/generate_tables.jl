@@ -243,7 +243,7 @@ function generate_summary_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 formatted = "\$$(latex_sci_compact(loss))\$"
-                if loss == best_loss
+                if latex_sci_compact(loss) == latex_sci_compact(best_loss)
                     row *= " & \\textbf{$formatted}"
                 else
                     row *= " & $formatted"
@@ -321,7 +321,7 @@ function generate_detailed_table(experiments, optimizer_order)
                 time_str = @sprintf("%.4f", stats["mean_time"])
 
                 opt_label = display_name(opt_name)
-                if loss == best_loss
+                if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
                     push!(lines, "\\textbf{$opt_label} & \\textbf{$loss_str} & $improv_str & $time_str \\\\")
                 else
                     push!(lines, "$opt_label & $loss_str & $improv_str & $time_str \\\\")
@@ -417,7 +417,7 @@ function generate_grid_table(experiments, optimizer_order)
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
                     formatted = "\$$(latex_sci_compact(loss))\$"
-                    if loss == best_loss
+                    if latex_sci_compact(loss) == latex_sci_compact(best_loss)
                         row *= " & \\textbf{$formatted}"
                     else
                         row *= " & $formatted"
@@ -496,7 +496,7 @@ function generate_timing_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
                 t_str = @sprintf("%.4f", t)
-                if t == best_time
+                if @sprintf("%.4f", t) == @sprintf("%.4f", best_time)
                     row *= " & \\textbf{$t_str}"
                 else
                     row *= " & $t_str"

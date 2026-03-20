@@ -279,7 +279,7 @@ function generate_summary_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
                 formatted = "\$$(latex_sci_compact(loss))\$"
-                if loss == best_loss
+                if latex_sci_compact(loss) == latex_sci_compact(best_loss)
                     row *= " & \\textbf{$formatted}"
                 else
                     row *= " & $formatted"
@@ -356,7 +356,7 @@ function generate_timing_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 t = agg[opt_name]["mean_time"]
                 t_str = @sprintf("%.4f", t)
-                if t == best_time
+                if @sprintf("%.4f", t) == @sprintf("%.4f", best_time)
                     row *= " & \\textbf{$t_str}"
                 else
                     row *= " & $t_str"
@@ -426,7 +426,7 @@ function generate_detailed_tables(experiments, optimizer_order)
                 stats = agg[opt_name]
                 loss = stats["mean_final_loss"]
                 loss_str = @sprintf("\$%.2e\$", loss)
-                if loss == best_loss
+                if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
                     loss_str = "\\textbf{$loss_str}"
                 end
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
@@ -519,7 +519,7 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order)
             n_configs = length(optimizer_stats[opt_name]["final_loss"])
 
             loss_str = @sprintf("\$%.2e\$", mean_loss)
-            if mean_loss == best_mean_loss
+            if @sprintf("%.2e", mean_loss) == @sprintf("%.2e", best_mean_loss)
                 loss_str = "\\textbf{$loss_str}"
             end
             improv_str = @sprintf("%.1f", mean_improv * 100)
