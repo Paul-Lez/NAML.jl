@@ -278,6 +278,7 @@ end
 
 # Canonical ordering for display (shared across all experiments)
 const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
+const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
 
 # ============================================================================
 # Create target function loss
@@ -495,7 +496,7 @@ function run_single_experiment(config::Dict)
                     if !haskey(opt_result, "error")
                         acc_imp = opt_result["accuracy_improvement"] * 100
                         acc_imp_str = acc_imp >= 0 ? "+$(Printf.@sprintf("%.2f", acc_imp))" : Printf.@sprintf("%.2f", acc_imp)
-                        println(@sprintf("    %-15s Final: %.6e, accuracy: %.2f%%  (loss: %.1f%%, acc: %s%%, %.2fs)",
+                        println(Printf.format(Printf.Format("    %-$(NAME_WIDTH)s Final: %.6e, accuracy: %.2f%%  (loss: %.1f%%, acc: %s%%, %.2fs)"),
                             opt_name, opt_result["final_loss"],
                             opt_result["final_accuracy"] * 100,
                             opt_result["improvement_ratio"] * 100,
@@ -634,16 +635,16 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(@sprintf("  %-15s %15s %12s %12s %12s %12s",
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15s %12s %12s %12s %12s"),
             "Optimizer", "Mean Final", "Std", "Accuracy", "Acc Δ", "Time (s)"))
-        println("  " * "-"^80)
+        println("  " * "-"^(NAME_WIDTH + 67))
 
         for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
                 acc_delta = agg["mean_accuracy_improvement"] * 100
                 acc_delta_str = acc_delta >= 0 ? "+$(Printf.@sprintf("%.1f", acc_delta))" : Printf.@sprintf("%.1f", acc_delta)
-                println(@sprintf("  %-15s %15.6e %12.2e %11.1f%% %12s%% %12.2f",
+                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15.6e %12.2e %11.1f%% %12s%% %12.2f"),
                     opt_name, agg["mean_final_loss"], agg["std_final_loss"],
                     agg["mean_final_accuracy"] * 100,
                     acc_delta_str, agg["mean_time"]))

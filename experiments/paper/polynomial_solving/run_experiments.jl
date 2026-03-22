@@ -261,6 +261,7 @@ end
 
 # Canonical ordering for display
 const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO", "Best-First-Gradient"]
+const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
 
 # ============================================================================
 # Run single sample (one random problem instance)
@@ -371,7 +372,7 @@ function run_single_experiment(config::Dict)
                 if haskey(sample_result["optimizers"], opt_name)
                     opt_result = sample_result["optimizers"][opt_name]
                     if !haskey(opt_result, "error")
-                        println(@sprintf("    %-15s Final: %.6e (Δ: %.6e, %.1f%%)",
+                        println(Printf.format(Printf.Format("    %-$(NAME_WIDTH)s Final: %.6e (Δ: %.6e, %.1f%%)"),
                             opt_name, opt_result["final_loss"], opt_result["improvement"],
                             opt_result["improvement_ratio"] * 100))
                     end
@@ -501,14 +502,14 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(@sprintf("  %-15s %15s %15s %15s %12s",
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15s %15s %15s %12s"),
             "Optimizer", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
-        println("  " * "-"^75)
+        println("  " * "-"^(NAME_WIDTH + 61))
 
         for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
-                println(@sprintf("  %-15s %15.6e %15.6e %14.1f%% %12.2f",
+                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15.6e %15.6e %14.1f%% %12.2f"),
                     opt_name, agg["mean_final_loss"], agg["mean_improvement"],
                     agg["mean_improvement_ratio"] * 100, agg["mean_time"]))
             end
