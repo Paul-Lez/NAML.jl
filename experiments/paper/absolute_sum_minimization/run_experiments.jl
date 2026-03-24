@@ -264,6 +264,35 @@ const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-Fir
 const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
 
 # ============================================================================
+# Per-sample optimizer ranking
+# ============================================================================
+
+"""
+Rank optimizers within a sample by final_loss (lower = rank 1).
+Adds a "rank" field to each valid optimizer result. Ties share the average rank.
+"""
+function compute_sample_rankings!(sample_results::Dict)
+    optimizers = sample_results["optimizers"]
+    valid_opts = [(name, res["final_loss"]) for (name, res) in optimizers
+                  if !haskey(res, "error")]
+    isempty(valid_opts) && return
+    sort!(valid_opts, by=x -> x[2])
+    n = length(valid_opts)
+    i = 1
+    while i <= n
+        j = i
+        while j <= n && valid_opts[j][2] == valid_opts[i][2]
+            j += 1
+        end
+        avg_rank = (i + j - 1) / 2.0
+        for k in i:j-1
+            optimizers[valid_opts[k][1]]["rank"] = avg_rank
+        end
+        i = j
+    end
+end
+
+# ============================================================================
 # Run single sample (one random problem instance)
 # ============================================================================
 
@@ -335,6 +364,7 @@ function run_single_sample(config::Dict, sample_num::Int)
         end
     end
 
+    compute_sample_rankings!(sample_results)
     return sample_results
 end
 
@@ -423,12 +453,18 @@ function compute_aggregate_stats!(results::Dict)
                 "mean_improvement" => mean([d["improvement"] for d in opt_data]),
                 "mean_improvement_ratio" => mean([d["improvement_ratio"] for d in opt_data]),
                 "mean_time" => mean([d["time"] for d in opt_data]),
+                "std_time" => length(opt_data) > 1 ? std([d["time"] for d in opt_data]) : 0.0,
                 "std_final_loss" => length(opt_data) > 1 ? std([d["final_loss"] for d in opt_data]) : 0.0,
                 "min_final_loss" => minimum([d["final_loss"] for d in opt_data]),
                 "max_final_loss" => maximum([d["final_loss"] for d in opt_data]),
             )
             if haskey(opt_data[1], "total_evals")
                 agg["mean_total_evals"] = mean([d["total_evals"] for d in opt_data])
+            end
+            ranks = [d["rank"] for d in opt_data if haskey(d, "rank")]
+            if !isempty(ranks)
+                agg["mean_rank"] = mean(ranks)
+                agg["std_rank"] = length(ranks) > 1 ? std(ranks) : 0.0
             end
             results["aggregate"][opt_name] = agg
         end
@@ -497,21 +533,55 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15s %15s %15s %12s"),
-            "Optimizer", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
-        println("  " * "-"^(NAME_WIDTH + 61))
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15s %15s %15s %12s"),
+            "Optimizer", "Mean Rank", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
+        println("  " * "-"^(NAME_WIDTH + 71))
 
         for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
-                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %15.6e %15.6e %14.1f%% %12.2f"),
-                    opt_name, agg["mean_final_loss"], agg["mean_improvement"],
+                rank_str = haskey(agg, "mean_rank") ? @sprintf("%.2f", agg["mean_rank"]) : "N/A"
+                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15.6e %15.6e %14.1f%% %12.2f"),
+                    opt_name, rank_str, agg["mean_final_loss"], agg["mean_improvement"],
                     agg["mean_improvement_ratio"] * 100, agg["mean_time"]))
             end
         end
     else
         println("  No valid aggregate statistics")
     end
+end
+
+# Compute global ranking across all configs
+global_ranks = Dict{String, Vector{Float64}}()
+for result in all_results
+    if !haskey(result, "error") && haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
+        for opt_name in OPTIMIZER_ORDER
+            if haskey(result["aggregate"], opt_name) && haskey(result["aggregate"][opt_name], "mean_rank")
+                if !haskey(global_ranks, opt_name)
+                    global_ranks[opt_name] = Float64[]
+                end
+                push!(global_ranks[opt_name], result["aggregate"][opt_name]["mean_rank"])
+            end
+        end
+    end
+end
+
+println("\n" * "-"^70)
+println("OPTIMIZER RANKING (average rank across all configs)")
+println("-"^70)
+if !isempty(global_ranks)
+    ranked_opts = sort([(opt, mean(ranks)) for (opt, ranks) in global_ranks], by=x -> x[2])
+    println()
+    println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12s %10s"),
+        "Optimizer", "Avg Rank", "# Configs"))
+    println("  " * "-"^(NAME_WIDTH + 26))
+    for (opt_name, avg_rank) in ranked_opts
+        n_configs = length(global_ranks[opt_name])
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12.2f %10d"),
+            opt_name, avg_rank, n_configs))
+    end
+else
+    println("  No ranking data available")
 end
 
 println("\n" * "="^70)
@@ -552,6 +622,12 @@ if save_results
             "optimizer_order" => OPTIMIZER_ORDER,
         )
         json_output["experiments"] = json_experiments
+
+        # Add global ranking to JSON
+        json_output["global_ranking"] = Dict{String, Any}(
+            opt => Dict("avg_rank" => mean(ranks), "n_configs" => length(ranks))
+            for (opt, ranks) in global_ranks if !isempty(ranks)
+        )
 
         if isnothing(output_filename)
             timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")

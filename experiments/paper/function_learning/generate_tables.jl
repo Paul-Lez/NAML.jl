@@ -287,7 +287,12 @@ function generate_summary_table(experiments, optimizer_order)
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 loss = agg[opt_name]["mean_final_loss"]
-                formatted = "\$$(latex_sci_compact(loss))\$"
+                std_loss = get(agg[opt_name], "std_final_loss", 0.0)
+                formatted = if std_loss > 0
+                    "\$$(latex_sci_compact(loss)) {\\scriptstyle \\pm $(latex_sci_compact(std_loss))}\$"
+                else
+                    "\$$(latex_sci_compact(loss))\$"
+                end
                 if latex_sci_compact(loss) == latex_sci_compact(best_loss)
                     row *= " & \\textbf{$formatted}"
                 else
@@ -443,10 +448,13 @@ function generate_accuracy_table(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 acc = agg[opt_name]["mean_final_accuracy"]
                 acc_pct = acc * 100
+                std_acc = get(agg[opt_name], "std_final_accuracy", 0.0)
                 acc_delta = agg[opt_name]["mean_accuracy_improvement"] * 100
 
-                # Format: XX.X% (+YY.Y%)
-                formatted = @sprintf("%.1f\\%% (%+.1f)", acc_pct, acc_delta)
+                # Format: XX.X ± std% (+YY.Y%)
+                formatted = std_acc > 0 ?
+                    @sprintf("%.1f {\\scriptstyle \\pm %.1f}\\%% (%+.1f)", acc_pct, std_acc * 100, acc_delta) :
+                    @sprintf("%.1f\\%% (%+.1f)", acc_pct, acc_delta)
                 if @sprintf("%.1f", acc * 100) == @sprintf("%.1f", best_accuracy * 100)
                     row *= " & \\textbf{$formatted}"
                 else
@@ -495,9 +503,9 @@ function generate_detailed_tables(experiments, optimizer_order)
         push!(lines, "\\caption{Detailed results for configuration: $(name). " *
                      "Shows mean final loss, accuracy (\\%), improvement ratio (\\%), and wall-clock time.}")
         push!(lines, "\\label{tab:funclearn-detail-$(idx)}")
-        push!(lines, "\\begin{tabular}{lrrrr}")
+        push!(lines, "\\begin{tabular}{lrrrrr}")
         push!(lines, "\\toprule")
-        push!(lines, "Optimizer & Final Loss & Accuracy (\\%) & Improv.~(\\%) & Time (s) \\\\")
+        push!(lines, "Optimizer & Final Loss & Accuracy (\\%) & Improv.~(\\%) & Time (s) & Mean Rank \\\\")
         push!(lines, "\\midrule")
 
         # Find best loss for bolding (excluding Random)
@@ -516,15 +524,26 @@ function generate_detailed_tables(experiments, optimizer_order)
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 stats = agg[opt_name]
                 loss = stats["mean_final_loss"]
-                loss_str = @sprintf("\$%.2e\$", loss)
+                std_loss = get(stats, "std_final_loss", 0.0)
+                loss_str = std_loss > 0 ?
+                    "\$$(latex_sci_compact(loss)) {\\scriptstyle \\pm $(latex_sci_compact(std_loss))}\$" :
+                    @sprintf("\$%.2e\$", loss)
                 if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
                     loss_str = "\\textbf{$loss_str}"
                 end
-                acc_str = @sprintf("%.1f", stats["mean_final_accuracy"] * 100)
+                acc = stats["mean_final_accuracy"]
+                std_acc = get(stats, "std_final_accuracy", 0.0)
+                acc_str = std_acc > 0 ?
+                    @sprintf("%.1f {\\scriptstyle \\pm %.1f}", acc * 100, std_acc * 100) :
+                    @sprintf("%.1f", acc * 100)
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
-                time_str = @sprintf("%.4f", stats["mean_time"])
+                std_t = get(stats, "std_time", 0.0)
+                time_str = std_t > 0 ?
+                    @sprintf("%.4f {\\scriptstyle \\pm %.4f}", stats["mean_time"], std_t) :
+                    @sprintf("%.4f", stats["mean_time"])
+                rank_str = haskey(stats, "mean_rank") ? @sprintf("%.2f", stats["mean_rank"]) : "---"
 
-                push!(lines, "$(display_name(opt_name)) & $loss_str & $acc_str & $improv_str & $time_str \\\\")
+                push!(lines, "$(display_name(opt_name)) & $loss_str & $acc_str & $improv_str & $time_str & $rank_str \\\\")
                 push!(lines, "\\hline")
             end
         end
@@ -716,6 +735,125 @@ function generate_function_type_table(experiments, optimizer_order)
 end
 
 # ============================================================================
+# Table: Optimizer ranking summary
+# ============================================================================
+
+function generate_ranking_table(experiments, optimizer_order)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
+    if isempty(valid)
+        return "% No valid experiments for ranking table\n"
+    end
+
+    has_ranks = any(
+        haskey(exp["aggregate"], opt) &&
+        !haskey(exp["aggregate"][opt], "error") &&
+        haskey(exp["aggregate"][opt], "mean_rank")
+        for exp in valid for opt in optimizer_order
+        if haskey(exp["aggregate"], opt)
+    )
+    if !has_ranks
+        return "% No ranking data available (re-run experiments to generate ranks)\n"
+    end
+
+    n_opts = length(optimizer_order)
+    lines = String[]
+    push!(lines, "\\begin{table}[H]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Function learning: optimizer ranking by mean final loss per configuration " *
+                 "(rank 1 = best, lower is better). Averaged over random samples. " *
+                 "Bold marks the best-ranked optimizer per row (excluding Random). " *
+                 "The \\textit{Average} row shows the mean rank across all configurations.}")
+    push!(lines, "\\label{tab:funclearn-ranking}")
+    col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{$col_spec}")
+    push!(lines, "\\toprule")
+
+    header = "Configuration"
+    for opt_name in optimizer_order
+        header *= " & $(display_name(opt_name))"
+    end
+    header *= " \\\\"
+    push!(lines, header)
+    push!(lines, "\\midrule")
+
+    rank_sums   = Dict{String, Float64}(opt => 0.0 for opt in optimizer_order)
+    rank_counts = Dict{String, Int}(opt => 0 for opt in optimizer_order)
+
+    for exp in valid
+        config = exp["config"]
+        agg = exp["aggregate"]
+
+        best_rank = Inf
+        for opt_name in optimizer_order
+            opt_name == "Random" && continue
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_rank")
+                r = agg[opt_name]["mean_rank"]
+                if r < best_rank; best_rank = r; end
+            end
+        end
+
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        row = name
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_rank")
+                r = agg[opt_name]["mean_rank"]
+                std_r = get(agg[opt_name], "std_rank", 0.0)
+                cell = std_r > 0 ?
+                    @sprintf("%.2f {\\scriptstyle \\pm %.2f}", r, std_r) :
+                    @sprintf("%.2f", r)
+                if @sprintf("%.2f", r) == @sprintf("%.2f", best_rank)
+                    row *= " & \\textbf{$cell}"
+                else
+                    row *= " & $cell"
+                end
+                rank_sums[opt_name] += r
+                rank_counts[opt_name] += 1
+            else
+                row *= " & ---"
+            end
+        end
+        row *= " \\\\"
+        push!(lines, row)
+        push!(lines, "\\hline")
+    end
+
+    best_avg = Inf
+    for opt_name in optimizer_order
+        opt_name == "Random" && continue
+        if rank_counts[opt_name] > 0
+            avg = rank_sums[opt_name] / rank_counts[opt_name]
+            if avg < best_avg; best_avg = avg; end
+        end
+    end
+
+    push!(lines, "\\midrule")
+    avg_row = "\\textit{Average}"
+    for opt_name in optimizer_order
+        if rank_counts[opt_name] > 0
+            avg = rank_sums[opt_name] / rank_counts[opt_name]
+            avg_str = @sprintf("%.2f", avg)
+            if @sprintf("%.2f", avg) == @sprintf("%.2f", best_avg)
+                avg_row *= " & \\textbf{$avg_str}"
+            else
+                avg_row *= " & $avg_str"
+            end
+        else
+            avg_row *= " & ---"
+        end
+    end
+    avg_row *= " \\\\"
+    push!(lines, avg_row)
+
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
 # Table 6: Evaluation count comparison
 # ============================================================================
 
@@ -856,6 +994,12 @@ function generate_unified_document(experiments, optimizer_order)
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
     push!(lines, generate_detailed_tables(experiments, optimizer_order))
+
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "% Table: Optimizer ranking summary")
+    push!(lines, "% ----------------------------------------------------------------------------")
+    push!(lines, "")
+    push!(lines, as_landscape(generate_ranking_table(experiments, optimizer_order)))
 
     return join(lines, "\n")
 end
