@@ -8,6 +8,7 @@
 #   --quick          Fast test: 3 c values, 1 config/suite, 2 samples, 5 epochs
 #   --epochs N       Optimization epochs per run (default: 20)
 #   --samples N      Samples per config (overrides per-config default)
+#   --degree N       Branching degree for MCTS-based optimisers (default: 1)
 #   --output FILE    JSON output path (default: experiments/paper/sweep_results_<timestamp>.json)
 #   --plots-dir DIR  Directory for plots (default: <json_dir>/plots)
 
@@ -25,6 +26,7 @@ while [[ $# -gt 0 ]]; do
         --quick)          SWEEP_FLAGS="$SWEEP_FLAGS --quick"; shift ;;
         --epochs)         SWEEP_FLAGS="$SWEEP_FLAGS --epochs $2"; shift 2 ;;
         --samples)        SWEEP_FLAGS="$SWEEP_FLAGS --samples $2"; shift 2 ;;
+        --degree)         SWEEP_FLAGS="$SWEEP_FLAGS --degree $2"; shift 2 ;;
         --output)         OUTPUT_FILE="$2"; shift 2 ;;
         --plots-dir)      PLOTS_DIR="$2"; shift 2 ;;
         *) echo "Unknown flag: $1"; exit 1 ;;
