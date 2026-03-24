@@ -56,6 +56,8 @@ global mcts_degree = 1
 for (i, arg) in enumerate(ARGS)
     if arg == "--degree" && i < length(ARGS)
         global mcts_degree = parse(Int, ARGS[i+1])
+    elseif startswith(arg, "--degree=")
+        global mcts_degree = parse(Int, arg[length("--degree=")+1:end])
     end
 end
 
