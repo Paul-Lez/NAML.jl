@@ -17,6 +17,7 @@ Flags:
     --quick          Fast smoke-test: 3 c values, 1 config/suite, 2 samples, 5 epochs
     --epochs N       Optimization epochs per run (default: 20)
     --samples N      Samples per config (overrides per-config default)
+    --degree N       Branching degree for MCTS-based optimisers (default: 1)
     --output FILE    Output JSON filename (default: sweep_results_<timestamp>.json)
 """
 
@@ -51,6 +52,13 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+global mcts_degree = 1
+for (i, arg) in enumerate(ARGS)
+    if arg == "--degree" && i < length(ARGS)
+        global mcts_degree = parse(Int, ARGS[i+1])
+    end
+end
+
 global output_filename = nothing
 for (i, arg) in enumerate(ARGS)
     if arg == "--output" && i < length(ARGS)
@@ -70,6 +78,7 @@ println("Exploration Constant Sweep")
 println("=" ^ 70)
 println("  c values  : $(C_VALUES)")
 println("  Epochs    : $n_epochs")
+println("  Degree    : $mcts_degree")
 println("  Quick mode: $quick_mode")
 println()
 
@@ -355,7 +364,7 @@ function run_sample_polynomial_learning(config::Dict, sample_num::Int, c::Float6
     initial_param = generate_gauss_point(degree + 1, K)
     initial_loss = loss.eval([initial_param])[1]
 
-    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=1)
+    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=mcts_degree)
     result = run_all_optimizers(initial_param, initial_loss, loss, opt_configs, n_epochs)
     result["initial_loss"] = initial_loss
     result["sample_num"] = sample_num
@@ -372,7 +381,7 @@ function run_sample_abssum(config::Dict, sample_num::Int, c::Float64)
     initial_param = generate_initial_point(num_vars, K)
     initial_loss = loss.eval([initial_param])[1]
 
-    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=1)
+    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=mcts_degree)
     result = run_all_optimizers(initial_param, initial_loss, loss, opt_configs, n_epochs)
     result["initial_loss"] = initial_loss
     result["sample_num"] = sample_num
@@ -398,7 +407,7 @@ function run_sample_function_learning(config::Dict, sample_num::Int, c::Float64)
         opt_result["accuracy_improvement"] = opt_result["final_accuracy"] - initial_accuracy
     end
 
-    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=1)
+    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=mcts_degree)
     result = run_all_optimizers(initial_param, initial_loss, loss, opt_configs, n_epochs;
                                 post_process=add_accuracy)
     result["initial_loss"] = initial_loss
@@ -417,7 +426,8 @@ function run_sample_polynomial_solving(config::Dict, sample_num::Int, c::Float64
     initial_param = generate_initial_point(num_vars, K)
     initial_loss = loss.eval([initial_param])[1]
 
-    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=opt_degree)
+    effective_degree = mcts_degree != 1 ? mcts_degree : opt_degree
+    opt_configs = get_sweep_optimizer_configs(c; quick=quick_mode, degree=effective_degree)
     result = run_all_optimizers(initial_param, initial_loss, loss, opt_configs, n_epochs)
     result["initial_loss"] = initial_loss
     result["sample_num"] = sample_num
@@ -599,6 +609,7 @@ try
             "suites"         => SUITES,
             "optimizer_order"=> OPTIMIZER_ORDER,
             "n_epochs"       => n_epochs,
+            "mcts_degree"    => mcts_degree,
             "quick_mode"     => quick_mode,
             "timestamp"      => string(Dates.now()),
             "n_records"      => length(flat_records),
