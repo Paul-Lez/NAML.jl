@@ -19,3 +19,7 @@ outputs/*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Experiment outputs
+*.tex
+*.pdf

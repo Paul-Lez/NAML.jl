@@ -51,15 +51,11 @@ println("\n[4/4] Testing optimization...")
 println("  - Initializing Greedy descent")
 optim = NAML.greedy_descent_init(initial_param, loss, 1, (false, 1))
 
-println("  - Running 3 optimization steps:")
-for i in 1:3
-    current_loss = NAML.eval_loss(optim)
-    println("    Step $i: loss = $current_loss")
-    NAML.step!(optim)
-end
-
+println("  - Running optimization (up to 3 steps):")
+steps = NAML.optimize!(optim, 3; verbose=true)
 final_loss = NAML.eval_loss(optim)
 println("  - Final loss: $final_loss")
+NAML.has_converged(optim) && println("  - Converged after $steps steps")
 println("  - Improvement: $(initial_loss_val - final_loss)")
 println("✓ Optimization test completed")
 

@@ -113,12 +113,18 @@ the gradient norm (steepest descent direction).
 function gradient_descent(
     loss::Loss,
     param::ValuationPolydisc{S,T,N},
-    state::U,
-    degree::Int
-) where {S, T, N, U}
+    next_branch::Int,
+    settings::Tuple{Bool,Int}
+) where {S, T, N}
     # Compute the children of the point param
-    below_nodes = children(param, degree)
-    isempty(below_nodes) && return (param, state, true)
+    (strict, degree) = settings
+    if strict
+        below_nodes = children_along_branch(param, next_branch)
+        next_branch = next_branch == dim(param) ? 1 : next_branch + 1
+    else
+        below_nodes = children(param, degree)
+    end
+    isempty(below_nodes) && return (param, next_branch, true)
     # Get the corresponding tangent vectors.
     # Evaluate gradient at each child (not at param): children have positive radius in one
     # coordinate, which makes the p-adic directional derivative non-trivial. Evaluating at
@@ -128,7 +134,7 @@ function gradient_descent(
     # that maximises the norm of the (downwards pointing) gradient
     grad_values = loss.grad(tangents)
     val, ind = findmax([LinearAlgebra.norm(g) for g in grad_values])
-    return below_nodes[ind], state, false
+    return below_nodes[ind], next_branch, false
 end
 
 @doc raw"""
@@ -151,15 +157,15 @@ The state parameter does nothing in gradient descent but is included for consist
 function gradient_descent_init(
     param::ValuationPolydisc{S,T,N},
     loss::Loss,
-    state::U,
-    degree=1
-) where {S, T, N, U}
+    next_branch::Int,
+    settings::Tuple{Bool,Int}
+) where {S, T, N}
     return OptimSetup(
         loss,
         param,
         (l, p, st, ctx) -> gradient_descent(l, p, st, ctx),
-        state,
-        degree,
+        next_branch,
+        settings,
         false
     )
 end

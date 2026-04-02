@@ -241,12 +241,13 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
         end
 
         total_loss = sum(loss_terms)
-        batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-            return map(batch_eval, params)
-        end
+        param_dim = degree + 1
+        VP = NAML.ValuationPolydisc{S, Int, param_dim}
+        batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+        batch_fn = (params) -> map(batch_eval, params)
+        grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-        return NAML.Loss(batch_fn, x -> 0)
+        return NAML.Loss(batch_fn, grad_fn)
     else
         # Case 2: real output - use cutoff composition
         # Create loss: Σᵢ |cutoff(|a₀ + a₁xᵢ + ... + aₙxᵢⁿ|) - yᵢ|²
@@ -264,12 +265,13 @@ function polynomial_to_linear_loss(data::Vector{Tuple{S, T}},
         end
 
         total_loss = sum(loss_terms)
-        batch_eval = NAML.batch_evaluate_init(total_loss)
-        batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-            map(batch_eval, params)
-        end
+        param_dim = degree + 1
+        VP = NAML.ValuationPolydisc{S, Int, param_dim}
+        batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+        batch_fn = (params) -> map(batch_eval, params)
+        grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-        return NAML.Loss(batch_fn, x -> 0)
+        return NAML.Loss(batch_fn, grad_fn)
     end
 end
 
@@ -323,6 +325,9 @@ function polynomial_to_crossentropy_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
 
     # Create LinearAbsolutePolynomialSum for each data point
     # and compose with sigmoid and cross-entropy
@@ -356,13 +361,15 @@ function polynomial_to_crossentropy_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end
+    # Use ValuedFieldPoint-wrapped type to match ValuationPolydisc created from
+    # Vector{PadicFieldElem} inputs (which auto-wraps centers in ValuedFieldPoint).
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-    return NAML.Loss(batch_fn, x -> 0)
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 function polynomial_to_valuation_crossentropy_loss(
@@ -384,6 +391,9 @@ function polynomial_to_valuation_crossentropy_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
 
     # Create LinearAbsolutePolynomialSum for each data point
     # and compose with sigmoid and cross-entropy
@@ -422,13 +432,13 @@ function polynomial_to_valuation_crossentropy_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
 
-    return NAML.Loss(batch_fn, x -> 0)
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 
@@ -471,6 +481,9 @@ function polynomial_to_mse_loss(
     end
 
     K = parent(data[1][1])
+    P = Int(Nemo.prime(K))
+    Prec = Int(Oscar.precision(K))
+    VFP = NAML.ValuedFieldPoint{P, Prec, S}
     loss_terms = Vector{NAML.PolydiscFunction{S}}()
 
     for (x_powers, y) in transformed_data
@@ -491,12 +504,13 @@ function polynomial_to_mse_loss(
     # Sum all loss terms
     total_loss = sum(loss_terms)
 
-    # Create batch evaluator
-    batch_eval = NAML.batch_evaluate_init(total_loss)
-    batch_fn = function(params::Vector{NAML.ValuationPolydisc{S, Int64, M}}) where M
-        return map(batch_eval, params)
-    end 
-    return NAML.Loss(batch_fn, x -> 0)
+    param_dim = degree + 1
+    VP = NAML.ValuationPolydisc{VFP, Int, param_dim}
+    batch_eval = NAML.batch_evaluate_init(total_loss, VP)
+    batch_fn = (params) -> map(batch_eval, params)
+    grad_fn = (vs) -> [NAML.directional_derivative(batch_eval, v) for v in vs]
+
+    return NAML.Loss(batch_fn, grad_fn)
 end
 
 
@@ -629,6 +643,68 @@ outputs = generate_random_binary_function(10)
 """
 function generate_random_binary_function(n::Int)::Vector{Float64}
     return Float64.(rand(0:1, n))
+end
+
+
+# ============================================================================
+# Logging: copy JSON results to repo-root logs/ directory
+# ============================================================================
+
+"""
+    save_to_logs(filepath::AbstractString)
+
+Copy a results file to the `logs/` directory at the repository root.
+Creates the directory if it doesn't exist.
+"""
+function save_to_logs(filepath::AbstractString)
+    # @__DIR__ is the caller's dir; repo root is 3 levels up from experiment scripts,
+    # but this file lives at experiments/paper/, so go 2 levels up.
+    repo_root = joinpath(@__DIR__, "..", "..")
+    logs_dir = joinpath(repo_root, "logs")
+    mkpath(logs_dir)
+    dest = joinpath(logs_dir, basename(filepath))
+    cp(filepath, dest; force=true)
+    println("Results also saved to: $dest")
+end
+
+# ============================================================================
+# Evaluation counting
+# ============================================================================
+
+"""
+    EvalCounter
+
+Mutable counter for tracking function evaluations during optimization.
+Tracks both loss evaluations and gradient evaluations separately.
+"""
+mutable struct EvalCounter
+    eval_count::Int
+    grad_count::Int
+end
+EvalCounter() = EvalCounter(0, 0)
+
+"""
+    wrap_loss_with_counting(loss::NAML.Loss) -> (NAML.Loss, EvalCounter)
+
+Wrap a Loss's eval and grad closures with counting wrappers.
+Each call to eval increments by length(params) (number of points evaluated).
+Each call to grad increments by length(tangents).
+Returns the wrapped Loss and the shared counter.
+"""
+function wrap_loss_with_counting(loss::NAML.Loss)
+    counter = EvalCounter()
+
+    wrapped_eval = function(params)
+        counter.eval_count += length(params)
+        return loss.eval(params)
+    end
+
+    wrapped_grad = function(tangents)
+        counter.grad_count += length(tangents)
+        return loss.grad(tangents)
+    end
+
+    return NAML.Loss(wrapped_eval, wrapped_grad), counter
 end
 
 

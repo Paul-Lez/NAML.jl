@@ -18,12 +18,16 @@ Flags:
     --save: Save results to JSON file
     --config: Use experiment configurations from config.jl
     --paper: Use comprehensive paper-ready configurations from paper_config.jl
+    --samples N: Override number of samples per config
+    --selection-mode M: MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
+    --degree D: Set tree branching degree for MCTS/DAG-MCTS/DOO optimizers (default: 1)
 
 Examples:
     julia --project=. run_experiments.jl --quick
     julia --project=. run_experiments.jl --config --save
     julia --project=. run_experiments.jl --paper --save
     julia --project=. run_experiments.jl --paper --quick --save
+    julia --project=. run_experiments.jl --paper --save --selection-mode VisitCount
 """
 
 include("../../../src/NAML.jl")
@@ -34,11 +38,63 @@ using Oscar
 using .NAML
 using Printf
 using Dates
+using Random
 
 # Parse command line arguments
 quick_mode = "--quick" in ARGS
 save_results = "--save" in ARGS
 use_config_file = "--config" in ARGS
+
+# Parse --epochs N
+global n_epochs_arg = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--epochs" && i < length(ARGS)
+        global n_epochs_arg = parse(Int, ARGS[i+1])
+    end
+end
+
+# Parse --output filename
+global output_filename = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--output" && i < length(ARGS)
+        global output_filename = ARGS[i+1]
+    end
+end
+
+# Parse --samples N
+global n_samples_override = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--samples" && i < length(ARGS)
+        global n_samples_override = parse(Int, ARGS[i+1])
+    end
+end
+
+# Parse --selection-mode M (BestValue, VisitCount, BestLoss)
+global selection_mode = NAML.BestValue
+for (i, arg) in enumerate(ARGS)
+    if arg == "--selection-mode" && i < length(ARGS)
+        mode_str = ARGS[i+1]
+        if mode_str == "BestValue"
+            global selection_mode = NAML.BestValue
+        elseif mode_str == "VisitCount"
+            global selection_mode = NAML.VisitCount
+        elseif mode_str == "BestLoss"
+            global selection_mode = NAML.BestLoss
+        else
+            error("Invalid selection mode: $mode_str. Must be BestValue, VisitCount, or BestLoss")
+        end
+    end
+end
+
+# Parse --degree D (or --degree=D)
+global mcts_degree = 1
+for (i, arg) in enumerate(ARGS)
+    if arg == "--degree" && i < length(ARGS)
+        global mcts_degree = parse(Int, ARGS[i+1])
+    elseif startswith(arg, "--degree=")
+        global mcts_degree = parse(Int, arg[10:end])
+    end
+end
 
 # ============================================================================
 # Experiment Configuration
@@ -58,40 +114,49 @@ elseif use_config_file
 else
     # Default configurations (small, fast experiments)
     configs = [
-        Dict("name" => "2poly_1var_linear", "prime" => 2, "prec" => 20,
-             "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 2, "opt_degree" => 1),
-        Dict("name" => "2poly_1var_quadratic", "prime" => 2, "prec" => 20,
-             "num_polys" => 2, "num_vars" => 1, "degree" => 2, "num_samples" => 2, "opt_degree" => 1),
+        Dict("name" => "p2_1var_2poly_lin", "prime" => 2, "prec" => 20,
+             "num_polys" => 2, "num_vars" => 1, "degree" => 1, "num_samples" => 2),
+        Dict("name" => "p2_1var_2poly_quad", "prime" => 2, "prec" => 20,
+             "num_polys" => 2, "num_vars" => 1, "degree" => 2, "num_samples" => 2),
     ]
 end
 
 # Set epochs based on mode
+global n_epochs = quick_mode ? 5 : 20
+if !isnothing(n_epochs_arg)
+    global n_epochs = n_epochs_arg
+end
 if quick_mode
-    n_epochs = 5
     println("="^70)
     println("QUICK MODE: Running with only $n_epochs epochs per optimizer")
     println("="^70)
-else
-    n_epochs = 20
+end
+
+# Apply samples override if specified
+if !isnothing(n_samples_override)
+    for config in configs
+        config["num_samples"] = n_samples_override
+    end
+    println("Overriding num_samples to $n_samples_override for all configs")
 end
 
 # ============================================================================
 # Optimizer configurations
 # ============================================================================
 
-function get_optimizer_configs(K, opt_degree)
+function get_optimizer_configs(K; selection_mode=NAML.BestValue, degree::Int=1)
     return Dict(
         "Random" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
-                config = (false, opt_degree)
+                config = (false, 1)
                 NAML.random_descent_init(param, loss, state, config)
             end
         ),
-        "Greedy" => Dict(
+        "Best-First" => Dict(
             "init" => (param, loss) -> begin
                 state = 1
-                config = (false, opt_degree)
+                config = (false, 1)
                 NAML.greedy_descent_init(param, loss, state, config)
             end
         ),
@@ -100,8 +165,8 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 10 : 50,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    selection_mode=selection_mode,
+                    degree=degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -111,10 +176,46 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 20 : 100,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    selection_mode=selection_mode,
+                    degree=degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-50" => Dict(
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick_mode ? 10 : 50,
+                    exploration_constant=1.41,
+                    degree=degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-100" => Dict(
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick_mode ? 20 : 100,
+                    exploration_constant=1.41,
+                    degree=degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-200" => Dict(
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick_mode ? 40 : 200,
+                    exploration_constant=1.41,
+                    degree=degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
             end
         ),
         "MCTS-200" => Dict(
@@ -122,10 +223,17 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.MCTSConfig(
                     num_simulations=quick_mode ? 40 : 200,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
-                    degree=opt_degree
+                    selection_mode=selection_mode,
+                    degree=degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
+            end
+        ),
+        "Best-First-branch2" => Dict(
+            "init" => (param, loss) -> begin
+                state = 1
+                config = (false, 2)
+                NAML.greedy_descent_init(param, loss, state, config)
             end
         ),
         "DOO" => Dict(
@@ -137,13 +245,51 @@ function get_optimizer_configs(K, opt_degree)
                 config = NAML.DOOConfig(
                     delta=delta,
                     max_depth=quick_mode ? 10 : 15,
-                    degree=opt_degree,
+                    degree=degree,
                     strict=false
                 )
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
+        "Best-First-Gradient" => Dict(
+            "init" => (param, loss) -> begin
+                NAML.gradient_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
     )
+end
+
+# Canonical ordering for display (shared across all experiments)
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
+const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
+
+# ============================================================================
+# Per-sample optimizer ranking
+# ============================================================================
+
+"""
+Rank optimizers within a sample by final_loss (lower = rank 1).
+Adds a "rank" field to each valid optimizer result. Ties share the average rank.
+"""
+function compute_sample_rankings!(sample_results::Dict)
+    optimizers = sample_results["optimizers"]
+    valid_opts = [(name, res["final_loss"]) for (name, res) in optimizers
+                  if !haskey(res, "error")]
+    isempty(valid_opts) && return
+    sort!(valid_opts, by=x -> x[2])
+    n = length(valid_opts)
+    i = 1
+    while i <= n
+        j = i
+        while j <= n && valid_opts[j][2] == valid_opts[i][2]
+            j += 1
+        end
+        avg_rank = (i + j - 1) / 2.0
+        for k in i:j-1
+            optimizers[valid_opts[k][1]]["rank"] = avg_rank
+        end
+        i = j
+    end
 end
 
 # ============================================================================
@@ -156,7 +302,6 @@ function run_single_sample(config::Dict, sample_num::Int)
     num_polys = config["num_polys"]
     num_vars = config["num_vars"]
     degree = config["degree"]
-    opt_degree = config["opt_degree"]
 
     K = PadicField(p, prec)
 
@@ -168,7 +313,7 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_loss = loss.eval([initial_param])[1]
 
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(K, opt_degree)
+    opt_configs = get_optimizer_configs(K; selection_mode=selection_mode, degree=(num_vars >= 2 ? 2 : 1))
 
     # Results storage for this sample
     sample_results = Dict{String, Any}()
@@ -179,7 +324,10 @@ function run_single_sample(config::Dict, sample_num::Int)
     # Run each optimizer
     for (opt_name, opt_setup) in opt_configs
         try
-            optim = opt_setup["init"](initial_param, loss)
+            # Wrap loss with evaluation counting
+            counted_loss, eval_counter = wrap_loss_with_counting(loss)
+
+            optim = opt_setup["init"](initial_param, counted_loss)
 
             losses = Float64[]
             t_start = time()
@@ -188,6 +336,7 @@ function run_single_sample(config::Dict, sample_num::Int)
                 current_loss = NAML.eval_loss(optim)
                 push!(losses, current_loss)
                 NAML.step!(optim)
+                NAML.has_converged(optim) && break
             end
 
             t_end = time()
@@ -196,12 +345,17 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
+            # Subtract monitoring eval_loss calls: length(losses) in-loop + 1 final
+            monitoring_evals = length(losses)
+            total_optimizer_evals = eval_counter.eval_count - monitoring_evals + eval_counter.grad_count
+
             sample_results["optimizers"][opt_name] = Dict(
                 "time" => elapsed,
                 "final_loss" => final_loss,
                 "losses" => losses,
                 "improvement" => initial_loss - final_loss,
-                "improvement_ratio" => (initial_loss > 0) ? (initial_loss - final_loss) / initial_loss : 0.0
+                "improvement_ratio" => (initial_loss > 0) ? (initial_loss - final_loss) / initial_loss : 0.0,
+                "total_evals" => total_optimizer_evals,
             )
 
         catch e
@@ -210,6 +364,7 @@ function run_single_sample(config::Dict, sample_num::Int)
         end
     end
 
+    compute_sample_rankings!(sample_results)
     return sample_results
 end
 
@@ -223,7 +378,7 @@ function run_single_experiment(config::Dict)
     println("="^70)
     println("Prime: $(config["prime"]), Polynomials: $(config["num_polys"]), " *
             "Variables: $(config["num_vars"]), Degree: $(config["degree"])")
-    println("Samples: $(config["num_samples"]), Optimization degree: $(config["opt_degree"])")
+    println("Samples: $(config["num_samples"])")
     println("-"^70)
 
     results = Dict{String, Any}()
@@ -240,11 +395,11 @@ function run_single_experiment(config::Dict)
 
             # Print brief summary
             println(@sprintf("    Initial: %.6e", sample_result["initial_loss"]))
-            for opt_name in ["Random", "Greedy", "MCTS-50", "MCTS-100", "MCTS-200", "DOO"]
+            for opt_name in OPTIMIZER_ORDER
                 if haskey(sample_result["optimizers"], opt_name)
                     opt_result = sample_result["optimizers"][opt_name]
                     if !haskey(opt_result, "error")
-                        println(@sprintf("    %-10s Final: %.6e (Δ: %.6e, %.1f%%)",
+                        println(Printf.format(Printf.Format("    %-$(NAME_WIDTH)s Final: %.6e (Δ: %.6e, %.1f%%)"),
                             opt_name, opt_result["final_loss"], opt_result["improvement"],
                             opt_result["improvement_ratio"] * 100))
                     end
@@ -293,15 +448,25 @@ function compute_aggregate_stats!(results::Dict)
         end
 
         if !isempty(opt_data)
-            results["aggregate"][opt_name] = Dict(
+            agg = Dict(
                 "mean_final_loss" => mean([d["final_loss"] for d in opt_data]),
                 "mean_improvement" => mean([d["improvement"] for d in opt_data]),
                 "mean_improvement_ratio" => mean([d["improvement_ratio"] for d in opt_data]),
                 "mean_time" => mean([d["time"] for d in opt_data]),
+                "std_time" => length(opt_data) > 1 ? std([d["time"] for d in opt_data]) : 0.0,
                 "std_final_loss" => length(opt_data) > 1 ? std([d["final_loss"] for d in opt_data]) : 0.0,
                 "min_final_loss" => minimum([d["final_loss"] for d in opt_data]),
                 "max_final_loss" => maximum([d["final_loss"] for d in opt_data]),
             )
+            if haskey(opt_data[1], "total_evals")
+                agg["mean_total_evals"] = mean([d["total_evals"] for d in opt_data])
+            end
+            ranks = [d["rank"] for d in opt_data if haskey(d, "rank")]
+            if !isempty(ranks)
+                agg["mean_rank"] = mean(ranks)
+                agg["std_rank"] = length(ranks) > 1 ? std(ranks) : 0.0
+            end
+            results["aggregate"][opt_name] = agg
         end
     end
 end
@@ -317,12 +482,17 @@ end
 # Run all experiments
 # ============================================================================
 
+# Set random seed for reproducibility
+Random.seed!(42)
+
 println("\n" * "="^70)
 println("ABSOLUTE SUM MINIMIZATION EXPERIMENT RUNNER")
 println("="^70)
 println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
+println("MCTS/DAG-MCTS/DOO degree: $mcts_degree")
+println("Random seed: 42 (for reproducibility)")
 println("="^70)
 
 all_results = []
@@ -363,21 +533,55 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(@sprintf("  %-15s %15s %15s %15s %12s",
-            "Optimizer", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
-        println("  " * "-"^75)
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15s %15s %15s %12s"),
+            "Optimizer", "Mean Rank", "Mean Final", "Mean Improv.", "Improv. %", "Time (s)"))
+        println("  " * "-"^(NAME_WIDTH + 71))
 
-        for opt_name in ["Random", "Greedy", "MCTS-50", "MCTS-100", "MCTS-200", "DOO"]
+        for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
-                println(@sprintf("  %-15s %15.6e %15.6e %14.1f%% %12.2f",
-                    opt_name, agg["mean_final_loss"], agg["mean_improvement"],
+                rank_str = haskey(agg, "mean_rank") ? @sprintf("%.2f", agg["mean_rank"]) : "N/A"
+                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15.6e %15.6e %14.1f%% %12.2f"),
+                    opt_name, rank_str, agg["mean_final_loss"], agg["mean_improvement"],
                     agg["mean_improvement_ratio"] * 100, agg["mean_time"]))
             end
         end
     else
         println("  No valid aggregate statistics")
     end
+end
+
+# Compute global ranking across all configs
+global_ranks = Dict{String, Vector{Float64}}()
+for result in all_results
+    if !haskey(result, "error") && haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
+        for opt_name in OPTIMIZER_ORDER
+            if haskey(result["aggregate"], opt_name) && haskey(result["aggregate"][opt_name], "mean_rank")
+                if !haskey(global_ranks, opt_name)
+                    global_ranks[opt_name] = Float64[]
+                end
+                push!(global_ranks[opt_name], result["aggregate"][opt_name]["mean_rank"])
+            end
+        end
+    end
+end
+
+println("\n" * "-"^70)
+println("OPTIMIZER RANKING (average rank across all configs)")
+println("-"^70)
+if !isempty(global_ranks)
+    ranked_opts = sort([(opt, mean(ranks)) for (opt, ranks) in global_ranks], by=x -> x[2])
+    println()
+    println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12s %10s"),
+        "Optimizer", "Avg Rank", "# Configs"))
+    println("  " * "-"^(NAME_WIDTH + 26))
+    for (opt_name, avg_rank) in ranked_opts
+        n_configs = length(global_ranks[opt_name])
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12.2f %10d"),
+            opt_name, avg_rank, n_configs))
+    end
+else
+    println("  No ranking data available")
 end
 
 println("\n" * "="^70)
@@ -392,12 +596,8 @@ if save_results
     try
         using JSON
 
-        timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
-        filename = "absolute_sum_results_$(timestamp).json"
-        filepath = joinpath(@__DIR__, filename)
-
         # Convert results to JSON-serializable format
-        json_results = []
+        json_experiments = []
         for result in all_results
             json_result = Dict{String, Any}()
             json_result["config"] = result["config"]
@@ -411,14 +611,36 @@ if save_results
                 end
             end
 
-            push!(json_results, json_result)
+            push!(json_experiments, json_result)
         end
 
+        json_output = Dict{String, Any}()
+        json_output["metadata"] = Dict(
+            "timestamp" => string(Dates.now()),
+            "n_epochs" => n_epochs,
+            "quick_mode" => quick_mode,
+            "optimizer_order" => OPTIMIZER_ORDER,
+        )
+        json_output["experiments"] = json_experiments
+
+        # Add global ranking to JSON
+        json_output["global_ranking"] = Dict{String, Any}(
+            opt => Dict("avg_rank" => mean(ranks), "n_configs" => length(ranks))
+            for (opt, ranks) in global_ranks if !isempty(ranks)
+        )
+
+        if isnothing(output_filename)
+            timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
+            global output_filename = "absolute_sum_results_$(timestamp).json"
+        end
+        filepath = joinpath(@__DIR__, output_filename)
+
         open(filepath, "w") do f
-            JSON.print(f, json_results, 2)
+            JSON.print(f, json_output, 2)
         end
 
         println("\n✓ Results saved to: $filepath")
+        save_to_logs(filepath)
     catch e
         if e isa ArgumentError && occursin("Package JSON not found", string(e))
             println("\n⚠ Warning: JSON package not installed. Cannot save results.")

@@ -101,7 +101,7 @@ using NAML
         loss_gd = MSE_loss_init(model_gd, data_gd)
         param_gd = ValuationPolydisc([K_gd(0)], [0])
 
-        optim = gradient_descent_init(param_gd, loss_gd, 0, 1)
+        optim = gradient_descent_init(param_gd, loss_gd, 1, (false, 1))
         steps = optimize!(optim, 100)
         @test has_converged(optim) == true
         @test steps <= 4

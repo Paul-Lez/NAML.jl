@@ -909,18 +909,19 @@ Convert a loss value to an RGB color using a colormap.
 RGB color from the colormap
 """
 function loss_to_color(loss::Float64, min_loss::Float64, max_loss::Float64, colormap::Symbol=:viridis)
-    # Normalize to [0, 1]
-    if max_loss ≈ min_loss
-        t = 0.5
-    else
-        t = (loss - min_loss) / (max_loss - min_loss)
-    end
-    t = clamp(t, 0.0, 1.0)
-
-    # Get color from Plots colormap
     Plots = Main.Plots
     cgrad = Plots.cgrad(colormap)
-    return cgrad[t]
+
+    # Log scale: gives large colour variation near small loss values.
+    # Guard against non-positive values with a small floor.
+    floor_val    = 1e-12
+    log_loss     = log(max(loss,     floor_val))
+    log_min_loss = log(max(min_loss, floor_val))
+    log_max_loss = log(max(max_loss, floor_val))
+
+    t = log_max_loss ≈ log_min_loss ? 0.5 :
+        (log_loss - log_min_loss) / (log_max_loss - log_min_loss)
+    return cgrad[clamp(t, 0.0, 1.0)]
 end
 
 @doc raw"""
@@ -967,6 +968,7 @@ function plot_tree_with_loss(tree::ConvexHullTree{S,T,N}, landscape::Dict;
                              title::String="Loss Landscape on Tree",
                              colormap::Symbol=:viridis,
                              show_node_labels::Bool=true,
+                             leaf_labels::Vector{String}=String[],
                              line_width::Real=4,
                              node_size::Real=8,
                              figsize::Tuple{Int,Int}=(800, 600)) where {S,T,N}
@@ -1078,6 +1080,16 @@ function plot_tree_with_loss(tree::ConvexHullTree{S,T,N}, landscape::Dict;
         for i in 1:length(tree.nodes)
             x, y = positions[i]
             Plots.annotate!(plt, x, y + 0.15, Plots.text(string(i), 8, :center))
+        end
+    end
+
+    # Add leaf labels if provided (one label per leaf, in input order)
+    if !isempty(leaf_labels)
+        n_labels = min(length(leaf_labels), length(tree.leaf_indices))
+        for k in 1:n_labels
+            leaf_idx = tree.leaf_indices[k]
+            x, y = positions[leaf_idx]
+            Plots.annotate!(plt, x, y - 0.25, Plots.text(leaf_labels[k], 9, :center, :bold))
         end
     end
 

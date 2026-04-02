@@ -165,6 +165,11 @@ for epoch in 1:EPOCHS
         improvement = 100 * (1 - current_loss / initial_loss)
         println("Epoch $epoch: Loss = $current_loss (improvement: $(round(improvement, digits=2))%)")
     end
+
+    if has_converged(optim)
+        println("Converged at epoch $epoch")
+        break
+    end
 end
 
 final_loss = eval_loss(optim)

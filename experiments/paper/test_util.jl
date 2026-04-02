@@ -176,14 +176,10 @@ println("Initial loss: $initial_loss")
 println("\nRunning 5 steps of greedy descent...")
 optim = NAML.greedy_descent_init(initial_param, loss, 1, (true, 0))
 
-for i in 1:5
-    step_loss = NAML.eval_loss(optim)
-    println("  Step $i: loss = $step_loss")
-    NAML.step!(optim)
-end
-
+steps = NAML.optimize!(optim, 5; verbose=true)
 final_loss = NAML.eval_loss(optim)
-println("Final loss after 5 steps: $final_loss")
+println("Final loss after $steps steps: $final_loss")
+NAML.has_converged(optim) && println("  (converged)")
 println("Final parameter radius: $(NAML.radius(optim.param))")
 
 println("\n" * "="^60)

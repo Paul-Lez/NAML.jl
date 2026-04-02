@@ -1143,3 +1143,23 @@ function directional_derivative(eval::LambdaEvaluator{S,T,N}, v::ValuationTangen
     eval.derivative === nothing && error("LambdaEvaluator has no derivative. Provide a derivative function at construction time.")
     return eval.derivative(v)
 end
+
+function directional_derivative(eval::LinearPolynomialEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
+    r = v.point.radius
+    c₀ = eval.constant + sum(eval.coefficients[i] * v.direction[i] for i in 1:N)
+    best_val = iszero(c₀) ? typemax(Int) : valuation(c₀)
+    best_mag = Base.zero(T)
+    linear_wins = false
+    for i in 1:N
+        iszero(eval.coefficients[i]) && continue
+        w   = eval.coeff_valuations[i] + r[i]
+        mag = v.magnitude[i]
+        if w < best_val || (w == best_val && mag < best_mag)
+            best_val    = w
+            best_mag    = mag
+            linear_wins = true
+        end
+    end
+    linear_wins || return 0.0
+    return -Float64(prime(v.point))^(-best_val)
+end

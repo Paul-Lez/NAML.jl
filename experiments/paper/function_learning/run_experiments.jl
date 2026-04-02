@@ -8,16 +8,22 @@ Usage:
     julia --project=. experiments/paper/function_learning/run_experiments.jl [flags]
 
 Flags:
-    --quick     Reduced epochs (5) and simulations (10) for quick testing
-    --save      Save results to JSON file (default filename with timestamp)
-    --config    Load experiment configurations from config.jl
-    --epochs N  Set number of epochs (default: 20)
-    --output F  Specify output JSON filename
+    --quick              Reduced epochs (5) and simulations (10) for quick testing
+    --save               Save results to JSON file (default filename with timestamp)
+    --config             Load experiment configurations from config.jl
+    --paper              Use paper-ready configurations from paper_config.jl
+    --epochs N           Set number of epochs (default: 20)
+    --samples N          Override number of samples per config
+    --output F           Specify output JSON filename
+    --selection-mode M   MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
+    --degree D           Set tree branching degree for MCTS/DAG-MCTS/DOO optimizers (default: 1)
 
 Examples:
     julia --project=. experiments/paper/function_learning/run_experiments.jl --quick --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --config --save
+    julia --project=. experiments/paper/function_learning/run_experiments.jl --paper --save
     julia --project=. experiments/paper/function_learning/run_experiments.jl --epochs 50 --save --output results.json
+    julia --project=. experiments/paper/function_learning/run_experiments.jl --paper --save --selection-mode VisitCount
 """
 
 include("../../../src/NAML.jl")
@@ -27,6 +33,7 @@ using Oscar
 using .NAML
 using Printf
 using Dates
+using Random
 
 # ============================================================================
 # Parse command line arguments
@@ -35,6 +42,7 @@ using Dates
 quick_mode = "--quick" in ARGS
 save_results = "--save" in ARGS
 use_config_file = "--config" in ARGS
+use_paper_config = "--paper" in ARGS
 
 # Parse --epochs N
 global n_epochs = quick_mode ? 5 : 20
@@ -52,24 +60,71 @@ for (i, arg) in enumerate(ARGS)
     end
 end
 
+# Parse --samples N
+global n_samples_override = nothing
+for (i, arg) in enumerate(ARGS)
+    if arg == "--samples" && i < length(ARGS)
+        global n_samples_override = parse(Int, ARGS[i+1])
+    end
+end
+
+# Parse --selection-mode M (BestValue, VisitCount, BestLoss)
+global selection_mode = NAML.BestValue
+for (i, arg) in enumerate(ARGS)
+    if arg == "--selection-mode" && i < length(ARGS)
+        mode_str = ARGS[i+1]
+        if mode_str == "BestValue"
+            global selection_mode = NAML.BestValue
+        elseif mode_str == "VisitCount"
+            global selection_mode = NAML.VisitCount
+        elseif mode_str == "BestLoss"
+            global selection_mode = NAML.BestLoss
+        else
+            error("Invalid selection mode: $mode_str. Must be BestValue, VisitCount, or BestLoss")
+        end
+    end
+end
+
+# Parse --degree D (or --degree=D)
+global mcts_degree = 1
+for (i, arg) in enumerate(ARGS)
+    if arg == "--degree" && i < length(ARGS)
+        global mcts_degree = parse(Int, ARGS[i+1])
+    elseif startswith(arg, "--degree=")
+        global mcts_degree = parse(Int, arg[10:end])
+    end
+end
+
 # ============================================================================
 # Experiment Configuration
 # ============================================================================
 
-if use_config_file
+if use_paper_config
+    include("paper_config.jl")
+    configs = experiment_configs
+    println("Loaded PAPER-READY experiment configurations from paper_config.jl")
+elseif use_config_file
     include("config.jl")
     configs = experiment_configs
     println("Loaded experiment configurations from config.jl")
 else
     # Default configurations
     configs = [
-        Dict("name" => "zero_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_zero_deg3", "prime" => 2, "prec" => 20,
              "degree" => 3, "n_points" => 4, "target_fn" => "zero",
              "num_samples" => 3, "threshold" => 0.5, "scale" => 1.0),
-        Dict("name" => "one_fn_deg3_2adic", "prime" => 2, "prec" => 20,
+        Dict("name" => "p2_one_deg3", "prime" => 2, "prec" => 20,
              "degree" => 3, "n_points" => 4, "target_fn" => "one",
              "num_samples" => 3, "threshold" => 0.5, "scale" => 1.0),
     ]
+end
+
+# Apply samples override if specified
+if !isnothing(n_samples_override)
+    for config in configs
+        config["num_samples"] = n_samples_override
+    end
+    println("Overriding num_samples to $n_samples_override for all configs")
 end
 
 # ============================================================================
@@ -81,17 +136,24 @@ Return a dict of optimizer name => initializer function.
 
 Each initializer takes (param, loss) and returns an OptimSetup.
 """
-function get_optimizer_configs(; quick::Bool=false)
+function get_optimizer_configs(; quick::Bool=false, selection_mode=NAML.BestValue, degree::Int=1)
     return Dict(
-        "Greedy" => Dict(
-            "type" => "Greedy",
+        "Random" => Dict(
+            "type" => "Random",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.random_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
+        "Best-First" => Dict(
+            "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 1),
             "init" => (param, loss) -> begin
                 NAML.greedy_descent_init(param, loss, 1, (false, 1))
             end
         ),
-        "Greedy-deg2" => Dict(
-            "type" => "Greedy",
+        "Best-First-branch2" => Dict(
+            "type" => "Best-First",
             "params" => Dict("strict" => false, "degree" => 2),
             "init" => (param, loss) -> begin
                 NAML.greedy_descent_init(param, loss, 1, (false, 2))
@@ -100,13 +162,13 @@ function get_optimizer_configs(; quick::Bool=false)
         "MCTS-50" => Dict(
             "type" => "MCTS",
             "params" => Dict("num_simulations" => quick ? 10 : 50,
-                             "exploration_constant" => 1.41, "degree" => 1),
+                             "exploration_constant" => 1.41, "degree" => degree),
             "init" => (param, loss) -> begin
                 config = NAML.MCTSConfig(
                     num_simulations=quick ? 10 : 50,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
-                    degree=1
+                    selection_mode=selection_mode,
+                    degree=degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
@@ -114,50 +176,82 @@ function get_optimizer_configs(; quick::Bool=false)
         "MCTS-100" => Dict(
             "type" => "MCTS",
             "params" => Dict("num_simulations" => quick ? 20 : 100,
-                             "exploration_constant" => 1.41, "degree" => 1),
+                             "exploration_constant" => 1.41, "degree" => degree),
             "init" => (param, loss) -> begin
                 config = NAML.MCTSConfig(
                     num_simulations=quick ? 20 : 100,
                     exploration_constant=1.41,
-                    selection_mode=NAML.BestValue,
-                    degree=1
+                    selection_mode=selection_mode,
+                    degree=degree
                 )
                 NAML.mcts_descent_init(param, loss, config)
             end
         ),
-        "DAG-MCTS-100" => Dict(
+        "MCTS-200" => Dict(
+            "type" => "MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => degree),
+            "init" => (param, loss) -> begin
+                config = NAML.MCTSConfig(
+                    num_simulations=quick ? 40 : 200,
+                    exploration_constant=1.41,
+                    selection_mode=selection_mode,
+                    degree=degree
+                )
+                NAML.mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-50" => Dict(
             "type" => "DAG-MCTS",
-            "params" => Dict("num_simulations" => quick ? 20 : 100,
-                             "exploration_constant" => 1.41, "degree" => 1,
+            "params" => Dict("num_simulations" => quick ? 10 : 50,
+                             "exploration_constant" => 1.41, "degree" => degree,
                              "persist_table" => true),
             "init" => (param, loss) -> begin
                 config = NAML.DAGMCTSConfig(
-                    num_simulations=quick ? 20 : 100,
+                    num_simulations=quick ? 10 : 50,
                     exploration_constant=1.41,
-                    degree=1,
+                    degree=degree,
                     persist_table=true,
                     selection_mode=NAML.BestValue
                 )
                 NAML.dag_mcts_descent_init(param, loss, config)
             end
         ),
-        "UCT" => Dict(
-            "type" => "UCT",
-            "params" => Dict("max_depth" => 10, "num_simulations" => quick ? 20 : 100,
-                             "exploration_constant" => 1.41, "degree" => 1),
+        "DAG-MCTS-100" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 20 : 100,
+                             "exploration_constant" => 1.41, "degree" => degree,
+                             "persist_table" => true),
             "init" => (param, loss) -> begin
-                config = NAML.UCTConfig(
-                    max_depth=10,
+                config = NAML.DAGMCTSConfig(
                     num_simulations=quick ? 20 : 100,
                     exploration_constant=1.41,
-                    degree=1
+                    degree=degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
                 )
-                NAML.uct_descent_init(param, loss, config)
+                NAML.dag_mcts_descent_init(param, loss, config)
+            end
+        ),
+        "DAG-MCTS-200" => Dict(
+            "type" => "DAG-MCTS",
+            "params" => Dict("num_simulations" => quick ? 40 : 200,
+                             "exploration_constant" => 1.41, "degree" => degree,
+                             "persist_table" => true),
+            "init" => (param, loss) -> begin
+                config = NAML.DAGMCTSConfig(
+                    num_simulations=quick ? 40 : 200,
+                    exploration_constant=1.41,
+                    degree=degree,
+                    persist_table=true,
+                    selection_mode=NAML.BestValue
+                )
+                NAML.dag_mcts_descent_init(param, loss, config)
             end
         ),
         "DOO" => Dict(
             "type" => "DOO",
-            "params" => Dict("max_depth" => quick ? 10 : 15, "degree" => 1),
+            "params" => Dict("max_depth" => quick ? 10 : 15, "degree" => degree),
             "init" => (param, loss) -> begin
                 # Get prime from parameter polydisc
                 p = Float64(NAML.prime(param))
@@ -166,17 +260,25 @@ function get_optimizer_configs(; quick::Bool=false)
                 config = NAML.DOOConfig(
                     delta=delta,
                     max_depth=quick ? 10 : 15,
-                    degree=1,
+                    degree=degree,
                     strict=false
                 )
                 NAML.doo_descent_init(param, loss, 1, config)
             end
         ),
+        "Best-First-Gradient" => Dict(
+            "type" => "Best-First-Gradient",
+            "params" => Dict("degree" => 1),
+            "init" => (param, loss) -> begin
+                NAML.gradient_descent_init(param, loss, 1, (false, 1))
+            end
+        ),
     )
 end
 
-# Canonical ordering for display
-const OPTIMIZER_ORDER = ["Greedy", "Greedy-deg2", "MCTS-50", "MCTS-100", "DAG-MCTS-100", "UCT", "DOO"]
+# Canonical ordering for display (shared across all experiments)
+const OPTIMIZER_ORDER = ["Random", "Best-First", "Best-First-branch2", "Best-First-Gradient", "MCTS-50", "MCTS-100", "MCTS-200", "DAG-MCTS-50", "DAG-MCTS-100", "DAG-MCTS-200", "DOO"]
+const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
 
 # ============================================================================
 # Create target function loss
@@ -198,14 +300,34 @@ function create_function_learning_loss(K, degree, n_points, target_fn, threshold
         y_values = [0.0 for _ in 1:n_points]
     elseif target_fn == "one"
         y_values = [1.0 for _ in 1:n_points]
+    elseif target_fn == "random"
+        # Random binary labels (0 or 1)
+        y_values = [Float64(rand(0:1)) for _ in 1:n_points]
     else
         error("Unknown target function: $target_fn")
     end
 
     data = collect(zip(x_values, y_values))
 
+    loss = polynomial_to_crossentropy_loss(data, degree, threshold, scale)
+
+    return loss, data
+end
+
+# ============================================================================
+# Compute classification accuracy
+# ============================================================================
+
+"""
+Compute classification accuracy for a polynomial classifier.
+
+Given polynomial coefficients, evaluates accuracy on the data using:
+- Polynomial evaluation: f(x) = a0 + a1*x + ... + an*x^n
+- Sigmoid activation: p = 1/(1 + exp(-(|f(x)| - threshold)/scale))
+- Binary prediction: predict 1 if p > 0.5, else 0
+"""
+function compute_accuracy(coeffs, data, threshold, scale)
     # Simple polynomial evaluation function
-    # Evaluates a0 + a1*x + a2*x^2 + ... + an*x^n
     function eval_polynomial(coeffs, x)
         result = coeffs[1]  # a0
         x_power = x
@@ -216,41 +338,56 @@ function create_function_learning_loss(K, degree, n_points, target_fn, threshold
         return result
     end
 
-    function eval_fn(param_vector::Vector{<:NAML.ValuationPolydisc})
-        return [begin
-            loss = 0.0
-            # Extract coefficient values from parameter polydisc
-            coeffs = [NAML.unwrap(c) for c in NAML.center(param)]
+    correct = 0
+    total = length(data)
 
-            for (x, y) in data
-                # Evaluate polynomial at x
-                poly_val = eval_polynomial(coeffs, x)
-                val_float = Float64(abs(poly_val))
+    for (x, y) in data
+        # Evaluate polynomial at x
+        poly_val = eval_polynomial(coeffs, x)
+        val_float = Float64(abs(poly_val))
 
-                # Cross-entropy: -[y*log(p) + (1-y)*log(1-p)]
-                # where p = sigmoid((val - threshold)/scale)
-                z = (val_float - threshold) / scale
-                prob = 1.0 / (1.0 + exp(-z))
+        # Sigmoid activation
+        z = (val_float - threshold) / scale
+        prob = 1.0 / (1.0 + exp(-z))
 
-                # Clip probabilities to avoid log(0)
-                prob = max(min(prob, 0.9999), 0.0001)
+        # Predict: 1 if prob > 0.5, else 0
+        prediction = prob > 0.5 ? 1.0 : 0.0
 
-                if y > 0.5  # y = 1
-                    loss += -log(prob)
-                else  # y = 0
-                    loss += -log(1 - prob)
-                end
-            end
-            loss
-        end for param in param_vector]
+        if prediction == y
+            correct += 1
+        end
     end
 
-    # Dummy gradient (not used by greedy descent)
-    function grad_fn(vs::Vector{<:NAML.ValuationTangent})
-        return [0.0 for _ in vs]
-    end
+    return correct / total
+end
 
-    return NAML.Loss(eval_fn, grad_fn), data
+# ============================================================================
+# Per-sample optimizer ranking
+# ============================================================================
+
+"""
+Rank optimizers within a sample by final_loss (lower = rank 1).
+Adds a "rank" field to each valid optimizer result. Ties share the average rank.
+"""
+function compute_sample_rankings!(sample_results::Dict)
+    optimizers = sample_results["optimizers"]
+    valid_opts = [(name, res["final_loss"]) for (name, res) in optimizers
+                  if !haskey(res, "error")]
+    isempty(valid_opts) && return
+    sort!(valid_opts, by=x -> x[2])
+    n = length(valid_opts)
+    i = 1
+    while i <= n
+        j = i
+        while j <= n && valid_opts[j][2] == valid_opts[i][2]
+            j += 1
+        end
+        avg_rank = (i + j - 1) / 2.0
+        for k in i:j-1
+            optimizers[valid_opts[k][1]]["rank"] = avg_rank
+        end
+        i = j
+    end
 end
 
 # ============================================================================
@@ -276,13 +413,19 @@ function run_single_sample(config::Dict, sample_num::Int)
     initial_param = NAML.ValuationPolydisc(param_center, [0 for _ in 1:degree+1])
     initial_loss = loss.eval([initial_param])[1]
 
+    # Compute initial accuracy
+    initial_coeffs = [NAML.unwrap(c) for c in NAML.center(initial_param)]
+    initial_accuracy = compute_accuracy(initial_coeffs, data, threshold, scale)
+
     # Get optimizer configs
-    opt_configs = get_optimizer_configs(quick=quick_mode)
+    num_params = degree + 1  # polynomial has degree+1 coefficients
+    opt_configs = get_optimizer_configs(quick=quick_mode, selection_mode=selection_mode, degree=(num_params >= 2 ? 2 : 1))
 
     # Results for this sample
     sample_results = Dict{String, Any}()
     sample_results["sample_num"] = sample_num
     sample_results["initial_loss"] = initial_loss
+    sample_results["initial_accuracy"] = initial_accuracy
 
     # Store data info (as floats for JSON serializability)
     sample_results["data"] = Dict(
@@ -300,7 +443,10 @@ function run_single_sample(config::Dict, sample_num::Int)
 
         opt_setup = opt_configs[opt_name]
         try
-            optim = opt_setup["init"](initial_param, loss)
+            # Wrap loss with evaluation counting
+            counted_loss, eval_counter = wrap_loss_with_counting(loss)
+
+            optim = opt_setup["init"](initial_param, counted_loss)
 
             losses = Float64[]
             t_start = time()
@@ -309,6 +455,7 @@ function run_single_sample(config::Dict, sample_num::Int)
                 current_loss = NAML.eval_loss(optim)
                 push!(losses, current_loss)
                 NAML.step!(optim)
+                NAML.has_converged(optim) && break
             end
 
             t_end = time()
@@ -317,14 +464,25 @@ function run_single_sample(config::Dict, sample_num::Int)
             final_loss = NAML.eval_loss(optim)
             push!(losses, final_loss)
 
+            # Compute final accuracy
+            final_coeffs = [NAML.unwrap(c) for c in NAML.center(optim.param)]
+            final_accuracy = compute_accuracy(final_coeffs, data, threshold, scale)
+
+            # Subtract monitoring eval_loss calls: length(losses) in-loop + 1 final
+            monitoring_evals = length(losses)
+            total_optimizer_evals = eval_counter.eval_count - monitoring_evals + eval_counter.grad_count
+
             sample_results["optimizers"][opt_name] = Dict(
                 "time" => elapsed,
                 "final_loss" => final_loss,
+                "final_accuracy" => final_accuracy,
                 "losses" => losses,
                 "improvement" => initial_loss - final_loss,
                 "improvement_ratio" => (initial_loss > 0) ?
                     (initial_loss - final_loss) / initial_loss : 0.0,
+                "accuracy_improvement" => final_accuracy - initial_accuracy,
                 "hyperparameters" => opt_setup["params"],
+                "total_evals" => total_optimizer_evals,
             )
 
         catch e
@@ -332,6 +490,7 @@ function run_single_sample(config::Dict, sample_num::Int)
         end
     end
 
+    compute_sample_rankings!(sample_results)
     return sample_results
 end
 
@@ -360,14 +519,19 @@ function run_single_experiment(config::Dict)
             push!(results["samples"], sample_result)
 
             # Brief summary
-            println(@sprintf("    Initial loss: %.6e", sample_result["initial_loss"]))
+            println(@sprintf("    Initial loss: %.6e, accuracy: %.2f%%",
+                sample_result["initial_loss"], sample_result["initial_accuracy"] * 100))
             for opt_name in OPTIMIZER_ORDER
                 if haskey(sample_result["optimizers"], opt_name)
                     opt_result = sample_result["optimizers"][opt_name]
                     if !haskey(opt_result, "error")
-                        println(@sprintf("    %-15s Final: %.6e  (%.1f%% improvement, %.2fs)",
+                        acc_imp = opt_result["accuracy_improvement"] * 100
+                        acc_imp_str = acc_imp >= 0 ? "+$(Printf.@sprintf("%.2f", acc_imp))" : Printf.@sprintf("%.2f", acc_imp)
+                        println(Printf.format(Printf.Format("    %-$(NAME_WIDTH)s Final: %.6e, accuracy: %.2f%%  (loss: %.1f%%, acc: %s%%, %.2fs)"),
                             opt_name, opt_result["final_loss"],
+                            opt_result["final_accuracy"] * 100,
                             opt_result["improvement_ratio"] * 100,
+                            acc_imp_str,
                             opt_result["time"]))
                     else
                         println("    $opt_name: ERROR - $(opt_result["error"])")
@@ -420,17 +584,35 @@ function compute_aggregate_stats!(results::Dict)
 
         if !isempty(opt_data)
             final_losses = [d["final_loss"] for d in opt_data]
-            results["aggregate"][opt_name] = Dict(
+            final_accuracies = [d["final_accuracy"] for d in opt_data]
+            accuracy_improvements = [d["accuracy_improvement"] for d in opt_data]
+
+            agg = Dict(
                 "mean_final_loss" => _mean(final_losses),
                 "std_final_loss" => length(opt_data) > 1 ? _std(final_losses) : 0.0,
                 "min_final_loss" => minimum(final_losses),
                 "max_final_loss" => maximum(final_losses),
+                "mean_final_accuracy" => _mean(final_accuracies),
+                "std_final_accuracy" => length(opt_data) > 1 ? _std(final_accuracies) : 0.0,
+                "min_final_accuracy" => minimum(final_accuracies),
+                "max_final_accuracy" => maximum(final_accuracies),
+                "mean_accuracy_improvement" => _mean(accuracy_improvements),
                 "mean_improvement" => _mean([d["improvement"] for d in opt_data]),
                 "mean_improvement_ratio" => _mean([d["improvement_ratio"] for d in opt_data]),
                 "mean_time" => _mean([d["time"] for d in opt_data]),
+                "std_time" => length(opt_data) > 1 ? _std([d["time"] for d in opt_data]) : 0.0,
                 "n_valid" => length(opt_data),
                 "hyperparameters" => opt_data[1]["hyperparameters"],
             )
+            if haskey(opt_data[1], "total_evals")
+                agg["mean_total_evals"] = _mean([d["total_evals"] for d in opt_data])
+            end
+            ranks = [d["rank"] for d in opt_data if haskey(d, "rank")]
+            if !isempty(ranks)
+                agg["mean_rank"] = _mean(ranks)
+                agg["std_rank"] = length(ranks) > 1 ? _std(ranks) : 0.0
+            end
+            results["aggregate"][opt_name] = agg
         end
     end
 end
@@ -439,6 +621,9 @@ end
 # Main execution
 # ============================================================================
 
+# Set random seed for reproducibility
+Random.seed!(42)
+
 println("\n" * "="^70)
 println("FUNCTION LEARNING EXPERIMENT RUNNER")
 println("="^70)
@@ -446,6 +631,8 @@ println("Start time: $(Dates.now())")
 println("Number of experiments: $(length(configs))")
 println("Epochs per optimizer: $n_epochs")
 println("Quick mode: $quick_mode")
+println("MCTS/DAG-MCTS/DOO degree: $mcts_degree")
+println("Random seed: 42 (for reproducibility)")
 println("="^70)
 
 all_results = []
@@ -485,19 +672,56 @@ for (i, result) in enumerate(all_results)
 
     if haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
         println()
-        println(@sprintf("  %-15s %15s %12s %12s %12s",
-            "Optimizer", "Mean Final", "Std", "Improv %", "Time (s)"))
-        println("  " * "-"^65)
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15s %12s %12s %12s %12s"),
+            "Optimizer", "Mean Rank", "Mean Final", "Std", "Accuracy", "Acc Δ", "Time (s)"))
+        println("  " * "-"^(NAME_WIDTH + 77))
 
         for opt_name in OPTIMIZER_ORDER
             if haskey(result["aggregate"], opt_name)
                 agg = result["aggregate"][opt_name]
-                println(@sprintf("  %-15s %15.6e %12.2e %11.1f%% %12.2f",
-                    opt_name, agg["mean_final_loss"], agg["std_final_loss"],
-                    agg["mean_improvement_ratio"] * 100, agg["mean_time"]))
+                rank_str = haskey(agg, "mean_rank") ? @sprintf("%.2f", agg["mean_rank"]) : "N/A"
+                acc_delta = agg["mean_accuracy_improvement"] * 100
+                acc_delta_str = acc_delta >= 0 ? "+$(Printf.@sprintf("%.1f", acc_delta))" : Printf.@sprintf("%.1f", acc_delta)
+                println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %10s %15.6e %12.2e %11.1f%% %12s%% %12.2f"),
+                    opt_name, rank_str, agg["mean_final_loss"], agg["std_final_loss"],
+                    agg["mean_final_accuracy"] * 100,
+                    acc_delta_str, agg["mean_time"]))
             end
         end
     end
+end
+
+# Compute global ranking across all configs
+global_ranks = Dict{String, Vector{Float64}}()
+for result in all_results
+    if !haskey(result, "error") && haskey(result, "aggregate") && !haskey(result["aggregate"], "error")
+        for opt_name in OPTIMIZER_ORDER
+            if haskey(result["aggregate"], opt_name) && haskey(result["aggregate"][opt_name], "mean_rank")
+                if !haskey(global_ranks, opt_name)
+                    global_ranks[opt_name] = Float64[]
+                end
+                push!(global_ranks[opt_name], result["aggregate"][opt_name]["mean_rank"])
+            end
+        end
+    end
+end
+
+println("\n" * "-"^70)
+println("OPTIMIZER RANKING (average rank across all configs)")
+println("-"^70)
+if !isempty(global_ranks)
+    ranked_opts = sort([(opt, _mean(ranks)) for (opt, ranks) in global_ranks], by=x -> x[2])
+    println()
+    println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12s %10s"),
+        "Optimizer", "Avg Rank", "# Configs"))
+    println("  " * "-"^(NAME_WIDTH + 26))
+    for (opt_name, avg_rank) in ranked_opts
+        n_configs = length(global_ranks[opt_name])
+        println(Printf.format(Printf.Format("  %-$(NAME_WIDTH)s %12.2f %10d"),
+            opt_name, avg_rank, n_configs))
+    end
+else
+    println("  No ranking data available")
 end
 
 println("\n" * "="^70)
@@ -539,6 +763,12 @@ if save_results
         end
         json_output["experiments"] = json_experiments
 
+        # Add global ranking to JSON
+        json_output["global_ranking"] = Dict{String, Any}(
+            opt => Dict("avg_rank" => _mean(ranks), "n_configs" => length(ranks))
+            for (opt, ranks) in global_ranks if !isempty(ranks)
+        )
+
         # Determine filename
         if isnothing(output_filename)
             timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
@@ -551,6 +781,7 @@ if save_results
         end
 
         println("\nResults saved to: $filepath")
+        save_to_logs(filepath)
     catch e
         if e isa ArgumentError && occursin("Package JSON not found", string(e))
             println("\nWarning: JSON package not installed. Cannot save results.")
