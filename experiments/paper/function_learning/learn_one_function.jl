@@ -242,6 +242,11 @@ for epoch in 1:EPOCHS
         println("Epoch $epoch: Loss = $current_loss (improvement: $(round(improvement, digits=2))%), Accuracy = $(round(current_accuracy, digits=2))%")
         println("  DAG Stats: $(dag_stats.unique_nodes) unique nodes, $(dag_stats.multi_parent_nodes) with multiple parents ($(round(100 * dag_stats.multi_parent_nodes / max(1, dag_stats.unique_nodes), digits=1))% transposition rate)")
     end
+
+    if NAML.has_converged(optim)
+        println("Converged at epoch $epoch")
+        break
+    end
 end
 
 final_loss = NAML.eval_loss(optim)
