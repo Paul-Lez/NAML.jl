@@ -12,9 +12,27 @@ julia --project=. path/to/script.jl
 # Run tests
 julia --project=. test/runtests.jl
 
-# Run paper experiments
-julia --project=. experiments/paper/run_benchmarks.jl
+# Run all paper experiments, regenerate LaTeX tables, and copy to arXiv draft
+bash experiments/paper/run_and_deploy_tables.sh [--quick] [--epochs N] [--move-only]
+
+# Run all paper experiments and regenerate LaTeX tables (no copy)
+bash experiments/paper/generate_paper_tables.sh [--quick] [--epochs N]
+
+# Run a single experiment suite
+julia --project=. experiments/paper/<name>/run_experiments.jl [--paper] [--quick] [--save]
+
+# Sanity check a single experiment
+julia --project=. experiments/paper/<name>/sanity_run.jl
 ```
+
+**Key paper experiment scripts:**
+- `experiments/paper/generate_paper_tables.sh` - Runs all 4 experiment suites and regenerates `.tex` tables
+- `experiments/paper/run_and_deploy_tables.sh` - Same as above, then copies tables to `~/Documents/65a7dd.../arXiv_draft/tables/`
+- `experiments/paper/*/run_experiments.jl` - Per-suite runner; use `--paper` for full configs, `--quick` for smoke test
+- `experiments/paper/*/generate_tables.jl` - Convert saved JSON results to LaTeX tables
+- `experiments/paper/*/sanity_run.jl` - Quick pipeline verification
+- `experiments/paper/polynomial_solving/util.jl` - Polynomial generation with guaranteed roots (new experiment type)
+- `experiments/paper/worked_examples/` - Self-contained illustrative scripts for paper worked examples
 
 ### Basic Usage
 ```julia

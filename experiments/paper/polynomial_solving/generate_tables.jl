@@ -1,16 +1,16 @@
 """
-LaTeX Table Generator for Polynomial Learning Results
+LaTeX Table Generator for Polynomial Solving Results
 
 Reads JSON results from run_experiments.jl and produces LaTeX tables
-in a single unified document suitable for inclusion in a paper.
+suitable for inclusion in a paper.
 
 Usage:
-    julia --project=. experiments/paper/polynomial_learning/generate_tables.jl <results.json>
-    julia --project=. experiments/paper/polynomial_learning/generate_tables.jl <results.json> --output tables.tex
-    julia --project=. experiments/paper/polynomial_learning/generate_tables.jl <results.json> --stdout
+    julia --project=. experiments/paper/polynomial_solving/generate_tables.jl <results.json>
+    julia --project=. experiments/paper/polynomial_solving/generate_tables.jl <results.json> --output tables.tex
+    julia --project=. experiments/paper/polynomial_solving/generate_tables.jl <results.json> --stdout
 
 Flags:
-    --output FILE Write to specified .tex file (default: polynomial_learning_tables.tex)
+    --output FILE Write to specified .tex file (default: polynomial_solving_tables.tex)
     --stdout      Print tables to stdout instead of writing file
     --verbose     Include per-configuration detailed tables (default: aggregate only)
 """
@@ -76,7 +76,7 @@ json_file = ARGS[1]
 print_stdout = "--stdout" in ARGS
 verbose = "--verbose" in ARGS
 
-output_file = "polynomial_learning_tables.tex"
+output_file = "polynomial_solving_tables.tex"
 for (i, arg) in enumerate(ARGS)
     if arg == "--output" && i < length(ARGS)
         global output_file = ARGS[i+1]
@@ -108,7 +108,7 @@ println("Epochs: $(metadata["n_epochs"]), Quick mode: $(metadata["quick_mode"])"
 println()
 
 # ============================================================================
-# Helper: format a number in scientific notation for LaTeX
+# Helpers
 # ============================================================================
 
 function latex_sci(x::Float64; digits::Int=2)
@@ -137,13 +137,7 @@ function latex_sci_compact(x::Float64; digits::Int=1)
     end
 end
 
-# ============================================================================
-# Helper: escape special characters for LaTeX
-# ============================================================================
-
 function escape_latex(s::String)
-    # Escape LaTeX special characters in order
-    # Note: backslash must be first, and we need to be careful with replacement order
     s = replace(s, "\\" => "\\textbackslash{}")
     s = replace(s, "~" => "\\~{}")
     s = replace(s, "^" => "\\^{}")
@@ -158,7 +152,7 @@ function escape_latex(s::String)
 end
 
 # ============================================================================
-# Table 0: Configuration summary table
+# Table 0: Configuration summary
 # ============================================================================
 
 function generate_config_table(experiments)
@@ -170,25 +164,18 @@ function generate_config_table(experiments)
     lines = String[]
     push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
-    push!(lines, "\\caption{Polynomial learning experiment configurations. " *
-                 "Each row describes one experimental setup.}")
-    push!(lines, "\\label{tab:poly-learning-config}")
+    push!(lines, "\\caption{Polynomial solving experiment configurations.}")
+    push!(lines, "\\label{tab:poly-solving-config}")
     push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{lcccccc}")
+    push!(lines, "\\begin{tabular}{lccccc}")
     push!(lines, "\\toprule")
-    push!(lines, "Experiment & Prime (\$p\$) & Precision & Degree & \\#Points & \\#Samples \\\\")
+    push!(lines, "Experiment & Prime (\$p\$) & Precision & Variables & Degree & \\#Samples \\\\")
     push!(lines, "\\midrule")
 
     for exp in valid
         config = exp["config"]
         name = "\\texttt{" * escape_latex(config["name"]) * "}"
-        prime = config["prime"]
-        prec = config["prec"]
-        degree = config["degree"]
-        n_points = config["n_points"]
-        num_samples = config["num_samples"]
-
-        row = "$name & $prime & $prec & $degree & $n_points & $num_samples \\\\"
+        row = "$name & $(config["prime"]) & $(config["prec"]) & $(config["num_vars"]) & $(config["degree"]) & $(config["num_samples"]) \\\\"
         push!(lines, row)
         push!(lines, "\\hline")
     end
@@ -205,7 +192,7 @@ function generate_config_table(experiments)
 end
 
 # ============================================================================
-# Table 1: Summary table (all experiments, all optimizers)
+# Table 1: Summary table (mean final loss)
 # ============================================================================
 
 function generate_summary_table(experiments, optimizer_order)
@@ -219,17 +206,15 @@ function generate_summary_table(experiments, optimizer_order)
     lines = String[]
     push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
-    push!(lines, "\\caption{Polynomial learning: mean final loss across optimizers. " *
-                 "Lower is better. Values are averaged over multiple random problem instances.}")
-    push!(lines, "\\label{tab:poly-learning-summary}")
+    push!(lines, "\\caption{Polynomial solving: mean final loss across optimizers. " *
+                 "Lower is better. The polynomial \\(f\\) has a known root in \\(\\mathbb{Z}_p^n\\).}")
+    push!(lines, "\\label{tab:poly-solving-summary}")
 
-    # Build column spec
     col_spec = "l" * "c"^n_opts
     push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
-    # Header row
     header = "Experiment"
     for opt_name in optimizer_order
         header *= " & $(display_name(opt_name))"
@@ -238,7 +223,6 @@ function generate_summary_table(experiments, optimizer_order)
     push!(lines, header)
     push!(lines, "\\midrule")
 
-    # Data rows
     for exp in valid
         config = exp["config"]
         agg = exp["aggregate"]
@@ -292,7 +276,7 @@ function generate_summary_table(experiments, optimizer_order)
 end
 
 # ============================================================================
-# Table 2: Detailed table with time and improvement ratio
+# Table 2: Detailed tables (one per experiment configuration)
 # ============================================================================
 
 function generate_detailed_table(experiments, optimizer_order)
@@ -301,25 +285,15 @@ function generate_detailed_table(experiments, optimizer_order)
         return "% No valid experiments to tabulate\n"
     end
 
-    all_lines = String[]
+    all_tables = String[]
 
-    for (idx, exp) in enumerate(valid)
+    for (ei, exp) in enumerate(valid)
         config = exp["config"]
         agg = exp["aggregate"]
-        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+        name = escape_latex(config["name"])
+        label_suffix = replace(name, r"[^a-zA-Z0-9]" => "-")
 
-        lines = String[]
-        push!(lines, "\\begin{table}[H]")
-        push!(lines, "\\centering")
-        push!(lines, "\\caption{Detailed results for configuration: $(name). " *
-                     "Shows mean final loss, improvement ratio (\\%), and wall-clock time.}")
-        push!(lines, "\\label{tab:poly-learning-detail-$(idx)}")
-        push!(lines, "\\begin{tabular}{lrrrrr}")
-        push!(lines, "\\toprule")
-        push!(lines, "Optimizer & Final Loss & Std Loss & Improv.~(\\%) & Time (s) & Rank \$\\pm\$ Std \\\\")
-        push!(lines, "\\midrule")
-
-        # Find best loss for bolding (excluding Random)
+        # Find best (minimum) mean final loss for bolding (excluding Random)
         best_loss = Inf
         for opt_name in optimizer_order
             opt_name == "Random" && continue
@@ -331,28 +305,41 @@ function generate_detailed_table(experiments, optimizer_order)
             end
         end
 
+        lines = String[]
+        push!(lines, "\\begin{table}[H]")
+        push!(lines, "\\centering")
+        push!(lines, "\\caption{Polynomial solving results for \\texttt{$name} " *
+                     "(\$p=$(config["prime"])\$, " *
+                     "$(config["num_vars"])~var(s), degree~$(config["degree"])): " *
+                     "mean final loss, improvement (\\%), and wall-clock time (s).}")
+        push!(lines, "\\label{tab:poly-solving-detail-$label_suffix}")
+        push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+        push!(lines, "\\begin{tabular}{lrrrr}")
+        push!(lines, "\\toprule")
+        push!(lines, "Optimizer & Final Loss & Improv.~(\\%) & Time (s) & Mean Rank \\\\")
+        push!(lines, "\\midrule")
+
         for opt_name in optimizer_order
             if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                 stats = agg[opt_name]
                 loss = stats["mean_final_loss"]
-                loss_str = @sprintf("\$%.2e\$", loss)
-                if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
-                    loss_str = "\\textbf{$loss_str}"
-                end
-                std_loss_str = haskey(stats, "std_final_loss") ? @sprintf("\$%.2e\$", stats["std_final_loss"]) : "---"
+                std_loss = get(stats, "std_final_loss", 0.0)
+                loss_str = std_loss > 0 ?
+                    "\$$(latex_sci_compact(loss)) {\\scriptstyle \\pm $(latex_sci_compact(std_loss))}\$" :
+                    @sprintf("\$%.2e\$", loss)
                 improv_str = @sprintf("%.1f", stats["mean_improvement_ratio"] * 100)
                 std_t = get(stats, "std_time", 0.0)
                 time_str = std_t > 0 ?
                     @sprintf("\$%.4f {\\scriptstyle \\pm %.4f}\$", stats["mean_time"], std_t) :
                     @sprintf("\$%.4f\$", stats["mean_time"])
-                rank_str = if haskey(stats, "mean_rank")
-                    std_r = get(stats, "std_rank", 0.0)
-                    @sprintf("%.2f \$\\pm\$ %.2f", stats["mean_rank"], std_r)
-                else
-                    "---"
-                end
+                rank_str = haskey(stats, "mean_rank") ? @sprintf("%.2f", stats["mean_rank"]) : "---"
 
-                push!(lines, "$(display_name(opt_name)) & $loss_str & $std_loss_str & $improv_str & $time_str & $rank_str \\\\")
+                opt_label = display_name(opt_name)
+                if @sprintf("%.2e", loss) == @sprintf("%.2e", best_loss)
+                    push!(lines, "\\textbf{$opt_label} & \\textbf{$loss_str} & $improv_str & $time_str & $rank_str \\\\")
+                else
+                    push!(lines, "$opt_label & $loss_str & $improv_str & $time_str & $rank_str \\\\")
+                end
                 push!(lines, "\\hline")
             end
         end
@@ -362,24 +349,23 @@ function generate_detailed_table(experiments, optimizer_order)
         end
         push!(lines, "\\bottomrule")
         push!(lines, "\\end{tabular}")
+        push!(lines, "}% end adjustbox")
         push!(lines, "\\end{table}")
 
-        push!(all_lines, join(lines, "\n"))
-        push!(all_lines, "")  # Blank line between tables
+        push!(all_tables, join(lines, "\n") * "\n")
     end
 
-    return join(all_lines, "\n") * "\n"
+    return join(all_tables, "\n")
 end
 
 # ============================================================================
-# Table 3: Degree sweep table (if applicable)
+# Table 3: Degree x Variables grid (grouped by prime)
 # ============================================================================
 
-function generate_degree_sweep_table(experiments, optimizer_order)
-    # Filter experiments that vary degree with the same prime
+function generate_grid_table(experiments, optimizer_order)
     valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
     if length(valid) < 2
-        return "% Not enough experiments for degree sweep table\n"
+        return "% Not enough experiments for grid table\n"
     end
 
     # Group by prime
@@ -392,51 +378,55 @@ function generate_degree_sweep_table(experiments, optimizer_order)
         push!(by_prime[p], exp)
     end
 
-    # Find primes with multiple degrees
-    sweep_primes = filter(p -> length(by_prime[p]) >= 2, collect(keys(by_prime)))
-    if isempty(sweep_primes)
-        return "% No degree sweep detected (need multiple degrees for same prime)\n"
-    end
-
     lines = String[]
-    push!(lines, "\\begin{table}[H]")
-    push!(lines, "\\centering")
-    push!(lines, "\\caption{Effect of polynomial degree on learning performance " *
-                 "(mean final loss). Each row is a different degree.}")
-    push!(lines, "\\label{tab:poly-learning-degree}")
 
-    n_opts = length(optimizer_order)
-    col_spec = "cc" * "c"^n_opts
-    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{$col_spec}")
-    push!(lines, "\\toprule")
+    for prime in sort(collect(keys(by_prime)))
+        exps = by_prime[prime]
+        if length(exps) < 2
+            continue
+        end
 
-    header = "\$p\$ & Degree"
-    for opt_name in optimizer_order
-        header *= " & $(display_name(opt_name))"
-    end
-    header *= " \\\\"
-    push!(lines, header)
-    push!(lines, "\\midrule")
+        # Find best optimizer for each experiment
+        push!(lines, "\\begin{table}[H]")
+        push!(lines, "\\centering")
+        push!(lines, "\\caption{Polynomial solving over \\(\\mathbb{Q}_{$prime}\\): " *
+                     "mean final loss by variables and degree. Best optimizer per row in bold.}")
+        push!(lines, "\\label{tab:poly-solving-grid-p$prime}")
 
-    for p in sort(sweep_primes)
-        exps = sort(by_prime[p], by=e -> e["config"]["degree"])
-        for (i, exp) in enumerate(exps)
+        n_opts = length(optimizer_order)
+        col_spec = "cc" * "c"^n_opts
+        push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+        push!(lines, "\\begin{tabular}{$col_spec}")
+        push!(lines, "\\toprule")
+
+        header = "Vars & Deg"
+        for opt_name in optimizer_order
+            header *= " & $(display_name(opt_name))"
+        end
+        header *= " \\\\"
+        push!(lines, header)
+        push!(lines, "\\midrule")
+
+        # Sort by (num_vars, degree)
+        sort!(exps, by=e -> (e["config"]["num_vars"], e["config"]["degree"]))
+
+        for exp in exps
             config = exp["config"]
             agg = exp["aggregate"]
 
+            # Find best (minimum) mean final loss for bolding (excluding Random)
             best_loss = Inf
             for opt_name in optimizer_order
                 opt_name == "Random" && continue
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
-                    if loss < best_loss; best_loss = loss; end
+                    if loss < best_loss
+                        best_loss = loss
+                    end
                 end
             end
 
-            prime_label = i == 1 ? string(p) : ""
-            row = "$prime_label & $(config["degree"])"
-
+            row = "$(config["num_vars"]) & $(config["degree"])"
             for opt_name in optimizer_order
                 if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
                     loss = agg[opt_name]["mean_final_loss"]
@@ -454,126 +444,22 @@ function generate_degree_sweep_table(experiments, optimizer_order)
             push!(lines, row)
             push!(lines, "\\hline")
         end
-    end
 
-    if !isempty(lines) && lines[end] == "\\hline"
-        pop!(lines)
+        if !isempty(lines) && lines[end] == "\\hline"
+            pop!(lines)
+        end
+        push!(lines, "\\bottomrule")
+        push!(lines, "\\end{tabular}")
+        push!(lines, "}% end adjustbox")
+        push!(lines, "\\end{table}")
+        push!(lines, "")
     end
-    push!(lines, "\\bottomrule")
-    push!(lines, "\\end{tabular}")
-    push!(lines, "}% end adjustbox")
-    push!(lines, "\\end{table}")
 
     return join(lines, "\n") * "\n"
 end
 
 # ============================================================================
-# Table 4: Prime sweep table (if applicable)
-# ============================================================================
-
-function generate_prime_sweep_table(experiments, optimizer_order)
-    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
-    if length(valid) < 2
-        return "% Not enough experiments for prime sweep table\n"
-    end
-
-    # Group by degree
-    by_degree = Dict{Int, Vector}()
-    for exp in valid
-        d = exp["config"]["degree"]
-        if !haskey(by_degree, d)
-            by_degree[d] = []
-        end
-        push!(by_degree[d], exp)
-    end
-
-    # Find degrees with multiple primes
-    sweep_degrees = filter(d -> begin
-        primes = unique([e["config"]["prime"] for e in by_degree[d]])
-        length(primes) >= 2
-    end, collect(keys(by_degree)))
-
-    if isempty(sweep_degrees)
-        return "% No prime sweep detected (need multiple primes for same degree)\n"
-    end
-
-    lines = String[]
-    push!(lines, "\\begin{table}[H]")
-    push!(lines, "\\centering")
-    push!(lines, "\\caption{Effect of base prime on learning performance " *
-                 "(mean final loss). Each row is a different prime.}")
-    push!(lines, "\\label{tab:poly-learning-prime}")
-
-    n_opts = length(optimizer_order)
-    col_spec = "cc" * "c"^n_opts
-    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{$col_spec}")
-    push!(lines, "\\toprule")
-
-    header = "Degree & \$p\$"
-    for opt_name in optimizer_order
-        header *= " & $(display_name(opt_name))"
-    end
-    header *= " \\\\"
-    push!(lines, header)
-    push!(lines, "\\midrule")
-
-    for d in sort(sweep_degrees)
-        exps = sort(by_degree[d], by=e -> e["config"]["prime"])
-        # Only include experiments that have distinct primes
-        seen_primes = Set{Int}()
-        for (i, exp) in enumerate(exps)
-            config = exp["config"]
-            if config["prime"] in seen_primes
-                continue
-            end
-            push!(seen_primes, config["prime"])
-            agg = exp["aggregate"]
-
-            best_loss = Inf
-            for opt_name in optimizer_order
-                opt_name == "Random" && continue
-                if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
-                    loss = agg[opt_name]["mean_final_loss"]
-                    if loss < best_loss; best_loss = loss; end
-                end
-            end
-
-            deg_label = i == 1 ? string(d) : ""
-            row = "$deg_label & $(config["prime"])"
-
-            for opt_name in optimizer_order
-                if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
-                    loss = agg[opt_name]["mean_final_loss"]
-                    formatted = "\$$(latex_sci_compact(loss))\$"
-                    if latex_sci_compact(loss) == latex_sci_compact(best_loss)
-                        row *= " & \\textbf{$formatted}"
-                    else
-                        row *= " & $formatted"
-                    end
-                else
-                    row *= " & ---"
-                end
-            end
-            row *= " \\\\"
-            push!(lines, row)
-            push!(lines, "\\hline")
-        end
-    end
-
-    if !isempty(lines) && lines[end] == "\\hline"
-        pop!(lines)
-    end
-    push!(lines, "\\bottomrule")
-    push!(lines, "\\end{tabular}")
-    push!(lines, "}% end adjustbox")
-    push!(lines, "\\end{table}")
-
-    return join(lines, "\n") * "\n"
-end
-
-# ============================================================================
-# Table 5: Timing comparison
+# Table 4: Timing comparison
 # ============================================================================
 
 function generate_timing_table(experiments, optimizer_order)
@@ -585,8 +471,8 @@ function generate_timing_table(experiments, optimizer_order)
     lines = String[]
     push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
-    push!(lines, "\\caption{Mean wall-clock time (seconds) per optimizer across experiments.}")
-    push!(lines, "\\label{tab:poly-learning-timing}")
+    push!(lines, "\\caption{Mean wall-clock time (seconds) per optimizer across polynomial solving experiments.}")
+    push!(lines, "\\label{tab:poly-solving-timing}")
 
     n_opts = length(optimizer_order)
     col_spec = "l" * "c"^n_opts
@@ -650,83 +536,6 @@ function generate_timing_table(experiments, optimizer_order)
 end
 
 # ============================================================================
-# Table 6: Evaluation count comparison
-# ============================================================================
-
-function generate_eval_count_table(experiments, optimizer_order)
-    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
-    if isempty(valid)
-        return "% No valid experiments for eval count table\n"
-    end
-
-    # Check if eval count data is available
-    has_evals = false
-    for exp in valid
-        agg = exp["aggregate"]
-        for opt_name in optimizer_order
-            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
-                has_evals = true
-                break
-            end
-        end
-        has_evals && break
-    end
-    if !has_evals
-        return "% No evaluation count data available\n"
-    end
-
-    lines = String[]
-    push!(lines, "\\begin{table}[H]")
-    push!(lines, "\\centering")
-    push!(lines, "\\caption{Mean number of function evaluations per optimizer (excluding monitoring calls). " *
-                 "Lower is more efficient.}")
-    push!(lines, "\\label{tab:poly-learning-evals}")
-
-    n_opts = length(optimizer_order)
-    col_spec = "l" * "c"^n_opts
-    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
-    push!(lines, "\\begin{tabular}{$col_spec}")
-    push!(lines, "\\toprule")
-
-    header = "Experiment"
-    for opt_name in optimizer_order
-        header *= " & $(display_name(opt_name))"
-    end
-    header *= " \\\\"
-    push!(lines, header)
-    push!(lines, "\\midrule")
-
-    for exp in valid
-        config = exp["config"]
-        agg = exp["aggregate"]
-        name = "\\texttt{" * escape_latex(config["name"]) * "}"
-
-        row = name
-        for opt_name in optimizer_order
-            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
-                evals = agg[opt_name]["mean_total_evals"]
-                row *= " & $(Int(round(evals)))"
-            else
-                row *= " & ---"
-            end
-        end
-        row *= " \\\\"
-        push!(lines, row)
-        push!(lines, "\\hline")
-    end
-
-    if !isempty(lines) && lines[end] == "\\hline"
-        pop!(lines)
-    end
-    push!(lines, "\\bottomrule")
-    push!(lines, "\\end{tabular}")
-    push!(lines, "}% end adjustbox")
-    push!(lines, "\\end{table}")
-
-    return join(lines, "\n") * "\n"
-end
-
-# ============================================================================
 # Table: Optimizer ranking summary
 # ============================================================================
 
@@ -736,7 +545,6 @@ function generate_ranking_table(experiments, optimizer_order)
         return "% No valid experiments for ranking table\n"
     end
 
-    # Check if ranking data is available
     has_ranks = any(
         haskey(exp["aggregate"], opt) &&
         !haskey(exp["aggregate"][opt], "error") &&
@@ -752,17 +560,17 @@ function generate_ranking_table(experiments, optimizer_order)
     lines = String[]
     push!(lines, "\\begin{table}[H]")
     push!(lines, "\\centering")
-    push!(lines, "\\caption{Polynomial learning: optimizer ranking by mean final loss per configuration " *
+    push!(lines, "\\caption{Polynomial solving: optimizer ranking by mean final loss per configuration " *
                  "(rank 1 = best, lower is better). Averaged over random samples. " *
                  "Bold marks the best-ranked optimizer per row (excluding Random). " *
                  "The \\textit{Average} row shows the mean rank across all configurations.}")
-    push!(lines, "\\label{tab:poly-learning-ranking}")
+    push!(lines, "\\label{tab:poly-solving-ranking}")
     col_spec = "l" * "c"^n_opts
     push!(lines, "\\adjustbox{max width=\\textwidth}{%")
     push!(lines, "\\begin{tabular}{$col_spec}")
     push!(lines, "\\toprule")
 
-    header = "Configuration"
+    header = "Experiment"
     for opt_name in optimizer_order
         header *= " & $(display_name(opt_name))"
     end
@@ -811,7 +619,6 @@ function generate_ranking_table(experiments, optimizer_order)
         push!(lines, "\\hline")
     end
 
-    # Average row
     best_avg = Inf
     for opt_name in optimizer_order
         opt_name == "Random" && continue
@@ -848,22 +655,97 @@ function generate_ranking_table(experiments, optimizer_order)
 end
 
 # ============================================================================
+# Table 5: Evaluation count comparison
+# ============================================================================
+
+function generate_eval_count_table(experiments, optimizer_order)
+    valid = filter(e -> !haskey(e, "error") && haskey(e, "aggregate"), experiments)
+    if isempty(valid)
+        return "% No valid experiments for eval count table\n"
+    end
+
+    # Check if eval count data is available
+    has_evals = false
+    for exp in valid
+        agg = exp["aggregate"]
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                has_evals = true
+                break
+            end
+        end
+        has_evals && break
+    end
+    if !has_evals
+        return "% No evaluation count data available\n"
+    end
+
+    lines = String[]
+    push!(lines, "\\begin{table}[H]")
+    push!(lines, "\\centering")
+    push!(lines, "\\caption{Mean number of function evaluations per optimizer for polynomial solving " *
+                 "(excluding monitoring calls). Lower is more efficient.}")
+    push!(lines, "\\label{tab:poly-solving-evals}")
+
+    n_opts = length(optimizer_order)
+    col_spec = "l" * "c"^n_opts
+    push!(lines, "\\adjustbox{max width=\\textwidth}{%")
+    push!(lines, "\\begin{tabular}{$col_spec}")
+    push!(lines, "\\toprule")
+
+    header = "Experiment"
+    for opt_name in optimizer_order
+        header *= " & $(display_name(opt_name))"
+    end
+    header *= " \\\\"
+    push!(lines, header)
+    push!(lines, "\\midrule")
+
+    for exp in valid
+        config = exp["config"]
+        agg = exp["aggregate"]
+        name = "\\texttt{" * escape_latex(config["name"]) * "}"
+
+        row = name
+        for opt_name in optimizer_order
+            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error") && haskey(agg[opt_name], "mean_total_evals")
+                evals = agg[opt_name]["mean_total_evals"]
+                row *= " & $(Int(round(evals)))"
+            else
+                row *= " & ---"
+            end
+        end
+        row *= " \\\\"
+        push!(lines, row)
+        push!(lines, "\\hline")
+    end
+
+    if !isempty(lines) && lines[end] == "\\hline"
+        pop!(lines)
+    end
+    push!(lines, "\\bottomrule")
+    push!(lines, "\\end{tabular}")
+    push!(lines, "}% end adjustbox")
+    push!(lines, "\\end{table}")
+
+    return join(lines, "\n") * "\n"
+end
+
+# ============================================================================
 # Generate unified document
 # ============================================================================
 
 function generate_unified_document(experiments, optimizer_order; verbose=true)
     lines = String[]
 
-    # Document header
     push!(lines, "% ============================================================================")
-    push!(lines, "% LaTeX Tables for Polynomial Learning Experiment")
+    push!(lines, "% LaTeX Tables for Polynomial Solving Experiment")
     push!(lines, "% Generated: $(Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS"))")
     push!(lines, "%")
-    push!(lines, "% This file contains all tables for the polynomial learning experiments.")
+    push!(lines, "% Minimize |f(z)| where f has a known root in Z_p^n.")
     push!(lines, "% ============================================================================")
     push!(lines, "")
 
-    # Generate all tables
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Configuration Summary")
     push!(lines, "% ----------------------------------------------------------------------------")
@@ -885,16 +767,10 @@ function generate_unified_document(experiments, optimizer_order; verbose=true)
     end
 
     push!(lines, "% ----------------------------------------------------------------------------")
-    push!(lines, "% Table: Degree sweep")
+    push!(lines, "% Table: Degree x Variables grid (per prime)")
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "")
-    push!(lines, as_landscape(generate_degree_sweep_table(experiments, optimizer_order)))
-
-    push!(lines, "% ----------------------------------------------------------------------------")
-    push!(lines, "% Table: Prime sweep")
-    push!(lines, "% ----------------------------------------------------------------------------")
-    push!(lines, "")
-    push!(lines, as_landscape(generate_prime_sweep_table(experiments, optimizer_order)))
+    push!(lines, as_landscape(generate_grid_table(experiments, optimizer_order)))
 
     push!(lines, "% ----------------------------------------------------------------------------")
     push!(lines, "% Table: Timing comparison")
