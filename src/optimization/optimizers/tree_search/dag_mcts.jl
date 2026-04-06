@@ -460,6 +460,8 @@ Sets `proven_value` to the max of children's `proven_values` (single-agent optim
 Returns `true` if the node was newly marked as solved.
 """
 function check_solved!(node::DAGMCTSNode)
+    # If the node has already been marked as solved or isn't expanded, then we return false
+    # since there's no change in status
     if node.is_solved || !node.is_expanded
         return false
     end
