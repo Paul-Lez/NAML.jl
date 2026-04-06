@@ -274,7 +274,8 @@ const NAME_WIDTH = maximum(length(n) for n in OPTIMIZER_ORDER)
 
 """
 Rank optimizers within a sample by final_loss (lower = rank 1).
-Adds a "rank" field to each valid optimizer result. Ties share the average rank.
+Adds a "rank" field to each valid optimizer result. Ties receive the minimum rank
+(standard competition ranking: 1,1,3 not 1.5,1.5,3).
 """
 function compute_sample_rankings!(sample_results::Dict)
     optimizers = sample_results["optimizers"]
@@ -289,9 +290,8 @@ function compute_sample_rankings!(sample_results::Dict)
         while j <= n && valid_opts[j][2] == valid_opts[i][2]
             j += 1
         end
-        avg_rank = (i + j - 1) / 2.0
         for k in i:j-1
-            optimizers[valid_opts[k][1]]["rank"] = avg_rank
+            optimizers[valid_opts[k][1]]["rank"] = Float64(i)
         end
         i = j
     end

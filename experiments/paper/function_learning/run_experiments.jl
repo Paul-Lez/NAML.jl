@@ -387,9 +387,8 @@ function compute_sample_rankings!(sample_results::Dict)
         while j <= n && valid_opts[j][2] == valid_opts[i][2]
             j += 1
         end
-        avg_rank = (i + j - 1) / 2.0
         for k in i:j-1
-            optimizers[valid_opts[k][1]]["rank"] = avg_rank
+            optimizers[valid_opts[k][1]]["rank"] = Float64(i)
         end
         i = j
     end
