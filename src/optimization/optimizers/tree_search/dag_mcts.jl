@@ -873,42 +873,78 @@ function dag_mcts_descent(
 
     # Update state for next step
     if config.persist_table
-        # Keep transposition table, just update root
-        # The new root should already be in the table
+        # DAG-first architecture: the DAG persists via node.children pointers.
+        # We re-root the tree and rebuild the transposition table as an ephemeral
+        # index of only the reachable subtree. This prevents unbounded table growth
+        # while preserving cached search information below the new root.
         new_root = get_or_create_node!(state.transposition_table, best_polydisc)
         state.root = new_root
-        # Reset best-node tracking cache. The new root has different children,
-        # so best_root_child is invalid. And best_value/best_node must be reset
-        # because the stale best_value (from the old root's search) can prevent
-        # backpropagate! from ever re-establishing best_root_child — the old
-        # best_node's average drifts with new visits and may never exceed the
-        # stale threshold. The actual information is preserved in the persisted
-        # table's visit counts and values.
-        state.best_node = nothing
-        state.best_value = -Inf
-        state.best_root_child = nothing
-        state.best_root_action = 0
-        state.min_loss_node = nothing
-        state.min_loss = Inf
-        state.min_loss_root_child = nothing
+        rebuild_table_from_subtree!(state, config)
     else
         # Fresh search: clear table and create new root
         empty!(state.transposition_table)
         new_root = DAGMCTSNode(best_polydisc)
         state.transposition_table[HashedPolydisc(best_polydisc)] = new_root
         state.root = new_root
-        state.best_node = nothing
-        state.best_value = -Inf
-        state.best_root_child = nothing
-        state.best_root_action = 0
-        state.min_loss_node = nothing
-        state.min_loss = Inf
-        state.min_loss_root_child = nothing
     end
+
+    # Reset best-node tracking (always needed: new root means old trackers are stale)
+    state.best_node = nothing
+    state.best_value = -Inf
+    state.best_root_child = nothing
+    state.best_root_action = 0
+    state.min_loss_node = nothing
+    state.min_loss = Inf
+    state.min_loss_root_child = nothing
 
     state.step_count += 1
 
     return best_polydisc, state, converged
+end
+
+@doc raw"""
+    rebuild_table_from_subtree!(state::DAGMCTSState{S,T,N}, config::DAGMCTSConfig) where {S,T,N}
+
+Rebuild the transposition table to contain only nodes reachable from `state.root`.
+
+Performs a BFS traversal down from the root, collecting all reachable nodes into a
+fresh dictionary. The old table is replaced, allowing Julia's GC to reclaim any
+unreachable nodes. If `config.track_parents` is enabled, parent arrays of surviving
+nodes are filtered to remove references to pruned ancestors.
+
+This is the core of the "DAG-first" architecture: the DAG structure is maintained
+by `node.children` pointers, and the transposition table is merely an ephemeral
+index rebuilt each step.
+"""
+function rebuild_table_from_subtree!(state::DAGMCTSState{S,T,N}, config::DAGMCTSConfig) where {S,T,N}
+    new_table = Dict{HashedPolydisc{S,T,N}, DAGMCTSNode{S,T,N}}()
+
+    # BFS from root to collect all reachable nodes
+    queue = DAGMCTSNode{S,T,N}[state.root]
+    new_table[HashedPolydisc(state.root.polydisc)] = state.root
+
+    while !isempty(queue)
+        curr = popfirst!(queue)
+        if curr.is_expanded
+            for child in curr.children
+                key = HashedPolydisc(child.polydisc)
+                if !haskey(new_table, key)
+                    new_table[key] = child
+                    push!(queue, child)
+                end
+            end
+        end
+    end
+
+    # If parent tracking is enabled, filter out references to pruned ancestors
+    if config.track_parents
+        reachable_ids = Set{UInt}(objectid(node) for node in values(new_table))
+        for node in values(new_table)
+            filter!(p -> objectid(p) in reachable_ids, node.parents)
+        end
+    end
+
+    state.transposition_table = new_table
 end
 
 @doc raw"""
