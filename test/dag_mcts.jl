@@ -329,6 +329,8 @@ using NAML
         initial_param = ValuationPolydisc([K(4)], [0])
 
         # Test with persist_table=true
+        # With the DAG-first architecture, the table is rebuilt from the active subtree
+        # after each step, so it only contains reachable nodes (not the whole history)
         config_persist = DAGMCTSConfig(num_simulations=20, persist_table=true)
         optim_persist = dag_mcts_descent_init(initial_param, loss, config_persist)
 
@@ -338,8 +340,12 @@ using NAML
         step!(optim_persist)
         table_size_after_step2 = length(optim_persist.state.transposition_table)
 
-        # With persistence, table should grow (or stay same, not shrink)
-        @test table_size_after_step2 >= table_size_after_step1
+        # Table should contain only reachable nodes (positive, bounded)
+        @test table_size_after_step1 > 0
+        @test table_size_after_step2 > 0
+
+        # Verify table integrity after rebuild
+        @test verify_transposition_table(optim_persist.state)
 
         # Test with persist_table=false
         config_no_persist = DAGMCTSConfig(num_simulations=20, persist_table=false)
