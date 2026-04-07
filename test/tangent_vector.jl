@@ -15,13 +15,15 @@ using NAML
     r1 = [1.0, 2.0]
 
     p1 = ValuationPolydisc(a1, r1)
+    # Direction polydisc: same center as p1, radius = p1.radius .+ magnitude [1.0, 1.0]
+    dir1 = ValuationPolydisc(a1, [2.0, 3.0])
 
     @testset "Tangent Vector Creation" begin
         # Create tangent vectors
-        v1 = ValuationTangent(p1, a1, [1.0, 1.0])
+        v1 = ValuationTangent(p1, dir1, [1.0, 1.0])
         @test v1 isa ValuationTangent
         @test v1.point == p1
-        @test v1.direction == a1
+        @test v1.direction == dir1
         @test v1.magnitude == [1.0, 1.0]
 
         v2 = NAML.zero(v1)  # Zero vector in same space
@@ -33,7 +35,7 @@ using NAML
     end
 
     @testset "Tangent Vector Addition" begin
-        v1 = ValuationTangent(p1, a1, [1.0, 1.0])
+        v1 = ValuationTangent(p1, dir1, [1.0, 1.0])
         v2 = NAML.zero(v1)
         v3 = NAML.basis_vector(v1, 1)
 
