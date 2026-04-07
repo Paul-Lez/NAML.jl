@@ -831,7 +831,10 @@ integer quantity ``v(a_n) + \langle r, n \rangle`` over non-zero terms.
 """
 function directional_exponent(f::AbstractAlgebra.Generic.MPoly{S}, v::ValuationTangent{S,T}) where {S, T}
     t = gens(f.parent)
-    g = AbstractAlgebra.evaluate(f, t + v.direction)
+    # For now, we're assuming the direction is always downwards so we can 
+    # use the center for the "target". This works for descent, but not in general.
+    # TODO: also make this work in the case where we use a wrapper around the valued field value
+    g = AbstractAlgebra.evaluate(f, t + collect(v.direction.center))
     exp_vecs = collect(Nemo.exponent_vectors(g))
     # Compute v(a_n) + ⟨radius, n⟩ for each term. Sparse polynomial representation
     # guarantees all stored coefficients are nonzero, so no filtering is needed.
@@ -839,7 +842,8 @@ function directional_exponent(f::AbstractAlgebra.Generic.MPoly{S}, v::ValuationT
     val_weights = [valuation(Nemo.coeff(g, i)) + sum(v.point.radius .* exp_vecs[i]) for i in eachindex(exp_vecs)]
     min_weight = minimum(val_weights)
     ties =  [exp_vecs[j] for j in findall(==(min_weight), val_weights)]
-    return reduce((n, m) -> dot(n, v.magnitude) < dot(m, v.magnitude) ? n : m, ties)
+    radial_magnitude = collect(v.direction.radius .- v.point.radius)
+    return reduce((n, m) -> dot(n, radial_magnitude) < dot(m, radial_magnitude) ? n : m, ties)
 end
 
 @doc raw"""
@@ -863,7 +867,8 @@ function directional_derivative(f::AbstractAlgebra.Generic.MPoly{S}, v::Valuatio
     # Compute the expansion of f around the direction a of the tangent vector v, i.e.
     # The coefficients a_n such that f = ∑_n a_n (T-a)^n. We do this by computing the
     # expansion around 0 of the polynomial g(T) = f(T+a).
-    g = AbstractAlgebra.evaluate(f, x + v.direction)
+    # TODO: this is a redundant calculation given that we already know that from computing the directional exponent. Let's fix that.
+    g = AbstractAlgebra.evaluate(f, x + collect(v.direction.center))
     # Next we need to compute the directional exponent of f along v
     n = directional_exponent(f, v)
     # Use the formula to get d_v
@@ -893,18 +898,21 @@ found by minimizing the valuation weight `v(aₙ) + ⟨r, n⟩`, breaking ties v
 function directional_derivative(poly::LinearPolynomial{S}, v::ValuationTangent{S,T,N}) where {S, T, N}
     r = v.point.radius
     # Expand poly(T + direction): constant term c₀ = b + Σᵢ aᵢdᵢ, linear terms unchanged.
-    c₀ = poly.constant + sum(poly.coefficients[i] * v.direction[i] for i in eachindex(poly.coefficients))
+    # Recenter around lower polydisc. TODO: make this work for arbitrary directions with possibly increasing radii (see similar comment for directional derivatives of general polynomials)
+    c₀ = poly.constant + sum(poly.coefficients[i] * v.direction.center[i] for i in eachindex(poly.coefficients))
     # Initialise with the constant term (exponent 0: val_weight = v(c₀), mag_weight = 0).
     best_val = iszero(c₀) ? typemax(Int) : valuation(c₀)
     best_mag = Base.zero(T)
     linear_wins = false
+    bestIdx = 0
     # Check each linear term (exponent eᵢ: val_weight = v(aᵢ) + rᵢ, mag_weight = magnitude[i]).
     for i in eachindex(poly.coefficients)
         aᵢ = poly.coefficients[i]
         iszero(aᵢ) && continue
         w   = valuation(aᵢ) + r[i]
-        mag = v.magnitude[i]
+        mag = v.direction.radius[i] - v.point.radius[i]
         if w < best_val || (w == best_val && mag < best_mag)
+            bestIdx = i
             best_val  = w
             best_mag  = mag
             linear_wins = true
@@ -1015,7 +1023,7 @@ function batch_evaluate_init(poly::AbstractAlgebra.Generic.MPoly{S}, ::Type{Valu
     end
     function wrapped_deriv(v::ValuationTangent)
         unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
-        unwrapped_direction = collect(unwrap(v.direction))
+        unwrapped_direction = ValuationPolydisc{S,T,N}(v.direction.center |> unwrap, v.direction.radius)
         unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
         return directional_derivative(poly, unwrapped_tangent)
     end
@@ -1077,14 +1085,14 @@ end
 
 function directional_derivative(fun::PolydiscFunction{S}, v::ValuationTangent{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
     unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
-    unwrapped_direction = collect(unwrap(v.direction))
+    unwrapped_direction = ValuationPolydisc{S,T,N}(v.direction.center |> unwrap, v.direction.radius)
     unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
     return directional_derivative(fun, unwrapped_tangent)
 end
 
 function directional_derivative(poly::AbstractAlgebra.Generic.MPoly{S}, v::ValuationTangent{ValuedFieldPoint{P,Prec,S},T,N}) where {S,P,Prec,T,N}
     unwrapped_point = ValuationPolydisc{S,T,N}(v.point.center |> unwrap, v.point.radius)
-    unwrapped_direction = collect(unwrap(v.direction))
+    unwrapped_direction = ValuationPolydisc{S,T,N}(v.direction.center |> unwrap, v.direction.radius)
     unwrapped_tangent = ValuationTangent{S,T,N}(unwrapped_point, unwrapped_direction, v.magnitude)
     return directional_derivative(poly, unwrapped_tangent)
 end
@@ -1146,14 +1154,14 @@ end
 
 function directional_derivative(eval::LinearPolynomialEvaluator{S,T,N}, v::ValuationTangent{S,T,N}) where {S,T,N}
     r = v.point.radius
-    c₀ = eval.constant + sum(eval.coefficients[i] * v.direction[i] for i in 1:N)
+    c₀ = eval.constant + sum(eval.coefficients[i] * v.direction.center[i] for i in 1:N)
     best_val = iszero(c₀) ? typemax(Int) : valuation(c₀)
     best_mag = Base.zero(T)
     linear_wins = false
     for i in 1:N
         iszero(eval.coefficients[i]) && continue
         w   = eval.coeff_valuations[i] + r[i]
-        mag = v.magnitude[i]
+        mag = v.direction.radius[i] - v.point.radius[i]
         if w < best_val || (w == best_val && mag < best_mag)
             best_val    = w
             best_mag    = mag

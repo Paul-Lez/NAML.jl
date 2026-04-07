@@ -21,28 +21,12 @@ this allows the tangent to have non-unit magnitude for each coordinate.
 """
 struct ValuationTangent{S, T, N} #where T<:Oscar.scalar_types
     point::ValuationPolydisc{S, T, N}
-    direction::Vector{S}
+    direction::ValuationPolydisc{S, T, N}
     # Possibly we should allow the magnitude to have a different type?
     # not sure if that would ever come up
     magnitude::Vector{T}
 end
 
-@doc raw"""
-    ValuationTangent(point::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N}, direction::Vector{PadicFieldElem}, magnitude::Vector{T}) where {P,Prec,PFE,T,N}
-
-Convenience constructor that automatically wraps `PadicFieldElem` direction into `ValuedFieldPoint`.
-
-This constructor enables compatibility with existing code that uses unwrapped `PadicFieldElem`
-while the polydisc uses wrapped `ValuedFieldPoint`.
-"""
-function ValuationTangent(
-    point::ValuationPolydisc{ValuedFieldPoint{P,Prec,PFE},T,N},
-    direction::Vector{PadicFieldElem},
-    magnitude::Vector{T}
-) where {P,Prec,PFE,T,N}
-    wrapped_direction = [ValuedFieldPoint{P,Prec,PFE}(d) for d in direction]
-    return ValuationTangent{ValuedFieldPoint{P,Prec,PFE},T,N}(point, wrapped_direction, magnitude)
-end
 
 @doc raw"""
     dim(v::ValuationTangent)
@@ -71,8 +55,8 @@ Create the zero tangent vector at a polydisc pointing in a specified direction.
 # Returns
 `ValuationTangent{S, T, N}`: Zero tangent vector at `P` in direction of segment `[P, Q]`
 """
-function zero(P::ValuationPolydisc{S, T, N}, Q::Vector{S}) where {S, T, N}
-    return ValuationTangent(P, Q, [Oscar.zero(T) for i in eachindex(Q)])
+function zero(P::ValuationPolydisc{S, T, N}, Q::ValuationPolydisc{S, T, N}) where {S, T, N}
+    return ValuationTangent{S,T,N}(P, Q, [Oscar.zero(T) for i in 1:N])
 end
 
 @doc raw"""
@@ -103,8 +87,8 @@ Create the i-th standard basis tangent vector.
 # Returns
 `ValuationTangent{S, T, N}`: Standard basis vector with magnitude 1 in coordinate `i` and 0 elsewhere
 """
-function basis_vector(P::ValuationPolydisc{S, T, N}, Q::Vector{S}, i) where {S, T, N}
-    return ValuationTangent(P, Q, [j == i ? Oscar.one(T) : Oscar.zero(T) for j in Base.eachindex(Q)])
+function basis_vector(P::ValuationPolydisc{S, T, N}, Q::ValuationPolydisc{S, T, N}, i) where {S, T, N}
+    return ValuationTangent{S,T,N}(P, Q, [j == i ? Oscar.one(T) : Oscar.zero(T) for j in 1:N])
 end
 
 @doc raw"""
@@ -138,23 +122,3 @@ Add two tangent vectors at the same basepoint and direction.
 function Base.:+(P::ValuationTangent{S, T, N}, Q::ValuationTangent{S, T, N}) where {S, T, N}
     return ValuationTangent(P.point, P.direction, P.magnitude + Q.magnitude)
 end
-
-@doc raw"""
-    ValuationTangent(P::ValuationPolydisc{S, T, N}, Q::ValuationPolydisc{S, T, N}) where {S,T,N}
-
-Create a tangent vector corresponding to the straight line from polydisc P to polydisc Q.
-
-# Arguments
-- `P::ValuationPolydisc{S, T, N}`: The starting polydisc (basepoint)
-- `Q::ValuationPolydisc{S, T, N}`: The target polydisc
-
-# Returns
-`ValuationTangent{S, T, N}`: Tangent vector from `P` toward `Q`
-
-# Notes
-Currently returns the zero tangent - full implementation is TODO.
-"""
-function ValuationTangent(P::ValuationPolydisc{S, T, N}, Q::ValuationPolydisc{S, T, N}) where {S, T, N}
-    # TODO: implement this!
-    return zero(P, collect(Q.center))
-end 

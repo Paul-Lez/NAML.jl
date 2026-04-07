@@ -16,8 +16,8 @@ using NAML
         eval_typed = batch_evaluate_init(c, ValuationPolydisc{PadicFieldElem,Int,2})
 
         p = make_polydisc([K(1), K(2)], [0, 0])
-        direction = [K(1), K(0)]
-        v = ValuationTangent(p, direction, [1, 0])
+        dir = make_polydisc([K(1), K(0)], [1, 0])
+        v = ValuationTangent(p, dir, [1, 0])
 
         @test directional_derivative(eval_typed, v) == 0.0
     end
@@ -30,8 +30,8 @@ using NAML
         eval_typed = batch_evaluate_init(poly, ValuationPolydisc{PadicFieldElem,Int,2})
 
         p = make_polydisc([K(3), K(1)], [0, 0])
-        direction = [K(1), K(0)]
-        v = ValuationTangent(p, direction, [1, 0])
+        dir = make_polydisc([K(1), K(0)], [1, 0])
+        v = ValuationTangent(p, dir, [1, 0])
 
         # Compare evaluator derivative with symbolic derivative
         eval_result = directional_derivative(eval_typed, v)
@@ -47,8 +47,8 @@ using NAML
         eval_typed = batch_evaluate_init(f, ValuationPolydisc{PadicFieldElem,Int,2})
 
         p = make_polydisc([K(3), K(5)], [0, 0])
-        direction = [K(1), K(1)]
-        v = ValuationTangent(p, direction, [1, 1])
+        dir = make_polydisc([K(1), K(1)], [1, 1])
+        v = ValuationTangent(p, dir, [1, 1])
 
         eval_result = directional_derivative(eval_typed, v)
         symbolic_result = directional_derivative(f, v)
@@ -65,8 +65,8 @@ using NAML
         eval_typed = batch_evaluate_init(f, ValuationPolydisc{PadicFieldElem,Int,1})
 
         p = make_polydisc([K(3)], [0])
-        direction = [K(1)]
-        v = ValuationTangent(p, direction, [1])
+        dir = make_polydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         eval_result = directional_derivative(eval_typed, v)
         symbolic_result = directional_derivative(f, v)
@@ -83,8 +83,8 @@ using NAML
         eval_typed = batch_evaluate_init(f, ValuationPolydisc{PadicFieldElem,Int,1})
 
         p = make_polydisc([K(3)], [0])
-        direction = [K(1)]
-        v = ValuationTangent(p, direction, [1])
+        dir = make_polydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         eval_result = directional_derivative(eval_typed, v)
         symbolic_result = directional_derivative(f, v)
@@ -99,8 +99,8 @@ using NAML
         eval_typed = batch_evaluate_init(f, ValuationPolydisc{PadicFieldElem,Int,1})
 
         p = make_polydisc([K(5)], [0])
-        direction = [K(1)]
-        v = ValuationTangent(p, direction, [1])
+        dir = make_polydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         eval_result = directional_derivative(eval_typed, v)
         symbolic_result = directional_derivative(f, v)
@@ -117,8 +117,8 @@ using NAML
         eval_typed = batch_evaluate_init(f, ValuationPolydisc{PadicFieldElem,Int,1})
 
         p = make_polydisc([K(3)], [0])
-        direction = [K(1)]
-        v = ValuationTangent(p, direction, [1])
+        dir = make_polydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         eval_result = directional_derivative(eval_typed, v)
         symbolic_result = directional_derivative(f, v)
@@ -136,7 +136,8 @@ using NAML
         eval_typed = batch_evaluate_init(l, ValuationPolydisc{PadicFieldElem,Int,1})
 
         p = make_polydisc([K(3)], [0])
-        v = ValuationTangent(p, [K(1)], [1])
+        dir = make_polydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         @test directional_derivative(eval_typed, v) == 0.5
 
@@ -156,15 +157,16 @@ using NAML
 
         # Use VFP-wrapped polydisc for VFP evaluator
         p = ValuationPolydisc([K(3)], [0])
-        direction = [K(1)]
-        v = ValuationTangent(p, direction, [1])
+        dir = ValuationPolydisc([K(1)], [1])
+        v = ValuationTangent(p, dir, [1])
 
         # Compare with symbolic derivative
         eval_result = directional_derivative(eval_typed, v)
 
         # Compute symbolic result using unwrapped types
         p_unwrapped = make_polydisc([K(3)], [0])
-        v_unwrapped = ValuationTangent(p_unwrapped, [K(1)], [1])
+        dir_unwrapped = make_polydisc([K(1)], [1])
+        v_unwrapped = ValuationTangent(p_unwrapped, dir_unwrapped, [1])
         symbolic_result = directional_derivative(poly, v_unwrapped)
 
         @test eval_result ≈ symbolic_result
