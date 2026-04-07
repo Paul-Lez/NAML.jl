@@ -49,8 +49,8 @@ using NAML
 
     @testset "Directional Derivative" begin
         f = 3 * x
-        # Create tangent vector
-        v = NAML.basis_vector(p1, collect(p1.center), 1)
+        # Create tangent vector (direction polydisc coincides with p1)
+        v = NAML.basis_vector(p1, p1, 1)
 
         # Test: Directional derivative
         dd = directional_derivative(f, v)
@@ -67,7 +67,8 @@ end
         # f = x + 4y: v(1)+0=0 vs v(4)+0=2 (2-adic) → x wins
         f = x2 + K2(4) * y2
         p = make_pd([K2(0), K2(0)], [0, 0])
-        v = ValuationTangent(p, [K2(0), K2(0)], [1, 0])
+        dir = make_pd([K2(0), K2(0)], [1, 0])
+        v = ValuationTangent(p, dir, [1, 0])
         @test directional_exponent(f, v) == [1, 0]
     end
 
@@ -75,7 +76,8 @@ end
         # f = x + y, radius (3,0): x gets penalty → v(1)+3=3 vs v(1)+0=0 → y wins
         f = x2 + y2
         p = make_pd([K2(0), K2(0)], [3, 0])
-        v = ValuationTangent(p, [K2(0), K2(0)], [1, 0])
+        dir = make_pd([K2(0), K2(0)], [4, 0])
+        v = ValuationTangent(p, dir, [1, 0])
         @test directional_exponent(f, v) == [0, 1]
     end
 
@@ -83,7 +85,8 @@ end
         # f = x + y, radius (0,0): both val_weight=0; magnitude [1,0] → dot([0,1],[1,0])=0 < dot([1,0],[1,0])=1 → y wins
         f = x2 + y2
         p = make_pd([K2(0), K2(0)], [0, 0])
-        v = ValuationTangent(p, [K2(0), K2(0)], [1, 0])
+        dir = make_pd([K2(0), K2(0)], [1, 0])
+        v = ValuationTangent(p, dir, [1, 0])
         @test directional_exponent(f, v) == [0, 1]
     end
 end
@@ -96,7 +99,8 @@ end
         # f = T₁, radius 0: c₀=0, linear val_weight=0+0=0 → d_v = -2^0 = -1.0
         poly = LinearPolynomial([K2(1)], K2(0))
         p = make_pd([K2(0)], [0])
-        v = ValuationTangent(p, [K2(0)], [1])
+        dir = make_pd([K2(0)], [1])
+        v = ValuationTangent(p, dir, [1])
         @test directional_derivative(poly, v) ≈ -1.0
     end
 
@@ -104,7 +108,8 @@ end
         # f = T₁ + 4, radius 1: v(4)=2 > v(1)+1=1 → linear wins → d_v = -2^{-1} = -0.5
         poly = LinearPolynomial([K2(1)], K2(4))
         p = make_pd([K2(0)], [1])
-        v = ValuationTangent(p, [K2(0)], [1])
+        dir = make_pd([K2(0)], [2])
+        v = ValuationTangent(p, dir, [1])
         @test directional_derivative(poly, v) ≈ -0.5
     end
 
@@ -112,7 +117,8 @@ end
         # f = T₁ + 1, radius 3: v(1)=0 < v(1)+3=3 → constant wins → d_v = 0.0
         poly = LinearPolynomial([K2(1)], K2(1))
         p = make_pd([K2(0)], [3])
-        v = ValuationTangent(p, [K2(0)], [1])
+        dir = make_pd([K2(0)], [4])
+        v = ValuationTangent(p, dir, [1])
         @test directional_derivative(poly, v) ≈ 0.0
     end
 
@@ -120,7 +126,8 @@ end
         # f = T₁ + T₂, radius (0,0): both val_weight=0; magnitude [1,0] → T₂ wins (mag 0 < 1) → d_v = -1.0
         poly = LinearPolynomial([K2(1), K2(1)], K2(0))
         p = make_pd([K2(0), K2(0)], [0, 0])
-        v = ValuationTangent(p, [K2(0), K2(0)], [1, 0])
+        dir = make_pd([K2(0), K2(0)], [1, 0])
+        v = ValuationTangent(p, dir, [1, 0])
         @test directional_derivative(poly, v) ≈ -1.0
     end
 end
@@ -137,7 +144,8 @@ end
         poly2 = LinearPolynomial([K2(0)], K2(1))
         f = LinearAbsolutePolynomialSum([poly1, poly2])
         p = make_pd([K2(0)], [0])
-        v = ValuationTangent(p, [K2(0)], [1])
+        dir = make_pd([K2(0)], [1])
+        v = ValuationTangent(p, dir, [1])
         @test directional_derivative(f, v) ≈ -1.0
     end
 
@@ -149,7 +157,8 @@ end
         poly2 = LinearPolynomial([K2(1)], K2(4))
         f = LinearAbsolutePolynomialSum([poly1, poly2])
         p = make_pd([K2(0)], [1])
-        v = ValuationTangent(p, [K2(0)], [1])
+        dir = make_pd([K2(0)], [2])
+        v = ValuationTangent(p, dir, [1])
         @test directional_derivative(f, v) ≈ -1.0
     end
 end

@@ -23,8 +23,9 @@ function gradient_param(
     val::ValuationPolydisc{S,T,N1},
     v::ValuationTangent{S,T,N2}
 ) where {S, T, N1, N2}
+    # TODO: implement concatenation of tangent vectors
     new_base = concatenate(val, v.point)
-    new_direction = [collect(val.center); v.direction]
+    new_direction = concatenate(val, v.direction)
     new_v = ValuationTangent(new_base, new_direction, [zeros(T, dim(val)); v.magnitude])
     grad_indices = (dim(val)+1):(dim(val)+dim(v))
     return partial_gradient(m.fun, new_v, grad_indices)
@@ -38,7 +39,7 @@ function gradient_param(
 ) where {S, P, Prec, T, N1, N2}
     unwrapped_val = ValuationPolydisc{S,T,N1}(unwrap(val.center), val.radius)
     unwrapped_point = ValuationPolydisc{S,T,N2}(unwrap(v.point.center), v.point.radius)
-    unwrapped_direction = collect(unwrap(v.direction))
+    unwrapped_direction = ValuationPolydisc{S,T,N2}(unwrap(v.direction.center), v.direction.radius)
     unwrapped_v = ValuationTangent{S,T,N2}(unwrapped_point, unwrapped_direction, v.magnitude)
     return gradient_param(m, unwrapped_val, unwrapped_v)
 end
@@ -64,7 +65,7 @@ function gradient_param(
     v::ValuationTangent
 )
     new_base = concatenate(val, v.point)
-    new_direction = [collect(val.center); v.direction]
+    new_direction = concatenate(val, v.direction)
     T = eltype(v.magnitude)
     new_v = ValuationTangent(new_base, new_direction, [zeros(T, dim(val)); v.magnitude])
     grad_indices = (dim(val)+1):(dim(val)+dim(v))
@@ -129,11 +130,11 @@ function gradient_descent(
     # Evaluate gradient at each child (not at param): children have positive radius in one
     # coordinate, which makes the p-adic directional derivative non-trivial. Evaluating at
     # param (radius 0 everywhere) would give gradient 0 for all children.
-    tangents = [ValuationTangent(lower_point, collect(lower_point.center), zeros(T, dim(lower_point))) for lower_point in below_nodes]
+    tangents = [ValuationTangent(param, lower_point, zeros(T, dim(lower_point))) for lower_point in below_nodes]
     # In gradient descent, we look at the children of the current parameter point and take the child
     # that maximises the norm of the (downwards pointing) gradient
     grad_values = loss.grad(tangents)
-    val, ind = findmax([LinearAlgebra.norm(g) for g in grad_values])
+    ind = rand(findall(u -> u == minimum(grad_values), grad_values))
     return below_nodes[ind], next_branch, false
 end
 
