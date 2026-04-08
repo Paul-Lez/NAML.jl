@@ -32,6 +32,7 @@ include("util.jl")  # Local: generate_polynomial_solving_problem, etc.
 
 using Oscar
 using .NAML
+using Distributed
 
 args = parse_experiment_args(ARGS)
 
@@ -91,6 +92,20 @@ function run_single_sample(config::Dict, sample_num::Int)
     )
 end
 
+@everywhere function run_experiment(configs::Vector{Dict{String, Any}}, sample_num::Int)
+    results = []
+    for config in configs
+        sample_result = try
+            run_single_sample(config, sample_num)
+        catch e 
+            Dict{String, Any}("sample_num" => sample_num, "error" => string(e))
+        end
+        push!(results, sample_result)
+    end 
+    return results
+end
+
+
 # ============================================================================
 # Print helpers
 # ============================================================================
@@ -143,27 +158,53 @@ end
 results_by_config = [Dict{String, Any}("config" => config, "samples" => Any[])
                      for config in configs]
 
+num_samples = first([config["num_samples"] for config in configs])
+
+# # Flatten (config_idx, sample) into a single task list.
+# tasks = [(ci, s) for ci in 1:length(configs) for s in 1:configs[ci]["num_samples"]]
+
 # Flatten (config_idx, sample) into a single task list.
-tasks = [(ci, s) for ci in 1:length(configs) for s in 1:configs[ci]["num_samples"]]
+experiments = [(configs, s) for s in 1:num_samples]
 
-println("\nRunning $(length(tasks)) (config, sample) tasks serially...\n")
+num_workers = nworkers()
 
-for (ci, sample) in tasks
-    config = configs[ci]
-    sample_result = try
-        run_single_sample(config, sample)
-    catch e
-        println("    ✗ $(config["name"]) sample $sample failed: $e")
-        flush(stdout)
-        Dict{String, Any}("sample_num" => sample, "error" => string(e))
-    end
+println("We have $num_workers workers.")
 
-    push!(results_by_config[ci]["samples"], sample_result)
+workers = WorkerPool(2:num_workers)
 
-    if !haskey(sample_result, "error")
-        print_sample_result(config, sample, sample_result)
+@everywhere myFun(x) = run_experiment(x[1], x[2])
+
+results = pmap(myFun, workers, experiments)
+
+println("All experiments have now been run")
+
+for (experiment, sampleIdx) in experiments
+    for ci in 1:length(configs)
+        sample_result = results[sampleIdx][ci]
+        push!(results_by_config[ci]["samples"], sample_result)
+    
+        if !haskey(sample_result, "error")
+            print_sample_result(configs[ci], sampleIdx, sample_result)
+        end
     end
 end
+
+# for (ci, sample) in tasks
+#     config = configs[ci]
+#     sample_result = try
+#         run_single_sample(config, sample)
+#     catch e
+#         println("    ✗ $(config["name"]) sample $sample failed: $e")
+#         flush(stdout)
+#         Dict{String, Any}("sample_num" => sample, "error" => string(e))
+#     end
+
+#     push!(results_by_config[ci]["samples"], sample_result)
+
+#     if !haskey(sample_result, "error")
+#         print_sample_result(config, sample, sample_result)
+#     end
+# end
 
 all_results = results_by_config
 
