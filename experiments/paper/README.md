@@ -1,6 +1,6 @@
 # Paper Experiments
 
-> **Architecture**: Three-stage pipeline — **Run → Stats → Tables** — with shared utilities and threading.
+> **Architecture**: Three-stage pipeline — **Run → Stats → Tables** — with shared utilities.
 
 ## Quick Start
 
@@ -32,7 +32,7 @@ make_stats.jl       →  *_stats.json
 generate_tables.jl  →  *.tex
 ```
 
-1. **`run_experiments.jl`** — Runs experiments and logs raw per-sample results to JSON. No statistical aggregation. Optimizer execution is threaded (`Threads.@threads`) for parallel speedup.
+1. **`run_experiments.jl`** — Runs experiments serially and logs raw per-sample results to JSON. No statistical aggregation.
 
 2. **`make_stats.jl`** — Reads raw JSON, computes per-sample rankings, per-experiment aggregate statistics (mean/std/min/max), and cross-experiment global ranking. Writes stats JSON.
 
@@ -44,7 +44,7 @@ All shared code lives in `experiments/paper/`:
 
 | File | Purpose |
 |------|---------|
-| `experiment_utils.jl` | CLI parsing, optimizer factory, threaded runner, JSON save |
+| `experiment_utils.jl` | CLI parsing, optimizer factory, JSON save |
 | `stats_utils.jl` | Mean/std, ranking, aggregate statistics |
 | `table_utils.jl` | LaTeX formatting, display names, generic table generators |
 | `util.jl` | Problem generation, loss functions, data utilities |
@@ -53,7 +53,7 @@ All shared code lives in `experiments/paper/`:
 
 ```
 experiments/paper/
-├── experiment_utils.jl       # Shared: CLI, optimizer factory, threading
+├── experiment_utils.jl       # Shared: CLI, optimizer factory
 ├── stats_utils.jl            # Shared: statistics computation
 ├── table_utils.jl            # Shared: LaTeX table generation
 ├── make_stats.jl             # Global: raw JSON → stats JSON
@@ -149,16 +149,6 @@ Flags:
   --degree D           Override tree degree
   --verbose            Include detailed tables
 ```
-
-## Threading
-
-Experiment runners use `Threads.@threads` to parallelize optimizer execution within each sample. To use multiple threads:
-
-```bash
-julia -t 4 --project=. experiments/paper/<experiment>/run_experiments.jl --quick --save
-```
-
-Each thread deep-copies the starting parameter and loss to avoid mutation issues.
 
 ## JSON Schema
 
