@@ -2,21 +2,21 @@
 # ==============================================================================
 # generate_paper_tables.sh
 #
-# Runs all paper experiments and regenerates the corresponding LaTeX tables.
+# Three-stage pipeline for paper experiments:
+#   1. run_experiments.jl → raw JSON (per-sample results, no aggregation)
+#   2. make_stats.jl      → stats JSON (adds rankings, aggregates, global ranking)
+#   3. generate_tables.jl → LaTeX tables (reads stats JSON)
 #
 # Usage:
-#   ./experiments/paper/generate_paper_tables.sh [--quick] [--epochs N] [--samples N] [--selection-mode M] [--degree D]
+#   bash experiments/paper/generate_paper_tables.sh [--quick] [--epochs N] [--samples N] [--selection-mode M] [--degree D] [--verbose]
 #
 # Flags:
-#   --quick           Use reduced epochs/simulations for a fast smoke-test run
-#   --epochs N        Override number of epochs (default: 20)
-#   --samples N       Override number of samples per config (default: 30)
-#   --selection-mode  MCTS/DAG-MCTS selection mode: BestValue, VisitCount, or BestLoss (default: BestValue)
-#   --degree D        Override tree branching degree for MCTS/DAG-MCTS/DOO optimizers (default: auto from dims)
-#   --verbose         Include per-configuration detailed tables (default: aggregate only)
-#
-# The script must be run from the repository root, e.g.:
-#   bash experiments/paper/generate_paper_tables.sh
+#   --quick           Reduced epochs/simulations for smoke testing
+#   --epochs N        Override epochs (default: 20)
+#   --samples N       Override samples per config (default: 30)
+#   --selection-mode  MCTS/DAG-MCTS selection mode (default: BestValue)
+#   --degree D        Override tree branching degree (default: auto)
+#   --verbose         Include per-configuration detailed tables
 # ==============================================================================
 
 set -euo pipefail
@@ -98,109 +98,82 @@ err()  { echo "  ERROR: $*" >&2; exit 1; }
 
 START_TIME=$(date +%s)
 
-# ----------------------------------------------------------------------------
-# Absolute sum minimization
-# ----------------------------------------------------------------------------
+# Helper function to run the 3-stage pipeline for one experiment
+run_pipeline() {
+    local DIR="$1"
+    local NAME="$2"
+    local RAW_FILE="$3"
+    local STATS_FILE="$4"
+    local TEX_FILE="$5"
 
-ABSSUM_DIR="$SCRIPT_DIR/absolute_sum_minimization"
-ABSSUM_RESULTS="$ABSSUM_DIR/absolute_sum_results_paper.json"
+    # Stage 1: Run experiments → raw JSON
+    step "[$NAME] Stage 1: Running experiments"
+    julia --project="$REPO_ROOT" \
+        "$DIR/run_experiments.jl" \
+        --paper --save \
+        --output "$RAW_FILE" \
+        $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
+    ok "Raw results: $DIR/$RAW_FILE"
 
-step "Running absolute_sum_minimization experiments"
-julia --project="$REPO_ROOT" \
-    "$ABSSUM_DIR/run_experiments.jl" \
-    --paper --save \
-    --output absolute_sum_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
-ok "Experiments done"
+    local RAW_PATH="$DIR/$RAW_FILE"
+    if [ ! -f "$RAW_PATH" ]; then
+        err "Expected raw results not found: $RAW_PATH"
+    fi
 
-step "Generating absolute_sum_minimization tables"
-if [ ! -f "$ABSSUM_RESULTS" ]; then
-    err "Expected results file not found: $ABSSUM_RESULTS"
-fi
-julia --project="$REPO_ROOT" \
-    "$ABSSUM_DIR/generate_tables.jl" \
-    "$ABSSUM_RESULTS" \
-    --output absolute_sum_tables.tex \
-    $VERBOSE_FLAG
-ok "Tables written to $ABSSUM_DIR/absolute_sum_tables.tex"
+    # Stage 2: Compute statistics → stats JSON
+    step "[$NAME] Stage 2: Computing statistics"
+    julia --project="$REPO_ROOT" \
+        "$SCRIPT_DIR/make_stats.jl" \
+        "$RAW_PATH" \
+        --output "$DIR/$STATS_FILE"
+    ok "Stats: $DIR/$STATS_FILE"
 
-# ----------------------------------------------------------------------------
-# Function learning
-# ----------------------------------------------------------------------------
+    local STATS_PATH="$DIR/$STATS_FILE"
+    if [ ! -f "$STATS_PATH" ]; then
+        err "Expected stats file not found: $STATS_PATH"
+    fi
 
-FUNCLEARN_DIR="$SCRIPT_DIR/function_learning"
-FUNCLEARN_RESULTS="$FUNCLEARN_DIR/function_learning_results_paper.json"
-
-step "Running function_learning experiments"
-julia --project="$REPO_ROOT" \
-    "$FUNCLEARN_DIR/run_experiments.jl" \
-    --paper --save \
-    --output function_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
-ok "Experiments done"
-
-step "Generating function_learning tables"
-if [ ! -f "$FUNCLEARN_RESULTS" ]; then
-    err "Expected results file not found: $FUNCLEARN_RESULTS"
-fi
-julia --project="$REPO_ROOT" \
-    "$FUNCLEARN_DIR/generate_tables.jl" \
-    "$FUNCLEARN_RESULTS" \
-    --output function_learning_tables.tex \
-    $VERBOSE_FLAG
-ok "Tables written to $FUNCLEARN_DIR/function_learning_tables.tex"
+    # Stage 3: Generate tables → LaTeX
+    step "[$NAME] Stage 3: Generating tables"
+    julia --project="$REPO_ROOT" \
+        "$DIR/generate_tables.jl" \
+        "$STATS_PATH" \
+        --output "$TEX_FILE" \
+        $VERBOSE_FLAG
+    ok "Tables: $DIR/$TEX_FILE"
+}
 
 # ----------------------------------------------------------------------------
-# Polynomial learning
+# Run all experiments through the pipeline
 # ----------------------------------------------------------------------------
 
-POLYLEARN_DIR="$SCRIPT_DIR/polynomial_learning"
-POLYLEARN_RESULTS="$POLYLEARN_DIR/poly_learning_results_paper.json"
+run_pipeline \
+    "$SCRIPT_DIR/absolute_sum_minimization" \
+    "absolute_sum" \
+    "absolute_sum_results_raw.json" \
+    "absolute_sum_results_stats.json" \
+    "absolute_sum_tables.tex"
 
-step "Running polynomial_learning experiments"
-julia --project="$REPO_ROOT" \
-    "$POLYLEARN_DIR/run_experiments.jl" \
-    --paper --save \
-    --output poly_learning_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
-ok "Experiments done"
+run_pipeline \
+    "$SCRIPT_DIR/function_learning" \
+    "function_learning" \
+    "function_learning_results_raw.json" \
+    "function_learning_results_stats.json" \
+    "function_learning_tables.tex"
 
-step "Generating polynomial_learning tables"
-if [ ! -f "$POLYLEARN_RESULTS" ]; then
-    err "Expected results file not found: $POLYLEARN_RESULTS"
-fi
-julia --project="$REPO_ROOT" \
-    "$POLYLEARN_DIR/generate_tables.jl" \
-    "$POLYLEARN_RESULTS" \
-    --output polynomial_learning_tables.tex \
-    $VERBOSE_FLAG
-ok "Tables written to $POLYLEARN_DIR/polynomial_learning_tables.tex"
+run_pipeline \
+    "$SCRIPT_DIR/polynomial_learning" \
+    "polynomial_learning" \
+    "poly_learning_results_raw.json" \
+    "poly_learning_results_stats.json" \
+    "polynomial_learning_tables.tex"
 
-# ----------------------------------------------------------------------------
-# Polynomial solving
-# ----------------------------------------------------------------------------
-
-POLYSOLVE_DIR="$SCRIPT_DIR/polynomial_solving"
-POLYSOLVE_RESULTS="$POLYSOLVE_DIR/polynomial_solving_results_paper.json"
-
-step "Running polynomial_solving experiments"
-julia --project="$REPO_ROOT" \
-    "$POLYSOLVE_DIR/run_experiments.jl" \
-    --paper --save \
-    --output polynomial_solving_results_paper.json \
-    $QUICK_FLAG $EPOCHS_FLAG $SAMPLES_FLAG $SELECTION_MODE_FLAG $DEGREE_FLAG
-ok "Experiments done"
-
-step "Generating polynomial_solving tables"
-if [ ! -f "$POLYSOLVE_RESULTS" ]; then
-    err "Expected results file not found: $POLYSOLVE_RESULTS"
-fi
-julia --project="$REPO_ROOT" \
-    "$POLYSOLVE_DIR/generate_tables.jl" \
-    "$POLYSOLVE_RESULTS" \
-    --output polynomial_solving_tables.tex \
-    $VERBOSE_FLAG
-ok "Tables written to $POLYSOLVE_DIR/polynomial_solving_tables.tex"
+run_pipeline \
+    "$SCRIPT_DIR/polynomial_solving" \
+    "polynomial_solving" \
+    "polynomial_solving_results_raw.json" \
+    "polynomial_solving_results_stats.json" \
+    "polynomial_solving_tables.tex"
 
 # ----------------------------------------------------------------------------
 # Done
@@ -213,9 +186,9 @@ ELAPSED_SEC=$(( ELAPSED % 60 ))
 echo
 echo "======================================================================"
 echo "All paper experiments complete and tables regenerated."
-echo "  $ABSSUM_DIR/absolute_sum_tables.tex"
-echo "  $FUNCLEARN_DIR/function_learning_tables.tex"
-echo "  $POLYLEARN_DIR/polynomial_learning_tables.tex"
-echo "  $POLYSOLVE_DIR/polynomial_solving_tables.tex"
+echo "  $SCRIPT_DIR/absolute_sum_minimization/absolute_sum_tables.tex"
+echo "  $SCRIPT_DIR/function_learning/function_learning_tables.tex"
+echo "  $SCRIPT_DIR/polynomial_learning/polynomial_learning_tables.tex"
+echo "  $SCRIPT_DIR/polynomial_solving/polynomial_solving_tables.tex"
 echo "Total time: ${ELAPSED_MIN}m ${ELAPSED_SEC}s"
 echo "======================================================================"
