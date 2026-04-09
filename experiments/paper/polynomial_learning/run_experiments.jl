@@ -250,12 +250,19 @@ if args.save_results
         git_commit=args.git_commit,
     )
 
-    isnothing(args.output_filename) &&
-        error("--save requires --output <absolute path> (no default location)")
-    isabspath(args.output_filename) ||
-        error("--output must be an absolute path, got: $(args.output_filename)")
+    output_path = if isnothing(args.output_filename)
+        repo_root = normpath(joinpath(@__DIR__, "..", "..", ".."))
+        logs_dir = joinpath(repo_root, "logs")
+        mkpath(logs_dir)
+        ts = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
+        joinpath(logs_dir, "polynomial_learning_$(ts).json")
+    else
+        isabspath(args.output_filename) ||
+            error("--output must be an absolute path, got: $(args.output_filename)")
+        args.output_filename
+    end
 
-    save_raw_results(all_results, metadata, args.output_filename)
+    save_raw_results(all_results, metadata, output_path)
 end
 
 println("\n✓ All experiments complete!")
