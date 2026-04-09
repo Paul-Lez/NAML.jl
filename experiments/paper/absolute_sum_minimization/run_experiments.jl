@@ -237,16 +237,12 @@ if args.save_results
         git_commit=args.git_commit,
     )
 
-    output_fn = if !isnothing(args.output_filename)
-        args.output_filename
-    else
-        timestamp = Dates.format(Dates.now(), "yyyymmdd_HHMMSS")
-        "absolute_sum_results_$(timestamp)_raw.json"
-    end
-    filepath = joinpath(@__DIR__, output_fn)
+    isnothing(args.output_filename) &&
+        error("--save requires --output <absolute path> (no default location)")
+    isabspath(args.output_filename) ||
+        error("--output must be an absolute path, got: $(args.output_filename)")
 
-    save_raw_results(all_results, metadata, filepath)
-    save_to_logs(filepath)
+    save_raw_results(all_results, metadata, args.output_filename)
 end
 
 println("\n✓ All experiments complete!")

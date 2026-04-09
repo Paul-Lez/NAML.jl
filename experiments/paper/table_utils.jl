@@ -15,56 +15,24 @@ using JSON
 using Printf
 using Dates
 
-# ============================================================================
-# Display names and ordering
-# ============================================================================
-
-const DISPLAY_NAMES = Dict(
-    "Random"              => "Random",
-    "Best-First"          => "Best First Value",
-    "Best-First-branch2"  => "Best First Branch 2",
-    "Best-First-Gradient" => "Best First Gradient",
-    "DOO"                 => "DOO",
-    "MCTS-k"              => "MCTS-\$k\$",
-    "MCTS-5k"             => "MCTS-\$5k\$",
-    "MCTS-10k"            => "MCTS-\$10k\$",
-    "DAG-MCTS-k"          => "DAG-MCTS-\$k\$",
-    "DAG-MCTS-5k"         => "DAG-MCTS-\$5k\$",
-    "DAG-MCTS-10k"        => "DAG-MCTS-\$10k\$",
-    
-    # New suite-based names
-    "MCTS-10k-deg1"       => "MCTS-\$10k\$ (deg 1)",
-    "MCTS-10k-deg2"       => "MCTS-\$10k\$ (deg 2)",
-    "DAG-MCTS-10k-deg1"   => "DAG-MCTS-\$10k\$ (deg 1)",
-    "DAG-MCTS-10k-deg2"   => "DAG-MCTS-\$10k\$ (deg 2)",
-    "Greedy-deg1"         => "Greedy (deg 1)",
-    "Greedy-deg2"         => "Greedy (deg 2)",
-    "Gradient-deg1"       => "Gradient (deg 1)",
-    "Gradient-deg2"       => "Gradient (deg 2)",
-)
-display_name(n) = get(DISPLAY_NAMES, n, n)
-
-const DISPLAY_ORDER = [
-    "Random", "Best-First", "Best-First-branch2", "Best-First-Gradient",
-    "MCTS-k", "MCTS-5k", "MCTS-10k",
-    "DAG-MCTS-k", "DAG-MCTS-5k", "DAG-MCTS-10k", 
-    "MCTS-10k-deg1", "MCTS-10k-deg2", "DAG-MCTS-10k-deg1", "DAG-MCTS-10k-deg2",
-    "Greedy-deg1", "Greedy-deg2", "Gradient-deg1", "Gradient-deg2",
-    "DOO"
-]
+# Display names, optimizer ordering, and pure aggregation helpers live in
+# stats_utils.jl so they can be reused by figures_util.jl. Including the file
+# here is idempotent (Julia simply re-evaluates the definitions).
+include(joinpath(@__DIR__, "stats_utils.jl"))
 
 # ============================================================================
 # CLI parsing for table generators
 # ============================================================================
 
 """
-    parse_table_args(ARGS, default_output) -> NamedTuple
+    parse_table_args(ARGS) -> NamedTuple
 
-Parse CLI arguments for generate_tables.jl scripts.
+Parse CLI arguments for generate_tables.jl scripts. Either `--output <absolute
+path>` or `--stdout` is required — there is no implicit default location.
 """
-function parse_table_args(args, default_output::String)
+function parse_table_args(args)
     if length(args) < 1
-        println("Usage: julia generate_tables.jl <stats.json> [--output FILE] [--stdout] [--verbose]")
+        println("Usage: julia generate_tables.jl <stats.json> (--output FILE | --stdout) [--verbose]")
         exit(1)
     end
 
@@ -72,11 +40,18 @@ function parse_table_args(args, default_output::String)
     print_stdout = "--stdout" in args
     verbose = "--verbose" in args
 
-    output_file = default_output
+    output_file = nothing
     for (i, arg) in enumerate(args)
         if arg == "--output" && i < length(args)
             output_file = args[i+1]
         end
+    end
+
+    if !print_stdout
+        isnothing(output_file) &&
+            error("generate_tables.jl requires --output <absolute path> (or --stdout)")
+        isabspath(output_file) ||
+            error("--output must be an absolute path, got: $output_file")
     end
 
     return (
@@ -662,9 +637,6 @@ function generate_ranking_table(experiments, optimizer_order, label::String, cap
     push!(lines, header)
     push!(lines, "\\midrule")
 
-    rank_sums   = Dict{String, Float64}(opt => 0.0 for opt in optimizer_order)
-    rank_counts = Dict{String, Int}(opt => 0 for opt in optimizer_order)
-
     for exp in valid
         config = exp["config"]
         agg = isnothing(suite_name) ? exp["aggregate"] : exp["suites_aggregate"][suite_name]
@@ -692,8 +664,6 @@ function generate_ranking_table(experiments, optimizer_order, label::String, cap
                 else
                     row *= " & $cell"
                 end
-                rank_sums[opt_name] += r
-                rank_counts[opt_name] += 1
             else
                 row *= " & ---"
             end
@@ -703,23 +673,22 @@ function generate_ranking_table(experiments, optimizer_order, label::String, cap
         push!(lines, "\\hline")
     end
 
-    # Average row
-    best_avg = Inf
-    for opt_name in optimizer_order
-        opt_name == "Random" && continue
-        if rank_counts[opt_name] > 0
-            avg = rank_sums[opt_name] / rank_counts[opt_name]
-            if avg < best_avg; best_avg = avg; end
-        end
-    end
+    # Average row — uses the shared cross-experiment aggregator.
+    avg_ranks = mean_metric_across_experiments(valid, optimizer_order,
+                                                s -> optimizer_metric(s, "mean_rank");
+                                                suite_name=suite_name)
+    best_avg = minimum(
+        (avg_ranks[opt] for opt in optimizer_order
+            if opt != "Random" && !isnan(avg_ranks[opt]));
+        init = Inf
+    )
 
     push!(lines, "\\midrule")
     avg_row = "\\textit{Average}"
     for opt_name in optimizer_order
-        if rank_counts[opt_name] > 0
-            avg = rank_sums[opt_name] / rank_counts[opt_name]
-            avg_str = @sprintf("%.2f", avg)
-            if @sprintf("%.2f", avg) == @sprintf("%.2f", best_avg)
+        if !isnan(avg_ranks[opt_name])
+            avg_str = @sprintf("%.2f", avg_ranks[opt_name])
+            if @sprintf("%.2f", avg_ranks[opt_name]) == @sprintf("%.2f", best_avg)
                 avg_row *= " & \\textbf{$avg_str}"
             else
                 avg_row *= " & $avg_str"
@@ -755,25 +724,22 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order, label:
         return "% No valid experiments for optimizer aggregate\n"
     end
 
-    # Collect per-optimizer stats across experiments
-    _m(x) = isempty(x) ? 0.0 : sum(x) / length(x)
-    optimizer_stats = Dict{String, Dict{String, Vector{Float64}}}()
-    for opt_name in optimizer_order
-        optimizer_stats[opt_name] = Dict(
-            "final_loss" => Float64[],
-            "improvement_ratio" => Float64[],
-            "time" => Float64[]
-        )
-    end
+    # Cross-experiment per-optimizer means via the shared aggregator.
+    mean_losses = mean_metric_across_experiments(valid, optimizer_order,
+        s -> optimizer_metric(s, "mean_final_loss"); suite_name=suite_name)
+    mean_improvs = mean_metric_across_experiments(valid, optimizer_order,
+        s -> optimizer_metric(s, "mean_improvement_ratio"); suite_name=suite_name)
+    mean_times = mean_metric_across_experiments(valid, optimizer_order,
+        s -> optimizer_metric(s, "mean_time"); suite_name=suite_name)
 
+    # Count of valid configs per optimizer (needed for the "Configs" column).
+    n_configs = Dict{String,Int}(opt => 0 for opt in optimizer_order)
     for exp in valid
-        agg = isnothing(suite_name) ? exp["aggregate"] : exp["suites_aggregate"][suite_name]
-        for opt_name in optimizer_order
-            if haskey(agg, opt_name) && !haskey(agg[opt_name], "error")
-                stats = agg[opt_name]
-                push!(optimizer_stats[opt_name]["final_loss"], stats["mean_final_loss"])
-                push!(optimizer_stats[opt_name]["improvement_ratio"], stats["mean_improvement_ratio"])
-                push!(optimizer_stats[opt_name]["time"], stats["mean_time"])
+        agg = experiment_aggregate(exp; suite_name=suite_name)
+        agg === nothing && continue
+        for opt in optimizer_order
+            if haskey(agg, opt) && !haskey(agg[opt], "error")
+                n_configs[opt] += 1
             end
         end
     end
@@ -789,32 +755,27 @@ function generate_optimizer_aggregate_table(experiments, optimizer_order, label:
     push!(lines, "Optimizer & Mean Loss & Improv.~(\\%) & Mean Time (s) & Configs \\\\")
     push!(lines, "\\midrule")
 
-    best_mean_loss = Inf
-    for opt_name in optimizer_order
-        opt_name == "Random" && continue
-        if !isempty(optimizer_stats[opt_name]["final_loss"])
-            mean_loss = _m(optimizer_stats[opt_name]["final_loss"])
-            if mean_loss < best_mean_loss; best_mean_loss = mean_loss; end
-        end
-    end
+    best_mean_loss = minimum(
+        (mean_losses[opt] for opt in optimizer_order
+            if opt != "Random" && !isnan(mean_losses[opt]));
+        init = Inf
+    )
 
     for opt_name in optimizer_order
-        if !isempty(optimizer_stats[opt_name]["final_loss"])
-            mean_loss = _m(optimizer_stats[opt_name]["final_loss"])
-            mean_improv = _m(optimizer_stats[opt_name]["improvement_ratio"])
-            mean_time = _m(optimizer_stats[opt_name]["time"])
-            n_configs = length(optimizer_stats[opt_name]["final_loss"])
+        n_configs[opt_name] == 0 && continue
+        mean_loss = mean_losses[opt_name]
+        mean_improv = mean_improvs[opt_name]
+        mean_time = mean_times[opt_name]
 
-            loss_str = @sprintf("\$%.2e\$", mean_loss)
-            if @sprintf("%.2e", mean_loss) == @sprintf("%.2e", best_mean_loss)
-                loss_str = "\\textbf{$loss_str}"
-            end
-            improv_str = @sprintf("%.1f", mean_improv * 100)
-            time_str = @sprintf("%.2f", mean_time)
-
-            push!(lines, "$(display_name(opt_name)) & $loss_str & $improv_str & $time_str & $n_configs \\\\")
-            push!(lines, "\\hline")
+        loss_str = @sprintf("\$%.2e\$", mean_loss)
+        if @sprintf("%.2e", mean_loss) == @sprintf("%.2e", best_mean_loss)
+            loss_str = "\\textbf{$loss_str}"
         end
+        improv_str = @sprintf("%.1f", mean_improv * 100)
+        time_str = @sprintf("%.2f", mean_time)
+
+        push!(lines, "$(display_name(opt_name)) & $loss_str & $improv_str & $time_str & $(n_configs[opt_name]) \\\\")
+        push!(lines, "\\hline")
     end
 
     if !isempty(lines) && lines[end] == "\\hline"
@@ -1024,15 +985,15 @@ end
 
 Write the document to a file or print to stdout.
 """
-function write_or_print(document::String, json_file::String, output_file::String, print_stdout::Bool)
+function write_or_print(document::String, json_file::String, output_file, print_stdout::Bool)
     if print_stdout
         println(document)
     else
-        filepath = joinpath(dirname(json_file), output_file)
-        open(filepath, "w") do f
+        mkpath(dirname(output_file))
+        open(output_file, "w") do f
             write(f, document)
         end
-        println("✓ Wrote unified tables to: $filepath")
+        println("✓ Wrote unified tables to: $output_file")
     end
     println("\nDone!")
 end

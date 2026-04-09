@@ -13,7 +13,7 @@ Usage:
 
 include("../table_utils.jl")
 
-targs = parse_table_args(ARGS, "function_learning_tables.tex")
+targs = parse_table_args(ARGS)
 experiments, metadata, optimizer_order = load_stats_json(targs.json_file)
 
 # ============================================================================

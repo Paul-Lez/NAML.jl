@@ -13,7 +13,7 @@ Usage:
 include("../table_utils.jl")
 
 # Parse arguments
-targs = parse_table_args(ARGS, "absolute_sum_tables.tex")
+targs = parse_table_args(ARGS)
 experiments, metadata, optimizer_order = load_stats_json(targs.json_file)
 
 # ============================================================================

@@ -648,27 +648,6 @@ end
 
 
 # ============================================================================
-# Logging: copy JSON results to repo-root logs/ directory
-# ============================================================================
-
-"""
-    save_to_logs(filepath::AbstractString)
-
-Copy a results file to the `logs/` directory at the repository root.
-Creates the directory if it doesn't exist.
-"""
-function save_to_logs(filepath::AbstractString)
-    # @__DIR__ is the caller's dir; repo root is 3 levels up from experiment scripts,
-    # but this file lives at experiments/paper/, so go 2 levels up.
-    repo_root = joinpath(@__DIR__, "..", "..")
-    logs_dir = joinpath(repo_root, "logs")
-    mkpath(logs_dir)
-    dest = joinpath(logs_dir, basename(filepath))
-    cp(filepath, dest; force=true)
-    println("Results also saved to: $dest")
-end
-
-# ============================================================================
 # Evaluation counting
 # ============================================================================
 

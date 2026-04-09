@@ -23,6 +23,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PAPER_DIR="$HOME/Documents/65a7dd3183827d4e7b6d0f36/arXiv_draft/tables"
+LATEST_RUN="$REPO_ROOT/logs/latest"
 
 step() { echo; echo "==== $* ===="; }
 ok()   { echo "  OK: $*"; }
@@ -63,21 +64,21 @@ if [ ! -d "$PAPER_DIR" ]; then
     err "Paper directory not found: $PAPER_DIR"
 fi
 
-cp "$SCRIPT_DIR/absolute_sum_minimization/absolute_sum_tables.tex" \
-   "$PAPER_DIR/absolute_sum_tables.tex"
-ok "absolute_sum_tables.tex"
+if [ ! -e "$LATEST_RUN" ]; then
+    err "No latest run directory found at: $LATEST_RUN (run generate_paper_tables.sh first)"
+fi
 
-cp "$SCRIPT_DIR/function_learning/function_learning_tables.tex" \
-   "$PAPER_DIR/function_learning_tables.tex"
-ok "function_learning_tables.tex"
+# Resolve symlink target so we can report which run we're deploying.
+RESOLVED_RUN="$(cd "$LATEST_RUN" && pwd -P)"
+echo "Deploying tables from: $RESOLVED_RUN"
 
-cp "$SCRIPT_DIR/polynomial_learning/polynomial_learning_tables.tex" \
-   "$PAPER_DIR/polynomial_learning_tables.tex"
-ok "polynomial_learning_tables.tex"
-
-cp "$SCRIPT_DIR/polynomial_solving/polynomial_solving_tables.tex" \
-   "$PAPER_DIR/polynomial_solving_tables.tex"
-ok "polynomial_solving_tables.tex"
+for tex in absolute_sum_minimization_tables.tex \
+           function_learning_tables.tex \
+           polynomial_learning_tables.tex \
+           polynomial_solving_tables.tex; do
+    cp "$LATEST_RUN/$tex" "$PAPER_DIR/$tex"
+    ok "$tex"
+done
 
 # ----------------------------------------------------------------------------
 # Done
@@ -86,7 +87,7 @@ ok "polynomial_solving_tables.tex"
 echo
 echo "======================================================================"
 echo "Tables deployed to: $PAPER_DIR/"
-echo "  absolute_sum_tables.tex"
+echo "  absolute_sum_minimization_tables.tex"
 echo "  function_learning_tables.tex"
 echo "  polynomial_learning_tables.tex"
 echo "  polynomial_solving_tables.tex"
