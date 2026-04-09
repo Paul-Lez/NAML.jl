@@ -147,6 +147,16 @@ end
     initial_coeffs = [NAML.unwrap(c) for c in NAML.center(initial_param)]
     initial_accuracy = compute_accuracy(initial_coeffs, data, threshold, scale)
 
+    # Post-run callback to compute classification accuracy for each optimizer
+    post_run_fn = (optim) -> begin
+        final_coeffs = [NAML.unwrap(c) for c in NAML.center(optim.param)]
+        final_accuracy = compute_accuracy(final_coeffs, data, threshold, scale)
+        Dict{String, Any}(
+            "final_accuracy" => final_accuracy,
+            "accuracy_improvement" => final_accuracy - initial_accuracy,
+        )
+    end
+
     # Get suite configs (SuiteName => {OptName => Setup})
     suite_configs = get_optimizer_configs(config, args)
 
