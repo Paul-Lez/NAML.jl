@@ -1,4 +1,4 @@
-# NAML — Non-Archimedean Machine Learning
+# NAML — Non-Archimedean Optimisation (and a bit of ML)
 
 NAML is a Julia package for optimization over non-Archimedean fields. It provides tools to define objective functions on p-adic polydiscs and minimize them using a range of optimizers, from greedy descent to tree-search methods (MCTS, DOO, plus other experimental implementations).
 
