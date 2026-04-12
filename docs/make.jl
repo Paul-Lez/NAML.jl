@@ -28,11 +28,7 @@ makedocs(
                 "Tree Search" => [
                     "DAG-MCTS" => "optimization/optimizers/tree_search/dag_mcts.md",
                     "DOO" => "optimization/optimizers/tree_search/doo.md",
-                    "Flat UCB" => "optimization/optimizers/tree_search/flat_ucb.md",
-                    "HOO" => "optimization/optimizers/tree_search/hoo.md",
                     "MCTS" => "optimization/optimizers/tree_search/mcts.md",
-                    "Modified UCT" => "optimization/optimizers/tree_search/modified_uct.md",
-                    "UCT" => "optimization/optimizers/tree_search/uct.md",
                     "Value Transforms" => "optimization/optimizers/tree_search/value_transforms.md",
                 ]
             ]
