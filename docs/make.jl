@@ -47,3 +47,9 @@ makedocs(
         ]
     ]
 )
+
+deploydocs(
+    repo="github.com/Paul-Lez/NAML.jl.git",
+    devbranch="main",
+    push_preview=true
+)
