@@ -3,6 +3,7 @@ using Documenter, NAML
 makedocs(
     sitename="NAML.jl",
     modules=[NAML],
+    warnonly=true,
     format=Documenter.HTML(
         prettyurls=get(ENV, "CI", "false") == "true",
         edit_link="main",
