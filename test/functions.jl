@@ -54,7 +54,7 @@ using NonArchimedeanMachineLearning
 
         # Test: Directional derivative
         dd = directional_derivative(f, v)
-        @test dd isa Number || dd isa Vector  # Result should be numeric
+        @test dd isa Number || dd isa Vector
     end
 end
 
@@ -161,4 +161,164 @@ end
         v = ValuationTangent(p, dir, [1])
         @test directional_derivative(f, v) ≈ -1.0
     end
+end
+
+@testset "Function Evaluation Consistency" begin
+    prec = 20
+    K = PadicField(2, prec)
+    R, (x, y) = polynomial_ring(K, ["x", "y"])
+
+    @testset "AbsolutePolynomialSum vs LinearAbsolutePolynomialSum consistency" begin
+        f1 = 2 * x + y + 1
+        f2 = x + 3
+
+        abs_poly_sum = AbsolutePolynomialSum([f1, f2])
+
+        lin_poly1 = LinearPolynomial([K(2), K(1)], K(1))
+        lin_poly2 = LinearPolynomial([K(1), K(0)], K(3))
+        lin_poly_sum = LinearAbsolutePolynomialSum([lin_poly1, lin_poly2])
+
+        test_points = [
+            ValuationPolydisc([K(0), K(0)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [0, 0]),
+            ValuationPolydisc([K(2), K(3)], [1, 1]),
+        ]
+
+        for p in test_points
+            @test evaluate(abs_poly_sum, p) ≈ evaluate(lin_poly_sum, p) atol = 1e-10
+        end
+    end
+
+    @testset "Single polynomial evaluation consistency" begin
+        polynomials = [
+            x,
+            2 * x,
+            x + 1,
+            x * y + 1,
+        ]
+
+        test_points = [
+            ValuationPolydisc([K(0), K(0)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [1, 1]),
+            ValuationPolydisc([K(2), K(1)], [0, 0]),
+        ]
+
+        for f in polynomials
+            for p in test_points
+                @test evaluate_abs(f, p) ≈ evaluate(AbsolutePolynomialSum([f]), p)
+            end
+        end
+    end
+
+    @testset "Consistency: evaluate_abs vs LinearPolynomial for linear functions" begin
+        f_mv = 3 * x + 2 * y + 5
+        f_lin = LinearPolynomial([K(3), K(2)], K(5))
+
+        test_points = [
+            ([K(0), K(0)], [0, 0]),
+            ([K(1), K(1)], [0, 0]),
+            ([K(2), K(3)], [1, 2]),
+            ([K(1), K(1)], [0, 1]),
+        ]
+
+        for (center, radius) in test_points
+            p = ValuationPolydisc(center, radius)
+            @test evaluate_abs(f_mv, p) ≈ evaluate(f_lin, p) atol = 1e-10
+        end
+    end
+end
+
+@testset "Batch Evaluation" begin
+    prec = 20
+    K = PadicField(2, prec)
+    R, (x, y) = polynomial_ring(K, ["x", "y"])
+
+    @testset "LinearPolynomial batch evaluator matches regular evaluation" begin
+        poly = LinearPolynomial([K(1), K(1)], K(1))
+        batch_eval = batch_evaluate_init(poly)
+
+        @test batch_eval isa Function
+
+        test_points = [
+            ValuationPolydisc([K(0), K(0)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [1, 1]),
+        ]
+
+        for p in test_points
+            @test batch_eval(p) ≈ evaluate(poly, p) atol = 1e-10
+        end
+    end
+
+    @testset "AbsolutePolynomialSum batch evaluator matches regular evaluation" begin
+        f1 = x + 1
+        f2 = y + 2
+        abs_sum = AbsolutePolynomialSum([f1, f2])
+        batch_eval = batch_evaluate_init(abs_sum)
+
+        test_points = [
+            ValuationPolydisc([K(0), K(0)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [0, 0]),
+            ValuationPolydisc([K(0), K(1)], [1, 0]),
+        ]
+
+        for p in test_points
+            @test batch_eval(p) ≈ evaluate(abs_sum, p) atol = 1e-10
+        end
+    end
+
+    @testset "MPoly batch evaluator matches regular evaluation" begin
+        polynomials = [
+            x,
+            2 * x + y,
+            x * y + 1,
+            3 * x + 2 * y + 5,
+        ]
+
+        test_points = [
+            ValuationPolydisc([K(0), K(0)], [0, 0]),
+            ValuationPolydisc([K(1), K(1)], [0, 0]),
+            ValuationPolydisc([K(2), K(3)], [1, 1]),
+        ]
+
+        for f in polynomials
+            batch_eval = batch_evaluate_init(f)
+            for p in test_points
+                @test batch_eval(p) ≈ evaluate_abs(f, p) atol = 1e-10
+            end
+        end
+    end
+
+    @testset "LinearAbsolutePolynomialSum batch evaluator matches regular evaluation" begin
+        polys = [
+            LinearPolynomial([K(1), K(2)], K(1)),
+            LinearPolynomial([K(3), K(1)], K(0)),
+            LinearPolynomial([K(1), K(1)], K(2)),
+        ]
+        lin_sum = LinearAbsolutePolynomialSum(polys)
+        batch_eval = batch_evaluate_init(lin_sum)
+
+        for i in 1:5
+            p = ValuationPolydisc([K(i), K(i)], [0, 0])
+            @test batch_eval(p) ≈ evaluate(lin_sum, p) atol = 1e-10
+        end
+    end
+end
+
+@testset "Exact Radius Sensitivity" begin
+    prec = 20
+    K = PadicField(2, prec)
+    R, (x, y) = polynomial_ring(K, ["x", "y"])
+
+    f = 4 * x
+    abs_sum = AbsolutePolynomialSum([f])
+
+    p_r0 = ValuationPolydisc([K(0), K(0)], [0, 0])
+    p_r1 = ValuationPolydisc([K(0), K(0)], [1, 0])
+    p_r2 = ValuationPolydisc([K(0), K(0)], [2, 0])
+
+    @test evaluate(abs_sum, p_r0) ≈ 0.25
+    @test evaluate(abs_sum, p_r1) ≈ 0.125
+    @test evaluate(abs_sum, p_r2) ≈ 0.0625
 end
