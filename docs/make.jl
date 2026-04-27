@@ -7,9 +7,7 @@ makedocs(
     format=Documenter.HTML(
         prettyurls=get(ENV, "CI", "false") == "true",
         edit_link="main",
-        size_threshold=400000, # 400 KB
-        assets=["assets/logo.png"],
-        logo="assets/logo.png"
+        size_threshold=400000 # 400 KB
     ),
     pages=[
         "Home" => "index.md",
